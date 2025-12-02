@@ -601,6 +601,93 @@
                 billboards.push(billboard);
                 scene.add(billboard);
             });
+
+            // Add PAY TAXES flashing sign
+            const taxBuildings = tallBuildings.filter(b => !selected.includes(b));
+            if (taxBuildings.length > 0) {
+                const taxBuilding = taxBuildings[Math.floor(Math.random() * taxBuildings.length)];
+                const h = taxBuilding.userData.height;
+
+                const taxSign = new THREE.Group();
+
+                // Support poles
+                const poleMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
+                const pole1 = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 5), poleMat);
+                pole1.position.set(-3, 2.5, 0);
+                taxSign.add(pole1);
+                const pole2 = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 5), poleMat);
+                pole2.position.set(3, 2.5, 0);
+                taxSign.add(pole2);
+
+                // Sign background - black
+                const signBg = new THREE.Mesh(
+                    new THREE.BoxGeometry(8, 4, 0.3),
+                    new THREE.MeshStandardMaterial({ color: 0x111111 })
+                );
+                signBg.position.y = 5.5;
+                taxSign.add(signBg);
+
+                // Create flashing text planes (one on, one off)
+                const createTaxTexture = (textColor) => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 512;
+                    canvas.height = 256;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#111111';
+                    ctx.fillRect(0, 0, 512, 256);
+                    ctx.fillStyle = textColor;
+                    ctx.font = 'bold 72px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('PAY TAXES', 256, 128);
+                    return new THREE.CanvasTexture(canvas);
+                };
+
+                const textureOn = createTaxTexture('#00ff00');
+                const textureOff = createTaxTexture('#003300');
+
+                const textPlaneOn = new THREE.Mesh(
+                    new THREE.PlaneGeometry(7, 3.5),
+                    new THREE.MeshBasicMaterial({ map: textureOn })
+                );
+                textPlaneOn.position.set(0, 5.5, 0.2);
+                textPlaneOn.userData.isTaxSign = true;
+                taxSign.add(textPlaneOn);
+
+                const textPlaneOff = new THREE.Mesh(
+                    new THREE.PlaneGeometry(7, 3.5),
+                    new THREE.MeshBasicMaterial({ map: textureOff })
+                );
+                textPlaneOff.position.set(0, 5.5, 0.2);
+                textPlaneOff.visible = false;
+                textPlaneOff.userData.isTaxSignOff = true;
+                taxSign.add(textPlaneOff);
+
+                // Back side
+                const textPlaneOnBack = new THREE.Mesh(
+                    new THREE.PlaneGeometry(7, 3.5),
+                    new THREE.MeshBasicMaterial({ map: textureOn })
+                );
+                textPlaneOnBack.position.set(0, 5.5, -0.2);
+                textPlaneOnBack.rotation.y = Math.PI;
+                textPlaneOnBack.userData.isTaxSign = true;
+                taxSign.add(textPlaneOnBack);
+
+                const textPlaneOffBack = new THREE.Mesh(
+                    new THREE.PlaneGeometry(7, 3.5),
+                    new THREE.MeshBasicMaterial({ map: textureOff })
+                );
+                textPlaneOffBack.position.set(0, 5.5, -0.2);
+                textPlaneOffBack.rotation.y = Math.PI;
+                textPlaneOffBack.visible = false;
+                textPlaneOffBack.userData.isTaxSignOff = true;
+                taxSign.add(textPlaneOffBack);
+
+                taxSign.position.set(taxBuilding.position.x, h, taxBuilding.position.z);
+                taxSign.userData.isTaxBillboard = true;
+                billboards.push(taxSign);
+                scene.add(taxSign);
+            }
         }
 
         function mkTrafficLights() {
@@ -1028,7 +1115,7 @@
                         const pdz = ped.position.z - omnibus.position.z;
                         const pdist = Math.sqrt(pdx * pdx + pdz * pdz);
                         const dotProduct = (pdx * dx + pdz * dz) / dist;
-                        if (dotProduct > 0 && pdist < 3) {
+                        if (dotProduct > 0 && pdist < 6) {
                             omnibusBlocked = true;
                             break;
                         }
@@ -1039,22 +1126,9 @@
                         const speed = omnibus.userData.spd;
                         omnibus.position.x += (dx / dist) * speed;
                         omnibus.position.z += (dz / dist) * speed;
-                        
+
                         // Face direction of travel (front of bus is +X, so subtract PI/2)
                         omnibus.rotation.y = Math.atan2(dx, dz) - Math.PI / 2;
-                        
-                        omnibus.userData.stuckTime = 0;
-                    } else {
-                        // Track stuck time
-                        omnibus.userData.stuckTime = (omnibus.userData.stuckTime || 0) + 0.016;
-                        
-                        // If stuck for more than 5 seconds, push through slowly
-                        if (omnibus.userData.stuckTime > 5) {
-                            const speed = omnibus.userData.spd * 0.3;
-                            omnibus.position.x += (dx / dist) * speed;
-                            omnibus.position.z += (dz / dist) * speed;
-                            omnibus.rotation.y = Math.atan2(dx, dz) - Math.PI / 2;
-                        }
                     }
                 }
             } else if (omnibus.userData.state === 'stopping') {
@@ -4139,15 +4213,13 @@
                     });
                 }
                 
-                // Check for pedestrians CROSSING the road only
+                // Check for pedestrians on the road
                 peds.forEach(ped => {
                     if (!ped.visible) return;
-                    // Only stop for pedestrians who are actually crossing
-                    if (ped.userData.state !== 'crossing') return;
-                    
+
                     const dx = ped.position.x - car.position.x;
                     const dz = ped.position.z - car.position.z;
-                    
+
                     if (car.userData.axis === 'x') {
                         const ahead = dx * car.userData.dir;
                         const inPath = Math.abs(dz) < 3;
@@ -4933,6 +5005,13 @@
                     }
                     if (child.userData.isGlow) {
                         child.material.opacity = 0.3 + Math.sin(t * 2) * 0.2;
+                    }
+                    // Flash PAY TAXES sign
+                    if (child.userData.isTaxSign) {
+                        child.visible = Math.sin(t * 4) > 0;
+                    }
+                    if (child.userData.isTaxSignOff) {
+                        child.visible = Math.sin(t * 4) <= 0;
                     }
                 });
             });
