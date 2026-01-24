@@ -640,7 +640,7 @@
                         buildings.push(b);
                         scene.add(b);
 
-                        // Track buildings with rooftop features for figure placement in Plan 02
+                        // Track buildings with rooftop features for figure placement
                         if (b.userData.hasRooftopFeature) {
                             activeRooftops.push({
                                 building: b,
@@ -651,6 +651,23 @@
                                 depth: d,
                                 type: b.userData.rooftopType
                             });
+
+                            // Add static figures to gardens and pools
+                            const numFigs = b.userData.rooftopType === 'pool'
+                                ? ROOFTOP_CFG.figuresPerPool[0] + Math.floor(Math.random() * (ROOFTOP_CFG.figuresPerPool[1] - ROOFTOP_CFG.figuresPerPool[0] + 1))
+                                : ROOFTOP_CFG.figuresPerGarden[0] + Math.floor(Math.random() * (ROOFTOP_CFG.figuresPerGarden[1] - ROOFTOP_CFG.figuresPerGarden[0] + 1));
+
+                            for (let f = 0; f < numFigs; f++) {
+                                const fig = mkRooftopFigure();
+                                const fx = (Math.random() - 0.5) * w * 0.5;
+                                const fz = (Math.random() - 0.5) * d * 0.5;
+                                fig.position.set(fx, h + 0.05, fz);
+                                fig.userData.baseX = fx;
+                                fig.userData.baseZ = fz;
+                                fig.userData.buildingHeight = h;
+                                b.add(fig);
+                                rooftopFigures.push(fig);
+                            }
                         }
                     }
                 }
@@ -1233,6 +1250,60 @@
 
             rooftopParties.push(party);
             scene.add(party);
+        }
+
+        // Update rooftop parties - spawn, animate, despawn
+        function updRooftopParties(t) {
+            // Check for party spawn
+            if (t - lastPartySpawn > ROOFTOP_CFG.partySpawnInterval) {
+                lastPartySpawn = t;
+                if (Math.random() < ROOFTOP_CFG.partySpawnChance) {
+                    spawnRooftopParty();
+                }
+            }
+
+            // Update existing parties
+            for (let i = rooftopParties.length - 1; i >= 0; i--) {
+                const party = rooftopParties[i];
+                const elapsed = t - party.userData.spawnTime;
+
+                // Check if party should end
+                if (elapsed > party.userData.duration) {
+                    scene.remove(party);
+                    rooftopParties.splice(i, 1);
+                    continue;
+                }
+
+                // Animate string lights (gentle twinkling)
+                party.userData.stringLights.forEach((light, idx) => {
+                    const twinkle = 0.7 + 0.3 * Math.sin(t * 3 + light.userData.phase);
+                    light.material.color.setHex(
+                        twinkle > 0.85 ? 0xffffaa : 0xffee88
+                    );
+                });
+
+                // Animate figures (subtle wandering)
+                party.userData.figures.forEach(fig => {
+                    const wanderX = Math.sin(t * fig.userData.wanderSpeed + fig.userData.phase) * fig.userData.wanderRadius;
+                    const wanderZ = Math.cos(t * fig.userData.wanderSpeed * 1.3 + fig.userData.phase) * fig.userData.wanderRadius;
+                    fig.position.x = fig.userData.baseX + wanderX * 0.3;
+                    fig.position.z = fig.userData.baseZ + wanderZ * 0.3;
+                    // Face movement direction
+                    fig.rotation.y = Math.atan2(wanderX, wanderZ);
+                });
+            }
+        }
+
+        // Update static rooftop figures on gardens and pools
+        function updRooftopFigures(t) {
+            rooftopFigures.forEach(fig => {
+                // Gentle wandering animation
+                const wanderX = Math.sin(t * fig.userData.wanderSpeed + fig.userData.phase) * fig.userData.wanderRadius;
+                const wanderZ = Math.cos(t * fig.userData.wanderSpeed * 1.1 + fig.userData.phase) * fig.userData.wanderRadius;
+                fig.position.x = fig.userData.baseX + wanderX;
+                fig.position.z = fig.userData.baseZ + wanderZ;
+                fig.rotation.y = Math.atan2(wanderX, wanderZ);
+            });
         }
 
         function mkBillboards() {
@@ -6406,6 +6477,8 @@
             updSecrets(t);
             updBirds(t);
             updBillboards(t);
+            updRooftopParties(t);
+            updRooftopFigures(t);
             updWindowLights(t);
             updEmergencyLights(t);
             updGridlock(t);
