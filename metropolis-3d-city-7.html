@@ -94,7 +94,7 @@
             gridCount: 4
         };
         
-        const CFG = { cars: 10, emergencyVehicles: 2, peds: 40, bikes: 3 };
+        const CFG = { cars: 10, emergencyVehicles: 2, peds: 40, bikes: 3, flocks: 4 };
 
         const SKY_COLORS = {
             midnight: 0x0a0a2e,    // Deep dark blue
@@ -102,6 +102,22 @@
             day: 0x87CEEB,         // Sky blue
             dusk: 0xff6b4a,        // Orange/red
             night: 0x1a1a3e        // Dark blue
+        };
+
+        const BIRD_CFG = {
+            flockSizes: [3, 5, 6, 8],     // Possible flock sizes for variety
+            speed: 0.15,                   // Base bird speed
+            turnSpeed: 0.03,               // How fast birds can turn
+            separationDist: 2,             // Minimum distance between birds
+            cohesionDist: 15,              // Max distance for cohesion
+            alignmentDist: 10,             // Max distance for alignment
+            separationWeight: 1.5,         // Weight of separation force
+            cohesionWeight: 0.8,           // Weight of cohesion force
+            alignmentWeight: 1.0,          // Weight of alignment force
+            wanderWeight: 0.3,             // Weight of random wandering
+            minHeight: 15,                 // Minimum flying height
+            maxHeight: 60,                 // Maximum flying height
+            boundaryMargin: 50             // How far outside city birds can go
         };
 
         let scene, cam, renderer, clock;
@@ -137,6 +153,9 @@
 
         let yaw = 0, pitch = -0.3, keys = {}, discoveries = new Set();
         let secrets = [], mmCtx;
+
+        // Bird flock system
+        let flocks = [];  // Array of flock groups, each containing birds[]
         let lastWindowToggle = 0;
         let lastBikeSpawn = 0;
         let policeChaseTarget = null;
