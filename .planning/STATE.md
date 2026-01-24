@@ -1,0 +1,242 @@
+# Project State: Metropolis
+
+## Project Reference
+
+See: .planning/PROJECT.md (updated 2025-01-23)
+
+**Core value:** The city feels alive and worth watching
+**Current focus:** Phase 5 - Rooftop Features (COMPLETE)
+
+## Current Position
+
+- **Milestone:** v1.0 - Visual Engagement Features (COMPLETE)
+- **Phase:** 5 of 5 (Rooftop Life) - COMPLETE
+- **Plan:** 2 of 2 completed
+- **Status:** All phases complete
+- **Last activity:** 2026-01-24 - Completed 05-02-PLAN.md
+
+**Progress:** ████████████████ 100% (11/11 plans across all phases)
+
+## Recent Progress
+
+- 05-02: Rooftop parties with string lights and animated figures (PHASE COMPLETE)
+- Parties spawn every 60 seconds with 40% chance (max 2 simultaneous)
+- Twinkling string lights in perimeter pattern with 12 lights per party
+- 4-8 party figures wandering subtly within party area
+- Static figures on gardens (1-3) and pools (1-2) with gentle animation
+- 05-01: Static rooftop features (gardens and pools) with activeRooftops tracking
+- Rooftop gardens with grass patch, 2-4 planters, 1-3 shrubs on ~20% tall buildings
+- Rooftop pools with water surface, white rim, 2 loungers on ~10% remaining buildings
+- activeRooftops[] array tracks buildings with features for Plan 02 figure placement
+- 04-02: Pedestrian subway interaction with station activity indicators (PHASE COMPLETE)
+- Pedestrians within 30 units of stations have 8% chance to walk toward entrance
+- Pedestrians disappear when entering, reappear at different station after 8-20 seconds
+- Station activity lights glow green when pedestrians entering/exiting or train stopped
+- Cross-system protection prevents bus/garbage interruption of subway passengers
+- 04-01: Subway infrastructure with 3 stations, elevated track, moving train
+- Station entrances at ground level with covered stairway and platform
+- Elevated track with support columns connecting L-shaped route
+- Train moves between stations with 5-second stops
+- 03-02: Pedestrian crowd behavior and performer interaction (PHASE COMPLETE)
+- Pedestrians detect nearby performers and walk to semicircle watching positions
+- 15% attraction chance creates organic crowd growth over time
+- Watching state with 10-30 second duration before resuming walking
+- Cross-system protection prevents bus/garbage interruption of crowds
+- 03-01: Street performer entities with musician and statue types
+- Musicians play guitar with strumming animation, statues pose with metallic finish
+- Performers spawn on sidewalks facing roads at 45-second intervals
+- Performance duration 60-120 seconds with automatic cleanup
+- Maximum 3 simultaneous performers, 20-unit minimum spacing
+- 02-02: Bird landing and scattering behavior with pedestrian proximity detection (PHASE COMPLETE)
+- Birds periodically land on rooftops (70%) and sidewalks (30%)
+- Pedestrians within 3 units cause birds to scatter and take flight
+- State machine: flying, landing, landed, takeoff with distinct animations
+- Landing duration 5-15 seconds with natural timing
+- 02-01: Bird flock system with boids algorithm (separation, cohesion, alignment)
+- 4 autonomous flocks of varying sizes (3-8 birds) flying through city
+- Wing flapping animation with sine wave motion
+- Waypoint navigation system for flocks to traverse city airspace
+- 01-03: Streetlights, car headlights, and window lighting activate at night
+- Streetlight poles along roads emit warm light at night (intensity 1.5)
+- Car headlights brighten from dim to yellow at night
+- Building windows shift from 20% lit (day) to 70% lit (night)
+- Bulk window updates during day/night transitions for immediate impact
+- 01-02: Sun and moon celestial bodies tracking across sky with time control
+- Visible sun during day (0.2-0.8) and moon during night (0.8-0.2)
+- Celestial bodies arc from east to west with realistic orbital motion
+- Directional light follows sun position for dynamic shadows
+- T key cycles time speed: normal, 10x fast, paused
+- 01-01: Core time system with sky transitions and dynamic lighting implemented
+- Time-of-day variable advances continuously (0-1 cycle)
+- Sky colors transition through 5 phases (midnight, dawn, day, dusk, night)
+- Lighting adjusts dynamically based on time of day
+
+## Session Notes
+
+### 2026-01-24 - Phase 05 Plan 02 (PHASE COMPLETE, MILESTONE COMPLETE)
+- Created ROOFTOP_CFG with partySpawnInterval (60), partySpawnChance (0.4), partyDuration [90, 180]
+- Implemented mkRooftopFigure() with colorful body/head and wandering animation userData
+- Built mkRooftopParty() with 12 twinkling string lights and 4-8 party figures
+- Created spawnRooftopParty() selecting from activeRooftops or tall buildings (h > 30)
+- Added updRooftopParties() for spawn timer, light twinkling, figure wandering, despawn
+- Added updRooftopFigures() for static garden/pool figure animation
+- Integrated static figure placement into mkBuildings() for rooftop features
+- Phase 05 complete - all v1.0 visual engagement features implemented
+
+### 2026-01-24 - Phase 05 Plan 01
+- Created mkRooftopGarden() with grass patch (0x4a7c4e), 2-4 planters (0x8b4513), 1-3 shrubs (0x2d5a2d)
+- Created mkRooftopPool() with water surface (0x4fc3f7, 80% opacity), white rim (0xdddddd), 2 loungers (0xeeeeee)
+- Integrated into mkBuilding() with probability checks: 20% gardens (h > 25), 10% pools (h > 20)
+- Added activeRooftops[] global array tracking buildings with features
+- Each entry stores: building reference, position, dimensions, feature type
+- Plan 01 complete - static rooftop features ready for Plan 02 animated figures
+
+### 2026-01-24 - Phase 04 Plan 02 (PHASE COMPLETE)
+- Added subwayPassengers array and SUBWAY_MAX_PASSENGERS (12) constant
+- Implemented 8% subway attraction chance in setNewPedTarget() for nearby stations
+- Added toSubwayStation state: pedestrians walk to station entrance
+- Added inSubway state: pedestrians invisible for 8-20 seconds, exit at different station
+- Station activity lights glow green when pedestrians using station or train stopped
+- Protected subway pedestrians from bus assignment and garbage truck suction
+- Phase 04 complete - subway system fully operational with passenger flow
+
+### 2026-01-24 - Phase 04 Plan 01
+- Created SUBWAY_CFG with trackHeight (6), trainSpeed (0.12), stopDuration (5)
+- Implemented mkSubwayStation() with ground entrance, stairs, elevated platform, shelter
+- Created mkSubwayTrack() with beam, rails, guard rails, support columns
+- Built mkSubwayTrain() with silver body, windows, AC units, wheels
+- Established L-shaped route with 3 stations (North, Central, East)
+- Train state machine: moving, stopping with automatic loop
+- updSubway(t) added to animate loop for continuous operation
+
+### 2026-01-24 - Phase 03 Plan 02 (PHASE COMPLETE)
+- Implemented pedestrian performer attraction with 15% notice chance
+- Added towardPerformer and watchingPerformer states to pedestrian state machine
+- Calculated semicircle positions around performer (144-degree arc, 3-unit radius)
+- Watch duration randomized 10-30 seconds with elapsed time tracking
+- Pedestrians face performer continuously while watching
+- Performer despawn releases all watchers back to walking state
+- Protected watching pedestrians from bus assignment and garbage truck suction
+- Phase 03 complete - street performers now draw realistic crowds
+
+### 2026-01-24 - Phase 03 Plan 01
+- Implemented street performer system with two performer types
+- Created mkMusician() with acoustic guitar, dark red outfit, beret
+- Created mkStatue() with silver metallic finish, top hat, dramatic pose
+- Performers spawn on random sidewalks facing toward roads
+- Spawn interval 45 seconds with 50% chance, max 3 performers
+- Performance duration randomized 60-120 seconds per performer
+- Musicians animate strumming with sine wave arm movement
+- Statues have subtle occasional head movements (living statue effect)
+- Minimum 20-unit spacing between performers enforced
+
+### 2026-01-24 - Phase 02 Plan 02 (PHASE COMPLETE)
+- Implemented bird landing system with rooftop and sidewalk perch selection
+- Added findPerchSpot() helper to calculate valid landing locations
+- Created checkPedestrianProximity() for cross-system bird-pedestrian interaction
+- Built four-state bird behavior machine (flying, landing, landed, takeoff)
+- Landing chance 0.002 per frame provides occasional natural landing
+- Scatter distance 3 units balances realism with observation
+- Phase 02 complete - birds now interact dynamically with city environment
+
+### 2026-01-24 - Phase 02 Plan 01
+- Implemented complete boids flocking algorithm with separation, cohesion, alignment
+- Created 4 bird flocks with varying sizes [3, 5, 6, 8] for visual diversity
+- Added wing flapping animation using sine wave on wingPhase
+- Waypoint navigation allows flocks to autonomously traverse city
+- Birds stay within height bounds 15-60 units for optimal visibility
+- Turn speed 0.03 creates smooth, organic movement
+
+### 2026-01-24 - Phase 01 Plan 03 (PHASE COMPLETE)
+- Created streetlight poles along all roads at 16-unit intervals
+- Implemented updStreetlights() for smooth intensity transitions
+- Streetlights emit warm yellow light at night with PointLights
+- Car headlights tracked in userData.headlights, brighten at night
+- Window lighting uses probability (70% night, 20% day)
+- Bulk window updates during day/night transitions
+- Phase 01 complete - full day/night cycle with all planned effects
+
+### 2026-01-24 - Phase 01 Plan 02
+- Created sun and moon celestial body meshes with visual detail
+- Sun has glow halo effect, moon has crater detail spots
+- Positioned celestial bodies in updDayNight based on timeOfDay
+- Directional light tracks sun position for realistic shadow movement
+- Added T key time speed control (normal/fast/paused)
+
+### 2026-01-24 - Phase 01 Plan 01
+- Implemented core time-of-day system
+- Sky color transitions through 5 phases with smooth interpolation
+- Dynamic lighting adjustments via sine wave intensity curves
+- Fixed weather system to respect day/night cycle when sunny
+
+### 2025-01-23 - Initialization
+- Created PROJECT.md with 5 visual engagement features
+- Defined requirements for day/night cycle, birds, performers, subway, rooftops
+- Created roadmap mapping all requirements to phases
+
+## Open Issues
+
+None currently.
+
+## Key Decisions Log
+
+| Date | Decision | Context |
+|------|----------|---------|
+| 2026-01-24 | Parties spawn every 60 seconds with 40% chance | Occasional but not constant, feels like city life |
+| 2026-01-24 | Max 2 simultaneous parties | Prevents performance impact, maintains specialness |
+| 2026-01-24 | Party duration 90-180 seconds | Long enough to observe, short enough for variety |
+| 2026-01-24 | 12 string lights per party | Visible perimeter without overdoing it |
+| 2026-01-24 | 4-8 party figures, 1-3 garden figures, 1-2 pool figures | Balanced density |
+| 2026-01-24 | Figure 5-color palette (coral, teal, yellow, mint, pink) | Colorful and distinguishable from above |
+| 2026-01-24 | Gardens on 20% of tall buildings (h > 25) | Visual variety without overcrowding, tall buildings more likely to have amenities |
+| 2026-01-24 | Pools on 10% of remaining buildings (h > 20) | Rarer premium feature, excluded from buildings with gardens |
+| 2026-01-24 | activeRooftops[] tracks building, position, dimensions, type | Enables Plan 02 figure placement with full context |
+| 2026-01-24 | Subway attraction chance 8% | Balances against bus (10%), performers (15%), buildings (10%) |
+| 2026-01-24 | Subway attraction radius 30 units | Matches performer attraction radius for consistency |
+| 2026-01-24 | Subway ride duration 8-20 seconds | Observable transit time, not too long to feel stuck |
+| 2026-01-24 | Max 12 subway passengers | Prevents draining pedestrian population |
+| 2026-01-24 | Station activity lights green | Consistent with active/go signaling |
+| 2026-01-24 | Track height 6 units above ground | Visible elevated transit above street traffic, connected to city |
+| 2026-01-24 | Train speed 0.12, stop duration 5 seconds | Observable travel between stations, noticeable pauses |
+| 2026-01-24 | L-shaped route with 3 stations | Covers two city edges, extensible to full loop |
+| 2026-01-24 | Station positioning 12 units from edge | Accessible while avoiding building collisions |
+| 2026-01-24 | Pedestrian attraction chance 15% | Gradual organic crowd growth, ~7-8 notices per target cycle, prevents sudden mobs |
+| 2026-01-24 | Semicircle crowd formation 144 degrees | Real crowds form arcs not circles, leaves performer "stage" clear, 0.8π spread |
+| 2026-01-24 | Watch duration 10-30 seconds | Visible crowd formation (10s min), dynamic turnover (30s max), staggered departures |
+| 2026-01-24 | Protect watchers from bus/garbage | Stable crowds during performances, prevents visual glitches, cross-system coordination |
+| 2026-01-24 | Performer types: musician and statue | Musician with guitar (animated), statue with metallic finish (still), both common street performers |
+| 2026-01-24 | Performer spawn interval 45 seconds, 50% chance | Average 22.5s spawn rate, maintains 1-3 performers typically, feels occasional not constant |
+| 2026-01-24 | Performer duration 60-120 seconds | Long enough to discover, short enough to stay fresh, matches simplified set length |
+| 2026-01-24 | Max 3 simultaneous performers | Prevents overcrowding, maintains specialness, low performance impact |
+| 2026-01-24 | Performers face toward road | Real performers face traffic for visibility, creates natural stage area for future crowds |
+| 2026-01-24 | Bird landing chance 0.002 per frame | Occasional landing without overwhelming flocks, creates natural variety |
+| 2026-01-24 | Bird scatter distance 3 units | Pedestrian proximity causes scatter, balances realism with visibility |
+| 2026-01-24 | Rooftop landing preference 70% | Creates visual variety while keeping some birds visible on ground |
+| 2026-01-24 | Bird land duration 5-15 seconds | Natural perching without birds staying static too long |
+| 2026-01-24 | Bird separation weight 1.5 (highest) | Prevents collisions between birds, strongest boids force for safety |
+| 2026-01-24 | 4 flocks with sizes [3, 5, 6, 8] | Visual variety without performance impact (~22 total birds) |
+| 2026-01-24 | Bird height bounds 15-60 units | Visible above buildings but not too high, optimal viewing range |
+| 2026-01-24 | Bird turn speed 0.03 | Smooth organic turns rather than sharp jerky movement |
+| 2026-01-24 | Window night probability 70%, day 20% | Creates clear day/night distinction, represents realistic building occupancy |
+| 2026-01-24 | Car headlights material color only, no PointLights | Visual effect without performance overhead for 25+ vehicles |
+| 2026-01-24 | Streetlight intensity 1.5 at night | Strong road illumination, warm inviting atmosphere |
+| 2026-01-24 | Streetlights every 16 units, skip intersections | Consistent illumination without clutter, avoids traffic light conflicts |
+| 2026-01-24 | Time speed control: normal -> fast -> paused | Normal (0.005) for observation, fast (0.05) for testing, paused for screenshots |
+| 2026-01-24 | Directional light synced to sun position | Realistic shadow movement throughout day enhances time perception |
+| 2026-01-24 | Sun orbit radius 150, peak height 120 | Large enough to be visible from anywhere in city, high enough to clear buildings |
+| 2026-01-24 | Sun visible 0.2-0.8, moon visible 0.8-0.2 | Corresponds to dawn-dusk and night periods, wrapping handles midnight |
+| 2026-01-24 | Time starts at 0.25 (dawn) | Visually interesting orange/pink sky at startup |
+| 2026-01-24 | Full day/night cycle in ~200 seconds | Allows observation of full cycle in 3-4 minutes |
+| 2026-01-24 | Sine wave for lighting intensity | Natural smooth transition peaking at noon |
+| 2026-01-24 | Weather overrides sky only when not sunny | Preserves day/night visibility in normal conditions |
+| 2025-01-23 | 5 features chosen for visual variety | Day/night, birds, performers, subway, rooftops |
+| 2025-01-23 | Audio out of scope | Focus on visual observation |
+
+## Session Continuity
+
+- **Last session:** 2026-01-24 04:56 UTC
+- **Stopped at:** Completed 05-02-PLAN.md (MILESTONE COMPLETE)
+- **Resume file:** None
+
+---
+*Last updated: 2026-01-24*
