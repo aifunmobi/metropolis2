@@ -4735,6 +4735,145 @@
             });
         }
 
+        function updBirds(t) {
+            flocks.forEach(flock => {
+                // Update flock center
+                flock.center.set(0, 0, 0);
+                flock.birds.forEach(bird => {
+                    if (bird.userData.state === 'flying') {
+                        flock.center.add(bird.position);
+                    }
+                });
+                const flyingCount = flock.birds.filter(b => b.userData.state === 'flying').length;
+                if (flyingCount > 0) {
+                    flock.center.divideScalar(flyingCount);
+                }
+
+                // Check if flock reached waypoint, pick new one
+                if (flock.targetWaypoint && flock.center.distanceTo(flock.targetWaypoint) < 15) {
+                    flock.targetWaypoint = getRandomWaypoint();
+                }
+
+                // Update each bird
+                flock.birds.forEach(bird => {
+                    if (bird.userData.state !== 'flying') return;
+
+                    // Calculate boids forces
+                    const separation = new THREE.Vector3();
+                    const cohesion = new THREE.Vector3();
+                    const alignment = new THREE.Vector3();
+                    let separationCount = 0;
+                    let cohesionCount = 0;
+                    let alignmentCount = 0;
+
+                    // Check against other birds in same flock
+                    flock.birds.forEach(other => {
+                        if (other === bird || other.userData.state !== 'flying') return;
+
+                        const dist = bird.position.distanceTo(other.position);
+
+                        // Separation - steer away from nearby birds
+                        if (dist < BIRD_CFG.separationDist && dist > 0) {
+                            const diff = bird.position.clone().sub(other.position);
+                            diff.normalize().divideScalar(dist);
+                            separation.add(diff);
+                            separationCount++;
+                        }
+
+                        // Cohesion - steer toward center of nearby birds
+                        if (dist < BIRD_CFG.cohesionDist) {
+                            cohesion.add(other.position);
+                            cohesionCount++;
+                        }
+
+                        // Alignment - match velocity of nearby birds
+                        if (dist < BIRD_CFG.alignmentDist) {
+                            alignment.add(other.userData.velocity);
+                            alignmentCount++;
+                        }
+                    });
+
+                    // Average and apply weights
+                    if (separationCount > 0) {
+                        separation.divideScalar(separationCount);
+                        separation.normalize().multiplyScalar(BIRD_CFG.separationWeight);
+                    }
+
+                    if (cohesionCount > 0) {
+                        cohesion.divideScalar(cohesionCount);
+                        cohesion.sub(bird.position);
+                        cohesion.normalize().multiplyScalar(BIRD_CFG.cohesionWeight);
+                    }
+
+                    if (alignmentCount > 0) {
+                        alignment.divideScalar(alignmentCount);
+                        alignment.normalize().multiplyScalar(BIRD_CFG.alignmentWeight);
+                    }
+
+                    // Waypoint steering
+                    const toWaypoint = new THREE.Vector3();
+                    if (flock.targetWaypoint) {
+                        toWaypoint.subVectors(flock.targetWaypoint, bird.position);
+                        toWaypoint.normalize().multiplyScalar(0.5);
+                    }
+
+                    // Random wandering
+                    const wander = new THREE.Vector3(
+                        (Math.random() - 0.5) * BIRD_CFG.wanderWeight,
+                        (Math.random() - 0.5) * BIRD_CFG.wanderWeight * 0.3,
+                        (Math.random() - 0.5) * BIRD_CFG.wanderWeight
+                    );
+
+                    // Height bounds steering
+                    const heightSteer = new THREE.Vector3();
+                    if (bird.position.y < BIRD_CFG.minHeight) {
+                        heightSteer.y = 0.5;
+                    } else if (bird.position.y > BIRD_CFG.maxHeight) {
+                        heightSteer.y = -0.5;
+                    }
+
+                    // Combine all forces
+                    const acceleration = new THREE.Vector3();
+                    acceleration.add(separation);
+                    acceleration.add(cohesion);
+                    acceleration.add(alignment);
+                    acceleration.add(toWaypoint);
+                    acceleration.add(wander);
+                    acceleration.add(heightSteer);
+
+                    // Apply acceleration to velocity
+                    bird.userData.velocity.add(acceleration.multiplyScalar(BIRD_CFG.turnSpeed));
+
+                    // Limit speed
+                    const speed = bird.userData.velocity.length();
+                    if (speed > BIRD_CFG.speed * 1.5) {
+                        bird.userData.velocity.normalize().multiplyScalar(BIRD_CFG.speed * 1.5);
+                    } else if (speed < BIRD_CFG.speed * 0.5) {
+                        bird.userData.velocity.normalize().multiplyScalar(BIRD_CFG.speed * 0.5);
+                    }
+
+                    // Update position
+                    bird.position.add(bird.userData.velocity);
+
+                    // Face direction of travel
+                    if (bird.userData.velocity.length() > 0.01) {
+                        const lookTarget = bird.position.clone().add(bird.userData.velocity);
+                        bird.lookAt(lookTarget);
+                    }
+
+                    // Animate wings
+                    bird.userData.wingPhase += 0.4;
+                    const wingAngle = Math.sin(bird.userData.wingPhase) * 0.5;
+                    if (bird.userData.leftWing) {
+                        bird.userData.leftWing.rotation.z = wingAngle;
+                    }
+                    if (bird.userData.rightWing) {
+                        bird.userData.rightWing.rotation.z = -wingAngle;
+                    }
+                });
+            });
+        }
+
         function animate() {
             requestAnimationFrame(animate);
             const dt = clock.getDelta(), t = clock.getElapsedTime();
@@ -4771,8 +4910,9 @@
             updSpecialEvents(t);
             updGarbageTruck(t);
             updFallingPerson(t);
-            updTL(t); 
+            updTL(t);
             updSecrets(t);
+            updBirds(t);
             updBillboards(t);
             updWindowLights(t);
             updEmergencyLights(t);
