@@ -4838,8 +4838,104 @@
 
                 // Update each bird
                 flock.birds.forEach(bird => {
-                    if (bird.userData.state !== 'flying') return;
+                    // Handle landed state
+                    if (bird.userData.state === 'landed') {
+                        // Check for pedestrian proximity - scatter if too close
+                        if (checkPedestrianProximity(bird.position)) {
+                            bird.userData.state = 'takeoff';
+                            bird.userData.velocity.set(
+                                (Math.random() - 0.5) * 0.2,
+                                BIRD_CFG.takeoffSpeed,
+                                (Math.random() - 0.5) * 0.2
+                            );
+                            return;
+                        }
 
+                        // Check if time to take off naturally
+                        if (t > bird.userData.takeoffTime) {
+                            bird.userData.state = 'takeoff';
+                            bird.userData.velocity.set(
+                                (Math.random() - 0.5) * 0.1,
+                                BIRD_CFG.takeoffSpeed,
+                                (Math.random() - 0.5) * 0.1
+                            );
+                        }
+
+                        // Subtle idle animation while landed
+                        bird.rotation.y += Math.sin(t * 2 + bird.userData.wingPhase) * 0.01;
+                        return;
+                    }
+
+                    // Handle takeoff state
+                    if (bird.userData.state === 'takeoff') {
+                        bird.position.add(bird.userData.velocity);
+                        bird.userData.velocity.y *= 0.98; // Slow vertical climb
+
+                        // Animate wings rapidly during takeoff
+                        bird.userData.wingPhase += 0.6;
+                        const wingAngle = Math.sin(bird.userData.wingPhase) * 0.6;
+                        if (bird.userData.leftWing) bird.userData.leftWing.rotation.z = wingAngle;
+                        if (bird.userData.rightWing) bird.userData.rightWing.rotation.z = -wingAngle;
+
+                        // Transition to flying once high enough
+                        if (bird.position.y > BIRD_CFG.minHeight) {
+                            bird.userData.state = 'flying';
+                            bird.userData.velocity.y = 0;
+                        }
+                        return;
+                    }
+
+                    // Handle landing state
+                    if (bird.userData.state === 'landing') {
+                        const target = bird.userData.landingTarget;
+                        const toTarget = target.clone().sub(bird.position);
+                        const dist = toTarget.length();
+
+                        if (dist < 0.3) {
+                            // Landed!
+                            bird.position.copy(target);
+                            bird.userData.state = 'landed';
+                            bird.userData.velocity.set(0, 0, 0);
+                            bird.userData.takeoffTime = t + BIRD_CFG.minLandTime +
+                                Math.random() * (BIRD_CFG.maxLandTime - BIRD_CFG.minLandTime);
+
+                            // Fold wings
+                            if (bird.userData.leftWing) bird.userData.leftWing.rotation.z = 0;
+                            if (bird.userData.rightWing) bird.userData.rightWing.rotation.z = 0;
+
+                            // Face random direction
+                            bird.rotation.y = Math.random() * Math.PI * 2;
+                            return;
+                        }
+
+                        // Move toward landing spot
+                        toTarget.normalize().multiplyScalar(BIRD_CFG.landingSpeed);
+                        bird.userData.velocity.lerp(toTarget, 0.1);
+                        bird.position.add(bird.userData.velocity);
+
+                        // Face direction of travel
+                        const lookTarget = bird.position.clone().add(bird.userData.velocity);
+                        bird.lookAt(lookTarget);
+
+                        // Slow wing flapping during descent
+                        bird.userData.wingPhase += 0.2;
+                        const wingAngle = Math.sin(bird.userData.wingPhase) * 0.3;
+                        if (bird.userData.leftWing) bird.userData.leftWing.rotation.z = wingAngle;
+                        if (bird.userData.rightWing) bird.userData.rightWing.rotation.z = -wingAngle;
+                        return;
+                    }
+
+                    // Flying state - check if should start landing
+                    if (bird.userData.state === 'flying' && Math.random() < BIRD_CFG.landingChance) {
+                        const perch = findPerchSpot(bird);
+                        if (perch) {
+                            bird.userData.state = 'landing';
+                            bird.userData.landingTarget = perch;
+                            return;
+                        }
+                    }
+
+                    // Normal flying behavior (boids algorithm)
                     // Calculate boids forces
                     const separation = new THREE.Vector3();
                     const cohesion = new THREE.Vector3();
