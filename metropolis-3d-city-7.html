@@ -3895,8 +3895,11 @@
             
             switch (weatherState) {
                 case 'sunny':
-                    scene.background = new THREE.Color(0x87CEEB);
-                    scene.fog = new THREE.Fog(0x87CEEB, 80, 350);
+                    // Don't set fixed color - let day/night cycle control it
+                    // Just initialize fog if it doesn't exist
+                    if (!scene.fog || scene.fog.far !== 350) {
+                        scene.fog = new THREE.Fog(0x87CEEB, 80, 350);
+                    }
                     windStrength = 0;
                     raining = false;
                     break;
@@ -4283,7 +4286,9 @@
             $('alt').textContent = Math.round(cam.position.y);
             $('spd').textContent = Math.round(vel.length() * 100);
             $('pos').textContent = `${Math.round(cam.position.x)},${Math.round(cam.position.z)}`;
-            
+
+            updDayNight(dt);
+
             updCars(t); 
             updPeds(t); 
             updBicycles(t);
