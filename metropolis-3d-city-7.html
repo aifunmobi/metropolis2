@@ -1891,30 +1891,31 @@
             stringLights.position.set(0, 2.5, 0);
             g.add(stringLights);
 
-            // "Jill's Bar" text on front of bar counter (first bar only)
+            // "Jill's Bar" text on back of bar counter (first bar only)
             if (!mkRooftopBar.signAdded) {
                 mkRooftopBar.signAdded = true;
 
-                // Create canvas texture with "Jill's Bar" text
+                // Create canvas texture with "JILL'S BAR" in block letters
                 const canvas = document.createElement('canvas');
-                canvas.width = 256;
-                canvas.height = 64;
+                canvas.width = 512;
+                canvas.height = 128;
                 const ctx = canvas.getContext('2d');
                 ctx.fillStyle = '#5d4e37'; // Match bar color
-                ctx.fillRect(0, 0, 256, 64);
+                ctx.fillRect(0, 0, 512, 128);
                 ctx.fillStyle = '#ffdd00'; // Gold text
-                ctx.font = 'bold 28px Arial';
+                ctx.font = '900 72px Impact, Arial Black, sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText("Jill's Bar", 128, 32);
+                ctx.fillText("JILL'S BAR", 256, 64);
 
                 const texture = new THREE.CanvasTexture(canvas);
                 const sign = new THREE.Mesh(
-                    new THREE.PlaneGeometry(barW * 0.8, 0.25),
+                    new THREE.PlaneGeometry(barW * 0.9, 0.3),
                     new THREE.MeshBasicMaterial({ map: texture })
                 );
-                // Position on front face of bar counter
-                sign.position.set(0, 0.3, -d * 0.3 + 0.26);
+                // Position on back face of bar counter (facing customers)
+                sign.position.set(0, 0.3, -d * 0.3 - 0.26);
+                sign.rotation.y = Math.PI; // Face toward customers
                 g.add(sign);
             }
 
