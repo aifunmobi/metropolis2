@@ -5,20 +5,24 @@
 See: .planning/PROJECT.md (updated 2025-01-23)
 
 **Core value:** The city feels alive and worth watching
-**Current focus:** Phase 5 - Rooftop Features (next)
+**Current focus:** Phase 5 - Rooftop Features (in progress)
 
 ## Current Position
 
 - **Milestone:** v1.0 - Visual Engagement Features
-- **Phase:** 4 of 5 (Subway System) - COMPLETE
-- **Plan:** 2 of 2 completed
-- **Status:** Phase complete, ready for Phase 5
-- **Last activity:** 2026-01-24 - Completed 04-02-PLAN.md
+- **Phase:** 5 of 5 (Rooftop Life)
+- **Plan:** 1 of 2 completed
+- **Status:** In progress
+- **Last activity:** 2026-01-24 - Completed 05-01-PLAN.md
 
-**Progress:** ████████████░░ 80% (9/11 plans across all phases)
+**Progress:** █████████████░ 91% (10/11 plans across all phases)
 
 ## Recent Progress
 
+- 05-01: Static rooftop features (gardens and pools) with activeRooftops tracking
+- Rooftop gardens with grass patch, 2-4 planters, 1-3 shrubs on ~20% tall buildings
+- Rooftop pools with water surface, white rim, 2 loungers on ~10% remaining buildings
+- activeRooftops[] array tracks buildings with features for Plan 02 figure placement
 - 04-02: Pedestrian subway interaction with station activity indicators (PHASE COMPLETE)
 - Pedestrians within 30 units of stations have 8% chance to walk toward entrance
 - Pedestrians disappear when entering, reappear at different station after 8-20 seconds
@@ -63,6 +67,14 @@ See: .planning/PROJECT.md (updated 2025-01-23)
 - Lighting adjusts dynamically based on time of day
 
 ## Session Notes
+
+### 2026-01-24 - Phase 05 Plan 01
+- Created mkRooftopGarden() with grass patch (0x4a7c4e), 2-4 planters (0x8b4513), 1-3 shrubs (0x2d5a2d)
+- Created mkRooftopPool() with water surface (0x4fc3f7, 80% opacity), white rim (0xdddddd), 2 loungers (0xeeeeee)
+- Integrated into mkBuilding() with probability checks: 20% gardens (h > 25), 10% pools (h > 20)
+- Added activeRooftops[] global array tracking buildings with features
+- Each entry stores: building reference, position, dimensions, feature type
+- Plan 01 complete - static rooftop features ready for Plan 02 animated figures
 
 ### 2026-01-24 - Phase 04 Plan 02 (PHASE COMPLETE)
 - Added subwayPassengers array and SUBWAY_MAX_PASSENGERS (12) constant
@@ -155,6 +167,9 @@ None currently.
 
 | Date | Decision | Context |
 |------|----------|---------|
+| 2026-01-24 | Gardens on 20% of tall buildings (h > 25) | Visual variety without overcrowding, tall buildings more likely to have amenities |
+| 2026-01-24 | Pools on 10% of remaining buildings (h > 20) | Rarer premium feature, excluded from buildings with gardens |
+| 2026-01-24 | activeRooftops[] tracks building, position, dimensions, type | Enables Plan 02 figure placement with full context |
 | 2026-01-24 | Subway attraction chance 8% | Balances against bus (10%), performers (15%), buildings (10%) |
 | 2026-01-24 | Subway attraction radius 30 units | Matches performer attraction radius for consistency |
 | 2026-01-24 | Subway ride duration 8-20 seconds | Observable transit time, not too long to feel stuck |
@@ -198,8 +213,8 @@ None currently.
 
 ## Session Continuity
 
-- **Last session:** 2026-01-24 04:14 UTC
-- **Stopped at:** Completed 04-02-PLAN.md (Phase 04 complete)
+- **Last session:** 2026-01-24 04:47 UTC
+- **Stopped at:** Completed 05-01-PLAN.md
 - **Resume file:** None
 
 ---
