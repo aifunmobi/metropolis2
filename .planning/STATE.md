@@ -11,14 +11,19 @@ See: .planning/PROJECT.md (updated 2025-01-23)
 
 - **Milestone:** v1.0 - Visual Engagement Features
 - **Phase:** 3 of 5 (Street Performers)
-- **Plan:** 1 of 3 completed
-- **Status:** In progress
-- **Last activity:** 2026-01-24 - Completed 03-01-PLAN.md
+- **Plan:** 2 of 2 completed
+- **Status:** Phase complete
+- **Last activity:** 2026-01-24 - Completed 03-02-PLAN.md
 
-**Progress:** ██████░░░░░░░░ 43% (6/14 plans across all phases)
+**Progress:** ███████░░░░░░░ 50% (7/14 plans across all phases)
 
 ## Recent Progress
 
+- 03-02: Pedestrian crowd behavior and performer interaction (PHASE COMPLETE)
+- Pedestrians detect nearby performers and walk to semicircle watching positions
+- 15% attraction chance creates organic crowd growth over time
+- Watching state with 10-30 second duration before resuming walking
+- Cross-system protection prevents bus/garbage interruption of crowds
 - 03-01: Street performer entities with musician and statue types
 - Musicians play guitar with strumming animation, statues pose with metallic finish
 - Performers spawn on sidewalks facing roads at 45-second intervals
@@ -49,6 +54,16 @@ See: .planning/PROJECT.md (updated 2025-01-23)
 - Lighting adjusts dynamically based on time of day
 
 ## Session Notes
+
+### 2026-01-24 - Phase 03 Plan 02 (PHASE COMPLETE)
+- Implemented pedestrian performer attraction with 15% notice chance
+- Added towardPerformer and watchingPerformer states to pedestrian state machine
+- Calculated semicircle positions around performer (144-degree arc, 3-unit radius)
+- Watch duration randomized 10-30 seconds with elapsed time tracking
+- Pedestrians face performer continuously while watching
+- Performer despawn releases all watchers back to walking state
+- Protected watching pedestrians from bus assignment and garbage truck suction
+- Phase 03 complete - street performers now draw realistic crowds
 
 ### 2026-01-24 - Phase 03 Plan 01
 - Implemented street performer system with two performer types
@@ -113,6 +128,10 @@ None currently.
 
 | Date | Decision | Context |
 |------|----------|---------|
+| 2026-01-24 | Pedestrian attraction chance 15% | Gradual organic crowd growth, ~7-8 notices per target cycle, prevents sudden mobs |
+| 2026-01-24 | Semicircle crowd formation 144 degrees | Real crowds form arcs not circles, leaves performer "stage" clear, 0.8π spread |
+| 2026-01-24 | Watch duration 10-30 seconds | Visible crowd formation (10s min), dynamic turnover (30s max), staggered departures |
+| 2026-01-24 | Protect watchers from bus/garbage | Stable crowds during performances, prevents visual glitches, cross-system coordination |
 | 2026-01-24 | Performer types: musician and statue | Musician with guitar (animated), statue with metallic finish (still), both common street performers |
 | 2026-01-24 | Performer spawn interval 45 seconds, 50% chance | Average 22.5s spawn rate, maintains 1-3 performers typically, feels occasional not constant |
 | 2026-01-24 | Performer duration 60-120 seconds | Long enough to discover, short enough to stay fresh, matches simplified set length |
@@ -143,8 +162,8 @@ None currently.
 
 ## Session Continuity
 
-- **Last session:** 2026-01-24 03:41 UTC
-- **Stopped at:** Completed 03-01-PLAN.md
+- **Last session:** 2026-01-24 03:47 UTC
+- **Stopped at:** Completed 03-02-PLAN.md (Phase 03 complete)
 - **Resume file:** None
 
 ---
