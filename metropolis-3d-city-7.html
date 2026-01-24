@@ -636,8 +636,8 @@
             const trackX = -halfSize + 12;  // -36
             const trackZ = halfSize - 12;   // 36
             const tunnelWidth = 4;  // Width of tunnel opening
-            const tunnelHeight = 4; // Height of tunnel opening
-            const tunnelBottom = SUBWAY_CFG.trackHeight - 1; // Bottom of tunnel
+            const tunnelHeight = 8; // Height of tunnel opening (doubled)
+            const tunnelBottom = SUBWAY_CFG.trackHeight - 2; // Bottom of tunnel
 
             // Check if building intersects with vertical track (x = -36)
             if (Math.abs(bx - trackX) < w/2 + 1) {
