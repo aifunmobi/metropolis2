@@ -65,8 +65,7 @@ See: .planning/PROJECT.md (updated 2025-01-23)
 
 ## Open Issues
 
-- Tour bus behavior: stops for long times, flips to other side of street (pre-existing)
-- Bus stop accumulation: pedestrians wait but buses don't pick them up (pre-existing)
+None currently.
 
 ## Key Decisions Log
 
