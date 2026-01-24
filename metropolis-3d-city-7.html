@@ -644,21 +644,28 @@
 
         // Check if a building position needs a subway tunnel
         function getSubwayTunnelInfo(bx, bz, w, d) {
-            // Subway track paths (will be set after createSubwayLine defines stations)
-            // Track 1: x = -36 (from North to Central, vertical)
-            // Track 2: z = 36 (from Central to East, horizontal)
+            // Subway track paths
+            // Track 1: x = -36 (from North to Central, vertical along z)
+            // Track 2: z = 36 (from Central to East, horizontal along x)
             const trackX = -halfSize + 12;  // -36
             const trackZ = halfSize - 12;   // 36
             const tunnelWidth = 4;  // Width of tunnel opening
-            const tunnelHeight = 8; // Height of tunnel opening (doubled)
+            const tunnelHeight = 8; // Height of tunnel opening
             const tunnelBottom = SUBWAY_CFG.trackHeight - 2; // Bottom of tunnel
 
+            const intersectsVertical = Math.abs(bx - trackX) < w/2 + 1;
+            const intersectsHorizontal = Math.abs(bz - trackZ) < d/2 + 1;
+
+            // Corner building needs both tunnels
+            if (intersectsVertical && intersectsHorizontal) {
+                return { direction: 'both', tunnelWidth, tunnelHeight, tunnelBottom };
+            }
             // Check if building intersects with vertical track (x = -36)
-            if (Math.abs(bx - trackX) < w/2 + 1) {
+            if (intersectsVertical) {
                 return { direction: 'z', tunnelWidth, tunnelHeight, tunnelBottom };
             }
             // Check if building intersects with horizontal track (z = 36)
-            if (Math.abs(bz - trackZ) < d/2 + 1) {
+            if (intersectsHorizontal) {
                 return { direction: 'x', tunnelWidth, tunnelHeight, tunnelBottom };
             }
             return null;
@@ -676,7 +683,54 @@
                 const tunnelBot = tunnelInfo.tunnelBottom;
                 const tunnelTop = tunnelBot + tunnelH;
 
-                if (tunnelInfo.direction === 'z') {
+                if (tunnelInfo.direction === 'both') {
+                    // Corner building - tunnels in both X and Z directions
+                    // Bottom section (full footprint)
+                    if (tunnelBot > 0) {
+                        const bottom = new THREE.Mesh(new THREE.BoxGeometry(w, tunnelBot, d), mat);
+                        bottom.position.y = tunnelBot / 2;
+                        bottom.castShadow = true;
+                        bottom.receiveShadow = true;
+                        g.add(bottom);
+                    }
+
+                    // Four corner pillars at tunnel height
+                    const pillarW = (w - tunnelW) / 2;
+                    const pillarD = (d - tunnelW) / 2;
+                    if (pillarW > 0 && pillarD > 0) {
+                        const corners = [
+                            [-(w/2 - pillarW/2), -(d/2 - pillarD/2)],
+                            [(w/2 - pillarW/2), -(d/2 - pillarD/2)],
+                            [-(w/2 - pillarW/2), (d/2 - pillarD/2)],
+                            [(w/2 - pillarW/2), (d/2 - pillarD/2)]
+                        ];
+                        corners.forEach(([px, pz]) => {
+                            const pillar = new THREE.Mesh(new THREE.BoxGeometry(pillarW, tunnelH, pillarD), mat);
+                            pillar.position.set(px, tunnelBot + tunnelH/2, pz);
+                            pillar.castShadow = true;
+                            g.add(pillar);
+                        });
+                    }
+
+                    // Top section (full footprint)
+                    const topHeight = h - tunnelTop;
+                    if (topHeight > 0) {
+                        const top = new THREE.Mesh(new THREE.BoxGeometry(w, topHeight, d), mat);
+                        top.position.y = tunnelTop + topHeight / 2;
+                        top.castShadow = true;
+                        top.receiveShadow = true;
+                        g.add(top);
+                    }
+
+                    // Add dark cross-shaped tunnel interior
+                    const tunnelMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+                    const interiorZ = new THREE.Mesh(new THREE.BoxGeometry(tunnelW - 0.2, tunnelH - 0.2, d + 0.1), tunnelMat);
+                    interiorZ.position.y = tunnelBot + tunnelH/2;
+                    g.add(interiorZ);
+                    const interiorX = new THREE.Mesh(new THREE.BoxGeometry(w + 0.1, tunnelH - 0.2, tunnelW - 0.2), tunnelMat);
+                    interiorX.position.y = tunnelBot + tunnelH/2;
+                    g.add(interiorX);
+                } else if (tunnelInfo.direction === 'z') {
                     // Tunnel runs through building in Z direction
                     // Bottom section (ground to tunnel bottom)
                     if (tunnelBot > 0) {
@@ -710,7 +764,7 @@
                         top.receiveShadow = true;
                         g.add(top);
                     }
-                } else {
+                } else if (tunnelInfo.direction === 'x') {
                     // Tunnel runs through building in X direction
                     // Bottom section
                     if (tunnelBot > 0) {
@@ -746,16 +800,18 @@
                     }
                 }
 
-                // Add dark tunnel interior for visual depth
-                const tunnelMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
-                if (tunnelInfo.direction === 'z') {
-                    const tunnelInterior = new THREE.Mesh(new THREE.BoxGeometry(tunnelW - 0.2, tunnelH - 0.2, d + 0.1), tunnelMat);
-                    tunnelInterior.position.y = tunnelBot + tunnelH/2;
-                    g.add(tunnelInterior);
-                } else {
-                    const tunnelInterior = new THREE.Mesh(new THREE.BoxGeometry(w + 0.1, tunnelH - 0.2, tunnelW - 0.2), tunnelMat);
-                    tunnelInterior.position.y = tunnelBot + tunnelH/2;
-                    g.add(tunnelInterior);
+                // Add dark tunnel interior for visual depth (skip 'both' - already handled above)
+                if (tunnelInfo.direction !== 'both') {
+                    const tunnelMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+                    if (tunnelInfo.direction === 'z') {
+                        const tunnelInterior = new THREE.Mesh(new THREE.BoxGeometry(tunnelW - 0.2, tunnelH - 0.2, d + 0.1), tunnelMat);
+                        tunnelInterior.position.y = tunnelBot + tunnelH/2;
+                        g.add(tunnelInterior);
+                    } else {
+                        const tunnelInterior = new THREE.Mesh(new THREE.BoxGeometry(w + 0.1, tunnelH - 0.2, tunnelW - 0.2), tunnelMat);
+                        tunnelInterior.position.y = tunnelBot + tunnelH/2;
+                        g.add(tunnelInterior);
+                    }
                 }
             } else {
                 // Regular solid building
