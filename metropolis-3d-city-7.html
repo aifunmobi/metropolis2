@@ -117,7 +117,13 @@
             wanderWeight: 0.3,             // Weight of random wandering
             minHeight: 15,                 // Minimum flying height
             maxHeight: 60,                 // Maximum flying height
-            boundaryMargin: 50             // How far outside city birds can go
+            boundaryMargin: 50,            // How far outside city birds can go
+            landingChance: 0.002,          // Per-frame chance a flying bird decides to land
+            minLandTime: 5,                // Minimum seconds to stay landed
+            maxLandTime: 15,               // Maximum seconds to stay landed
+            scatterDistance: 3,            // Distance at which pedestrians scare birds
+            landingSpeed: 0.08,            // Speed when descending to land
+            takeoffSpeed: 0.12             // Speed when taking off
         };
 
         let scene, cam, renderer, clock;
@@ -4144,6 +4150,82 @@
                 BIRD_CFG.minHeight + Math.random() * (BIRD_CFG.maxHeight - BIRD_CFG.minHeight),
                 (Math.random() - 0.5) * (halfSize * 2 + margin)
             );
+        }
+
+        function findPerchSpot(bird) {
+            // 70% chance rooftop, 30% chance sidewalk
+            const preferRooftop = Math.random() < 0.7;
+
+            if (preferRooftop) {
+                // Find a nearby building rooftop
+                let bestBuilding = null;
+                let bestDist = Infinity;
+
+                buildings.forEach(b => {
+                    if (!b.userData || !b.userData.height) return;
+                    const dist = bird.position.distanceTo(b.position);
+                    if (dist < 40 && dist < bestDist) {
+                        bestDist = dist;
+                        bestBuilding = b;
+                    }
+                });
+
+                if (bestBuilding) {
+                    const h = bestBuilding.userData.height || 10;
+                    const w = bestBuilding.userData.width || 8;
+                    // Random spot on rooftop
+                    return new THREE.Vector3(
+                        bestBuilding.position.x + (Math.random() - 0.5) * w * 0.6,
+                        h + 0.1,
+                        bestBuilding.position.z + (Math.random() - 0.5) * w * 0.6
+                    );
+                }
+            }
+
+            // Sidewalk perch - find a spot near bird's current position
+            const innerSize = GRID.cellSize - GRID.roadWidth;
+            const bx = Math.floor((bird.position.x + halfSize) / GRID.cellSize);
+            const bz = Math.floor((bird.position.z + halfSize) / GRID.cellSize);
+
+            // Clamp to valid grid
+            const gridX = Math.max(0, Math.min(GRID.gridCount - 1, bx));
+            const gridZ = Math.max(0, Math.min(GRID.gridCount - 1, bz));
+
+            const blockCenterX = -halfSize + gridX * GRID.cellSize + GRID.cellSize / 2;
+            const blockCenterZ = -halfSize + gridZ * GRID.cellSize + GRID.cellSize / 2;
+
+            // Pick a random sidewalk side
+            const side = Math.floor(Math.random() * 4);
+            const halfInner = innerSize / 2;
+            const swOffset = GRID.sidewalkWidth / 2;
+
+            let px, pz;
+            if (side === 0) {
+                px = blockCenterX + (Math.random() - 0.5) * (innerSize - 2);
+                pz = blockCenterZ - halfInner + swOffset;
+            } else if (side === 1) {
+                px = blockCenterX + (Math.random() - 0.5) * (innerSize - 2);
+                pz = blockCenterZ + halfInner - swOffset;
+            } else if (side === 2) {
+                px = blockCenterX - halfInner + swOffset;
+                pz = blockCenterZ + (Math.random() - 0.5) * (innerSize - 2);
+            } else {
+                px = blockCenterX + halfInner - swOffset;
+                pz = blockCenterZ + (Math.random() - 0.5) * (innerSize - 2);
+            }
+
+            return new THREE.Vector3(px, 0.2, pz);
+        }
+
+        function checkPedestrianProximity(birdPos) {
+            for (let i = 0; i < peds.length; i++) {
+                const p = peds[i];
+                const dist = birdPos.distanceTo(p.position);
+                if (dist < BIRD_CFG.scatterDistance) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         function mkFlocks() {
