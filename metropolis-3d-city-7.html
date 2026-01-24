@@ -136,6 +136,13 @@
             maxCrowd: 8                 // Maximum pedestrians watching one performer
         };
 
+        const SUBWAY_CFG = {
+            trackHeight: 6,           // Height of elevated track above ground
+            trainSpeed: 0.12,         // Train movement speed
+            stopDuration: 5,          // Seconds train waits at station
+            stationSpacing: 40        // Approximate distance between stations
+        };
+
         let scene, cam, renderer, clock;
         let sunLight = null;      // Directional light reference
         let ambientLight = null;  // Ambient light reference
@@ -175,6 +182,11 @@
 
         // Street performer system
         let performers = [];
+
+        // Subway system
+        let subwayTrain = null;
+        let subwayStations = [];
+        let subwayTrack = null;
 
         let lastWindowToggle = 0;
         let lastBikeSpawn = 0;
@@ -1598,9 +1610,202 @@
             });
         }
 
+        // ========== SUBWAY SYSTEM ==========
+
+        function mkSubwayStation(stationNum) {
+            const g = new THREE.Group();
+
+            // Station entrance at ground level - covered stairway entrance
+            // Base platform
+            const base = new THREE.Mesh(
+                new THREE.BoxGeometry(2.5, 0.3, 2.5),
+                new THREE.MeshStandardMaterial({ color: 0x444444 })
+            );
+            base.position.y = 0.15;
+            base.receiveShadow = true;
+            g.add(base);
+
+            // Entrance housing (main structure)
+            const entrance = new THREE.Mesh(
+                new THREE.BoxGeometry(2, 2, 2),
+                new THREE.MeshStandardMaterial({ color: 0x555555 })
+            );
+            entrance.position.y = 1.15;
+            entrance.castShadow = true;
+            g.add(entrance);
+
+            // Entrance opening (dark recess for visual depth)
+            const opening = new THREE.Mesh(
+                new THREE.BoxGeometry(1.2, 1.5, 0.5),
+                new THREE.MeshStandardMaterial({ color: 0x111111 })
+            );
+            opening.position.set(0, 0.9, 1.0);
+            g.add(opening);
+
+            // Roof overhang
+            const roof = new THREE.Mesh(
+                new THREE.BoxGeometry(2.5, 0.1, 2.8),
+                new THREE.MeshStandardMaterial({ color: 0x333333 })
+            );
+            roof.position.y = 2.2;
+            roof.castShadow = true;
+            g.add(roof);
+
+            // "SUBWAY" sign - yellow panel on front
+            const sign = new THREE.Mesh(
+                new THREE.BoxGeometry(1.5, 0.3, 0.1),
+                new THREE.MeshStandardMaterial({ color: 0xffcc00 })
+            );
+            sign.position.set(0, 2.0, 1.25);
+            g.add(sign);
+
+            // Stairs going down into ground (5 steps)
+            const stepMat = new THREE.MeshStandardMaterial({ color: 0x666666 });
+            for (let i = 0; i < 5; i++) {
+                const step = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.0, 0.15, 0.4),
+                    stepMat
+                );
+                step.position.set(0, -0.15 - i * 0.2, 0.6 - i * 0.4);
+                g.add(step);
+            }
+
+            // Support pillars for elevated track (two on each side)
+            const pillarMat = new THREE.MeshStandardMaterial({ color: 0x666666 });
+            const pillarPositions = [
+                [-3, 0, 0],
+                [3, 0, 0]
+            ];
+            pillarPositions.forEach(pos => {
+                const pillar = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.3, 0.35, SUBWAY_CFG.trackHeight, 12),
+                    pillarMat
+                );
+                pillar.position.set(pos[0], SUBWAY_CFG.trackHeight / 2, pos[2]);
+                pillar.castShadow = true;
+                g.add(pillar);
+            });
+
+            // Platform section at track height
+            const platform = new THREE.Mesh(
+                new THREE.BoxGeometry(8, 0.4, 3),
+                new THREE.MeshStandardMaterial({ color: 0x555555 })
+            );
+            platform.position.y = SUBWAY_CFG.trackHeight;
+            platform.receiveShadow = true;
+            g.add(platform);
+
+            // Platform edge marking (yellow safety line)
+            const edgeLine = new THREE.Mesh(
+                new THREE.BoxGeometry(7.5, 0.05, 0.2),
+                new THREE.MeshBasicMaterial({ color: 0xffff00 })
+            );
+            edgeLine.position.set(0, SUBWAY_CFG.trackHeight + 0.22, 1.3);
+            g.add(edgeLine);
+
+            // Waiting shelter on platform
+            const shelterRoof = new THREE.Mesh(
+                new THREE.BoxGeometry(4, 0.15, 2),
+                new THREE.MeshStandardMaterial({ color: 0x333333 })
+            );
+            shelterRoof.position.set(0, SUBWAY_CFG.trackHeight + 2.5, -0.3);
+            g.add(shelterRoof);
+
+            // Shelter supports
+            const supportMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
+            [[-1.8, -1.1], [1.8, -1.1], [-1.8, 0.5], [1.8, 0.5]].forEach(pos => {
+                const support = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.08, 0.08, 2.3, 8),
+                    supportMat
+                );
+                support.position.set(pos[0], SUBWAY_CFG.trackHeight + 1.35, pos[1]);
+                g.add(support);
+            });
+
+            g.userData = { type: 'subwayStation', stationNum: stationNum };
+            return g;
+        }
+
+        function mkSubwayTrack(startX, startZ, endX, endZ) {
+            const g = new THREE.Group();
+
+            // Calculate track length and direction
+            const dx = endX - startX;
+            const dz = endZ - startZ;
+            const length = Math.sqrt(dx * dx + dz * dz);
+            const angle = Math.atan2(dx, dz);
+
+            // Main track beam
+            const beam = new THREE.Mesh(
+                new THREE.BoxGeometry(2, 0.5, length),
+                new THREE.MeshStandardMaterial({ color: 0x444444 })
+            );
+            beam.position.set((startX + endX) / 2, SUBWAY_CFG.trackHeight - 0.25, (startZ + endZ) / 2);
+            beam.rotation.y = angle;
+            beam.receiveShadow = true;
+            g.add(beam);
+
+            // Rails on top of beam
+            const railMat = new THREE.MeshStandardMaterial({ color: 0x666666, metalness: 0.5 });
+            [-0.6, 0.6].forEach(offset => {
+                const rail = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.1, 0.1, length),
+                    railMat
+                );
+                // Position rail along the track
+                const perpX = Math.cos(angle) * offset;
+                const perpZ = -Math.sin(angle) * offset;
+                rail.position.set(
+                    (startX + endX) / 2 + perpX,
+                    SUBWAY_CFG.trackHeight + 0.05,
+                    (startZ + endZ) / 2 + perpZ
+                );
+                rail.rotation.y = angle;
+                g.add(rail);
+            });
+
+            // Guard rails on both sides
+            const guardMat = new THREE.MeshStandardMaterial({ color: 0x555555 });
+            [-1.1, 1.1].forEach(offset => {
+                const guard = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.08, 0.8, length),
+                    guardMat
+                );
+                const perpX = Math.cos(angle) * offset;
+                const perpZ = -Math.sin(angle) * offset;
+                guard.position.set(
+                    (startX + endX) / 2 + perpX,
+                    SUBWAY_CFG.trackHeight + 0.4,
+                    (startZ + endZ) / 2 + perpZ
+                );
+                guard.rotation.y = angle;
+                g.add(guard);
+            });
+
+            // Support columns every 12 units
+            const pillarMat = new THREE.MeshStandardMaterial({ color: 0x666666 });
+            const numSupports = Math.floor(length / 12);
+            for (let i = 1; i < numSupports; i++) {
+                const t = i / numSupports;
+                const px = startX + dx * t;
+                const pz = startZ + dz * t;
+
+                const pillar = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.25, 0.3, SUBWAY_CFG.trackHeight, 10),
+                    pillarMat
+                );
+                pillar.position.set(px, SUBWAY_CFG.trackHeight / 2, pz);
+                pillar.castShadow = true;
+                g.add(pillar);
+            }
+
+            g.userData = { type: 'subwayTrack' };
+            return g;
+        }
+
         function mkDoubleDecker() {
             const g = new THREE.Group();
-            
+
             // Lower deck - red body
             const lowerBody = new THREE.Mesh(
                 new THREE.BoxGeometry(4.5, 1.2, 1.8),
@@ -1609,7 +1814,7 @@
             lowerBody.position.y = 0.8;
             lowerBody.castShadow = true;
             g.add(lowerBody);
-            
+
             // Upper deck - open top
             const upperBody = new THREE.Mesh(
                 new THREE.BoxGeometry(4.0, 0.9, 1.7),
@@ -1618,7 +1823,7 @@
             upperBody.position.set(-0.2, 1.85, 0);
             upperBody.castShadow = true;
             g.add(upperBody);
-            
+
             // Upper deck railing
             const railMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
             // Front rail
