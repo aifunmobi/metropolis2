@@ -4183,9 +4183,79 @@
             addEventListener('resize', () => { cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
         }
 
-        function notify(txt, dur = 3000) { 
-            const n = $('notif'); n.innerHTML = txt; n.classList.add('show'); 
-            setTimeout(() => n.classList.remove('show'), dur); 
+        function notify(txt, dur = 3000) {
+            const n = $('notif'); n.innerHTML = txt; n.classList.add('show');
+            setTimeout(() => n.classList.remove('show'), dur);
+        }
+
+        function updDayNight(dt) {
+            // Advance time (wraps at 1.0)
+            timeOfDay = (timeOfDay + dayNightSpeed * dt) % 1.0;
+
+            // Determine if night for other systems
+            isNight = timeOfDay < 0.2 || timeOfDay > 0.8;
+
+            // Calculate sky color based on time
+            // Time segments: midnight(0), dawn(0.2-0.3), day(0.3-0.7), dusk(0.7-0.8), night(0.8-1)
+            let skyColor;
+            const t = timeOfDay;
+
+            if (t < 0.2) {
+                // Night to dawn transition
+                skyColor = lerpColor(SKY_COLORS.midnight, SKY_COLORS.dawn, t / 0.2);
+            } else if (t < 0.3) {
+                // Dawn to day
+                skyColor = lerpColor(SKY_COLORS.dawn, SKY_COLORS.day, (t - 0.2) / 0.1);
+            } else if (t < 0.7) {
+                // Full day
+                skyColor = SKY_COLORS.day;
+            } else if (t < 0.8) {
+                // Day to dusk
+                skyColor = lerpColor(SKY_COLORS.day, SKY_COLORS.dusk, (t - 0.7) / 0.1);
+            } else if (t < 0.9) {
+                // Dusk to night
+                skyColor = lerpColor(SKY_COLORS.dusk, SKY_COLORS.night, (t - 0.8) / 0.1);
+            } else {
+                // Deep night
+                skyColor = lerpColor(SKY_COLORS.night, SKY_COLORS.midnight, (t - 0.9) / 0.1);
+            }
+
+            // Apply sky color (only if not overridden by weather)
+            if (weatherState === 'sunny') {
+                scene.background = new THREE.Color(skyColor);
+                scene.fog.color = new THREE.Color(skyColor);
+            }
+
+            // Adjust lighting intensities
+            const dayFactor = Math.sin(t * Math.PI); // 0 at midnight, 1 at noon
+            const nightFactor = 1 - dayFactor;
+
+            if (sunLight) {
+                sunLight.intensity = 0.2 + dayFactor * 1.0; // 0.2 at night, 1.2 at noon
+                // Warm color at dawn/dusk, white at noon
+                if (t > 0.2 && t < 0.3) {
+                    sunLight.color.setHex(0xffcc88); // Warm dawn
+                } else if (t > 0.7 && t < 0.8) {
+                    sunLight.color.setHex(0xff8844); // Orange dusk
+                } else {
+                    sunLight.color.setHex(0xfffacd); // Normal daylight
+                }
+            }
+
+            if (ambientLight) {
+                ambientLight.intensity = 0.15 + dayFactor * 0.45; // 0.15 at night, 0.6 at noon
+            }
+
+            if (hemiLight) {
+                hemiLight.intensity = 0.1 + dayFactor * 0.4; // Dimmer at night
+            }
+        }
+
+        // Helper function for color interpolation
+        function lerpColor(c1, c2, t) {
+            const color1 = new THREE.Color(c1);
+            const color2 = new THREE.Color(c2);
+            return new THREE.Color().lerpColors(color1, color2, t).getHex();
         }
 
         function animate() {
