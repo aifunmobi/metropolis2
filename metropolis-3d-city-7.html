@@ -187,6 +187,8 @@
         let subwayTrain = null;
         let subwayStations = [];
         let subwayTrack = null;
+        let subwayPassengers = [];      // Pedestrians currently riding subway
+        const SUBWAY_MAX_PASSENGERS = 12;
 
         let lastWindowToggle = 0;
         let lastBikeSpawn = 0;
@@ -2461,6 +2463,36 @@
 
                     // Add to performer's watcher list
                     nearestPerformer.userData.watchers.push(p);
+                    return;
+                }
+            }
+
+            // 8% chance to go to subway station when walking
+            if (Math.random() < 0.08 && p.userData.state === 'walking' && subwayStations.length > 0) {
+                // Find nearest subway station
+                let nearestStation = null;
+                let nearestDist = 30; // Max attraction distance
+
+                for (const station of subwayStations) {
+                    const dx = station.x - p.position.x;
+                    const dz = station.z - p.position.z;
+                    const dist = Math.sqrt(dx * dx + dz * dz);
+
+                    if (dist < nearestDist) {
+                        nearestDist = dist;
+                        nearestStation = station;
+                    }
+                }
+
+                if (nearestStation && subwayPassengers.length < SUBWAY_MAX_PASSENGERS) {
+                    p.userData.state = 'toSubwayStation';
+                    p.userData.targetStation = nearestStation;
+                    // Target the entrance position (slightly in front of station)
+                    p.userData.target = new THREE.Vector3(
+                        nearestStation.x + Math.sin(nearestStation.rotation) * 2,
+                        0.15,
+                        nearestStation.z + Math.cos(nearestStation.rotation) * 2
+                    );
                     return;
                 }
             }
