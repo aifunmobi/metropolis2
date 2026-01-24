@@ -7247,11 +7247,12 @@
             const dt = clock.getDelta(), t = clock.getElapsedTime();
             
             const spd = boost ? baseSpd * 3 : baseSpd;
-            const fwd = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
+            // Horizontal-only forward vector (ignores pitch) for ground movement
+            const fwdHoriz = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
             const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
-            
-            if (keys['KeyW'] || keys['ArrowUp']) vel.add(fwd.clone().multiplyScalar(spd * 0.12));
-            if (keys['KeyS'] || keys['ArrowDown']) vel.add(fwd.clone().multiplyScalar(-spd * 0.12));
+
+            if (keys['KeyW'] || keys['ArrowUp']) vel.add(fwdHoriz.clone().multiplyScalar(spd * 0.12));
+            if (keys['KeyS'] || keys['ArrowDown']) vel.add(fwdHoriz.clone().multiplyScalar(-spd * 0.12));
             if (keys['KeyA'] || keys['ArrowLeft']) vel.add(right.clone().multiplyScalar(-spd * 0.12));
             if (keys['KeyD'] || keys['ArrowRight']) vel.add(right.clone().multiplyScalar(spd * 0.12));
             if (keys['KeyQ']) vel.y -= spd * 0.12;
