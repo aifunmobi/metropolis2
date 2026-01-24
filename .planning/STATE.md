@@ -5,20 +5,25 @@
 See: .planning/PROJECT.md (updated 2025-01-23)
 
 **Core value:** The city feels alive and worth watching
-**Current focus:** Phase 2 - Bird Flocks
+**Current focus:** Phase 3 - Street Performers
 
 ## Current Position
 
 - **Milestone:** v1.0 - Visual Engagement Features
-- **Phase:** 2 of 5 (Bird Flocks)
-- **Plan:** 2 of 2 completed
-- **Status:** Phase complete
-- **Last activity:** 2026-01-24 - Completed 02-02-PLAN.md
+- **Phase:** 3 of 5 (Street Performers)
+- **Plan:** 1 of 3 completed
+- **Status:** In progress
+- **Last activity:** 2026-01-24 - Completed 03-01-PLAN.md
 
-**Progress:** █████ 100% (5/5 plans across all phases)
+**Progress:** ██████░░░░░░░░ 43% (6/14 plans across all phases)
 
 ## Recent Progress
 
+- 03-01: Street performer entities with musician and statue types
+- Musicians play guitar with strumming animation, statues pose with metallic finish
+- Performers spawn on sidewalks facing roads at 45-second intervals
+- Performance duration 60-120 seconds with automatic cleanup
+- Maximum 3 simultaneous performers, 20-unit minimum spacing
 - 02-02: Bird landing and scattering behavior with pedestrian proximity detection (PHASE COMPLETE)
 - Birds periodically land on rooftops (70%) and sidewalks (30%)
 - Pedestrians within 3 units cause birds to scatter and take flight
@@ -44,6 +49,17 @@ See: .planning/PROJECT.md (updated 2025-01-23)
 - Lighting adjusts dynamically based on time of day
 
 ## Session Notes
+
+### 2026-01-24 - Phase 03 Plan 01
+- Implemented street performer system with two performer types
+- Created mkMusician() with acoustic guitar, dark red outfit, beret
+- Created mkStatue() with silver metallic finish, top hat, dramatic pose
+- Performers spawn on random sidewalks facing toward roads
+- Spawn interval 45 seconds with 50% chance, max 3 performers
+- Performance duration randomized 60-120 seconds per performer
+- Musicians animate strumming with sine wave arm movement
+- Statues have subtle occasional head movements (living statue effect)
+- Minimum 20-unit spacing between performers enforced
 
 ### 2026-01-24 - Phase 02 Plan 02 (PHASE COMPLETE)
 - Implemented bird landing system with rooftop and sidewalk perch selection
@@ -97,6 +113,11 @@ None currently.
 
 | Date | Decision | Context |
 |------|----------|---------|
+| 2026-01-24 | Performer types: musician and statue | Musician with guitar (animated), statue with metallic finish (still), both common street performers |
+| 2026-01-24 | Performer spawn interval 45 seconds, 50% chance | Average 22.5s spawn rate, maintains 1-3 performers typically, feels occasional not constant |
+| 2026-01-24 | Performer duration 60-120 seconds | Long enough to discover, short enough to stay fresh, matches simplified set length |
+| 2026-01-24 | Max 3 simultaneous performers | Prevents overcrowding, maintains specialness, low performance impact |
+| 2026-01-24 | Performers face toward road | Real performers face traffic for visibility, creates natural stage area for future crowds |
 | 2026-01-24 | Bird landing chance 0.002 per frame | Occasional landing without overwhelming flocks, creates natural variety |
 | 2026-01-24 | Bird scatter distance 3 units | Pedestrian proximity causes scatter, balances realism with visibility |
 | 2026-01-24 | Rooftop landing preference 70% | Creates visual variety while keeping some birds visible on ground |
@@ -122,8 +143,8 @@ None currently.
 
 ## Session Continuity
 
-- **Last session:** 2026-01-24 03:20 UTC
-- **Stopped at:** Completed 02-02-PLAN.md
+- **Last session:** 2026-01-24 03:41 UTC
+- **Stopped at:** Completed 03-01-PLAN.md
 - **Resume file:** None
 
 ---
