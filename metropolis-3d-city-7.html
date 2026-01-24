@@ -1729,6 +1729,15 @@
                 g.add(support);
             });
 
+            // Activity indicator light (glows when station active)
+            const activityLight = new THREE.Mesh(
+                new THREE.SphereGeometry(0.15, 8, 8),
+                new THREE.MeshBasicMaterial({ color: 0x004400, transparent: true, opacity: 0.2 })
+            );
+            activityLight.position.set(0, 2.3, 1.2);
+            activityLight.userData.isActivityLight = true;
+            g.add(activityLight);
+
             g.userData = { type: 'subwayStation', stationNum: stationNum };
             return g;
         }
@@ -2011,6 +2020,35 @@
                     subwayTrain.userData.state = 'moving';
                 }
             }
+
+            // Update station activity lights based on nearby pedestrians
+            subwayStations.forEach(station => {
+                if (!station.mesh) return;
+
+                // Check for pedestrians heading to or at this station
+                let hasActivity = false;
+                for (const p of peds) {
+                    if (p.userData.targetStation === station ||
+                        (p.userData.exitStation === station && p.userData.state === 'inSubway')) {
+                        hasActivity = true;
+                        break;
+                    }
+                }
+
+                // Also show activity when train is stopped at this station
+                if (subwayTrain && subwayTrain.userData.state === 'stopping') {
+                    const trainStation = subwayStations[subwayTrain.userData.nextStation];
+                    if (trainStation === station) hasActivity = true;
+                }
+
+                // Update activity light
+                station.mesh.traverse(child => {
+                    if (child.userData.isActivityLight) {
+                        child.material.opacity = hasActivity ? 0.8 : 0.2;
+                        child.material.color.setHex(hasActivity ? 0x00ff00 : 0x004400);
+                    }
+                });
+            });
         }
 
         function mkDoubleDecker() {
