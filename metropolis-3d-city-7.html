@@ -1589,6 +1589,41 @@
                 billboards.push(marlboroSign);
                 scene.add(marlboroSign);
             }
+
+            // Add aircraft warning lights on remaining tall buildings
+            const usedBuildings = [...selected, taxBuildings[0], marlboroBuildings[0]].filter(Boolean);
+            const warningBuildings = tallBuildings.filter(b => !usedBuildings.includes(b) && b.userData.height > 50);
+
+            warningBuildings.forEach(building => {
+                const h = building.userData.height;
+                const warningGroup = new THREE.Group();
+
+                // Vertical pole/antenna
+                const poleMat = new THREE.MeshStandardMaterial({ color: 0x666666 });
+                const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, h * 0.3), poleMat);
+                pole.position.y = h * 0.15;
+                warningGroup.add(pole);
+
+                // Red warning lights from top to bottom
+                const numLights = Math.floor(h * 0.3 / 4) + 1; // One light every ~4 units
+                for (let i = 0; i < numLights; i++) {
+                    const light = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.2),
+                        new THREE.MeshBasicMaterial({ color: 0xff0000 })
+                    );
+                    const lightY = h * 0.3 - (i * 4);
+                    light.position.y = lightY;
+                    light.userData.isWarningLight = true;
+                    light.userData.lightIndex = i;
+                    light.userData.totalLights = numLights;
+                    warningGroup.add(light);
+                }
+
+                warningGroup.position.set(building.position.x, h, building.position.z);
+                warningGroup.userData.isWarningTower = true;
+                billboards.push(warningGroup);
+                scene.add(warningGroup);
+            });
         }
 
         function mkTrafficLights() {
@@ -7782,6 +7817,16 @@
                             brightness * 0.85,
                             brightness * 0.3
                         );
+                    }
+                    // Aircraft warning lights - cascade from top to bottom
+                    if (child.userData.isWarningLight) {
+                        const idx = child.userData.lightIndex;
+                        const total = child.userData.totalLights;
+                        // Cascade effect: lights flash in sequence from top (idx 0) to bottom
+                        const phase = (t * 2 - idx * 0.4) % (Math.PI * 2);
+                        const isOn = Math.sin(phase) > 0.5;
+                        child.material.color.setRGB(isOn ? 1 : 0.2, 0, 0);
+                        child.scale.setScalar(isOn ? 1.2 : 0.8);
                     }
                 });
             });
