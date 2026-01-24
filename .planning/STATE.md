@@ -5,20 +5,24 @@
 See: .planning/PROJECT.md (updated 2025-01-23)
 
 **Core value:** The city feels alive and worth watching
-**Current focus:** Phase 3 - Street Performers
+**Current focus:** Phase 4 - Subway System
 
 ## Current Position
 
 - **Milestone:** v1.0 - Visual Engagement Features
-- **Phase:** 3 of 5 (Street Performers)
-- **Plan:** 2 of 2 completed
-- **Status:** Phase complete
-- **Last activity:** 2026-01-24 - Completed 03-02-PLAN.md
+- **Phase:** 4 of 5 (Subway System)
+- **Plan:** 1 of 2 completed
+- **Status:** In progress
+- **Last activity:** 2026-01-24 - Completed 04-01-PLAN.md
 
-**Progress:** ███████░░░░░░░ 50% (7/14 plans across all phases)
+**Progress:** ████████░░░░░░ 57% (8/14 plans across all phases)
 
 ## Recent Progress
 
+- 04-01: Subway infrastructure with 3 stations, elevated track, moving train
+- Station entrances at ground level with covered stairway and platform
+- Elevated track with support columns connecting L-shaped route
+- Train moves between stations with 5-second stops
 - 03-02: Pedestrian crowd behavior and performer interaction (PHASE COMPLETE)
 - Pedestrians detect nearby performers and walk to semicircle watching positions
 - 15% attraction chance creates organic crowd growth over time
@@ -54,6 +58,15 @@ See: .planning/PROJECT.md (updated 2025-01-23)
 - Lighting adjusts dynamically based on time of day
 
 ## Session Notes
+
+### 2026-01-24 - Phase 04 Plan 01
+- Created SUBWAY_CFG with trackHeight (6), trainSpeed (0.12), stopDuration (5)
+- Implemented mkSubwayStation() with ground entrance, stairs, elevated platform, shelter
+- Created mkSubwayTrack() with beam, rails, guard rails, support columns
+- Built mkSubwayTrain() with silver body, windows, AC units, wheels
+- Established L-shaped route with 3 stations (North, Central, East)
+- Train state machine: moving, stopping with automatic loop
+- updSubway(t) added to animate loop for continuous operation
 
 ### 2026-01-24 - Phase 03 Plan 02 (PHASE COMPLETE)
 - Implemented pedestrian performer attraction with 15% notice chance
@@ -128,6 +141,10 @@ None currently.
 
 | Date | Decision | Context |
 |------|----------|---------|
+| 2026-01-24 | Track height 6 units above ground | Visible elevated transit above street traffic, connected to city |
+| 2026-01-24 | Train speed 0.12, stop duration 5 seconds | Observable travel between stations, noticeable pauses |
+| 2026-01-24 | L-shaped route with 3 stations | Covers two city edges, extensible to full loop |
+| 2026-01-24 | Station positioning 12 units from edge | Accessible while avoiding building collisions |
 | 2026-01-24 | Pedestrian attraction chance 15% | Gradual organic crowd growth, ~7-8 notices per target cycle, prevents sudden mobs |
 | 2026-01-24 | Semicircle crowd formation 144 degrees | Real crowds form arcs not circles, leaves performer "stage" clear, 0.8π spread |
 | 2026-01-24 | Watch duration 10-30 seconds | Visible crowd formation (10s min), dynamic turnover (30s max), staggered departures |
@@ -162,8 +179,8 @@ None currently.
 
 ## Session Continuity
 
-- **Last session:** 2026-01-24 03:47 UTC
-- **Stopped at:** Completed 03-02-PLAN.md (Phase 03 complete)
+- **Last session:** 2026-01-24 04:10 UTC
+- **Stopped at:** Completed 04-01-PLAN.md
 - **Resume file:** None
 
 ---
