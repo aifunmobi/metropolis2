@@ -1490,6 +1490,105 @@
                 billboards.push(taxSign);
                 scene.add(taxSign);
             }
+
+            // Add Marlboro Country billboard with flashing lights
+            const marlboroBuildings = tallBuildings.filter(b => !selected.includes(b) && b !== taxBuildings[0]);
+            if (marlboroBuildings.length > 0) {
+                const marlboroBuilding = marlboroBuildings[Math.floor(Math.random() * marlboroBuildings.length)];
+                const h = marlboroBuilding.userData.height;
+
+                const marlboroSign = new THREE.Group();
+
+                // Support poles
+                const poleMat = new THREE.MeshStandardMaterial({ color: 0x8b4513 }); // Brown rustic poles
+                const pole1 = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 6), poleMat);
+                pole1.position.set(-4, 3, 0);
+                marlboroSign.add(pole1);
+                const pole2 = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 6), poleMat);
+                pole2.position.set(4, 3, 0);
+                marlboroSign.add(pole2);
+
+                // Sign background - warm sunset orange/red
+                const signBg = new THREE.Mesh(
+                    new THREE.BoxGeometry(10, 5, 0.3),
+                    new THREE.MeshStandardMaterial({ color: 0xcc4400 })
+                );
+                signBg.position.y = 6.5;
+                marlboroSign.add(signBg);
+
+                // Create Marlboro Country texture
+                const createMarlboroTexture = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 512;
+                    canvas.height = 256;
+                    const ctx = canvas.getContext('2d');
+                    // Sunset gradient background
+                    const gradient = ctx.createLinearGradient(0, 0, 0, 256);
+                    gradient.addColorStop(0, '#cc4400');
+                    gradient.addColorStop(0.5, '#dd6622');
+                    gradient.addColorStop(1, '#cc4400');
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(0, 0, 512, 256);
+                    // Text
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 42px Georgia';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('MARLBORO', 256, 100);
+                    ctx.font = 'italic 36px Georgia';
+                    ctx.fillText('Country', 256, 160);
+                    return new THREE.CanvasTexture(canvas);
+                };
+
+                const marlboroTexture = createMarlboroTexture();
+                const textPlane = new THREE.Mesh(
+                    new THREE.PlaneGeometry(9, 4.5),
+                    new THREE.MeshBasicMaterial({ map: marlboroTexture })
+                );
+                textPlane.position.set(0, 6.5, 0.2);
+                marlboroSign.add(textPlane);
+
+                // Back side
+                const textPlaneBack = new THREE.Mesh(
+                    new THREE.PlaneGeometry(9, 4.5),
+                    new THREE.MeshBasicMaterial({ map: marlboroTexture })
+                );
+                textPlaneBack.position.set(0, 6.5, -0.2);
+                textPlaneBack.rotation.y = Math.PI;
+                marlboroSign.add(textPlaneBack);
+
+                // Flashing border lights - warm white/yellow
+                for (let i = 0; i < 24; i++) {
+                    const light = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.12),
+                        new THREE.MeshBasicMaterial({ color: 0xffdd44 })
+                    );
+                    // Position lights around the border
+                    let lx, ly;
+                    if (i < 6) { // Top
+                        lx = -4.5 + i * 1.8;
+                        ly = 9;
+                    } else if (i < 12) { // Right
+                        lx = 4.5;
+                        ly = 9 - (i - 6) * 0.9;
+                    } else if (i < 18) { // Bottom
+                        lx = 4.5 - (i - 12) * 1.8;
+                        ly = 4;
+                    } else { // Left
+                        lx = -4.5;
+                        ly = 4 + (i - 18) * 0.9;
+                    }
+                    light.position.set(lx, ly, 0.25);
+                    light.userData.lightIndex = i;
+                    light.userData.isMarlboroLight = true;
+                    marlboroSign.add(light);
+                }
+
+                marlboroSign.position.set(marlboroBuilding.position.x, h, marlboroBuilding.position.z);
+                marlboroSign.userData.isMarlboroBillboard = true;
+                billboards.push(marlboroSign);
+                scene.add(marlboroSign);
+            }
         }
 
         function mkTrafficLights() {
@@ -7671,6 +7770,18 @@
                     }
                     if (child.userData.isTaxSignOff) {
                         child.visible = Math.sin(t * 4) <= 0;
+                    }
+                    // Marlboro Country chasing lights
+                    if (child.userData.isMarlboroLight) {
+                        const idx = child.userData.lightIndex;
+                        // Chase pattern - lights turn on/off in sequence
+                        const phase = (t * 5 + idx * 0.3) % (Math.PI * 2);
+                        const brightness = Math.sin(phase) > 0.2 ? 1 : 0.15;
+                        child.material.color.setRGB(
+                            brightness * 1.0,
+                            brightness * 0.85,
+                            brightness * 0.3
+                        );
                     }
                 });
             });
