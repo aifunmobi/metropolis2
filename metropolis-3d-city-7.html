@@ -243,7 +243,8 @@
             
             prog(90, 'Secrets...');
             mkSecrets();
-            
+            mkFlocks();
+
             prog(98, 'Systems...');
             setupMM();
             setupInput();
@@ -4044,6 +4045,118 @@
             g.userData.mainRotor = rotor;
             
             return g;
+        }
+
+        function mkBird() {
+            const g = new THREE.Group();
+
+            // Body - small elongated ellipsoid
+            const body = new THREE.Mesh(
+                new THREE.SphereGeometry(0.15, 8, 6),
+                new THREE.MeshStandardMaterial({ color: 0x333333 })
+            );
+            body.scale.set(1, 0.6, 1.5);
+            g.add(body);
+
+            // Head
+            const head = new THREE.Mesh(
+                new THREE.SphereGeometry(0.08, 6, 6),
+                new THREE.MeshStandardMaterial({ color: 0x222222 })
+            );
+            head.position.set(0, 0.05, 0.2);
+            g.add(head);
+
+            // Beak
+            const beak = new THREE.Mesh(
+                new THREE.ConeGeometry(0.03, 0.1, 4),
+                new THREE.MeshStandardMaterial({ color: 0xff8800 })
+            );
+            beak.rotation.x = -Math.PI / 2;
+            beak.position.set(0, 0.03, 0.3);
+            g.add(beak);
+
+            // Wings - simple triangular shapes
+            const wingGeo = new THREE.BufferGeometry();
+            const wingVerts = new Float32Array([
+                0, 0, 0,      // origin
+                0.4, 0, 0.1,  // wingtip
+                0.1, 0, 0.15  // trailing edge
+            ]);
+            wingGeo.setAttribute('position', new THREE.BufferAttribute(wingVerts, 3));
+            wingGeo.computeVertexNormals();
+            const wingMat = new THREE.MeshStandardMaterial({
+                color: 0x444444,
+                side: THREE.DoubleSide
+            });
+
+            const leftWing = new THREE.Mesh(wingGeo, wingMat);
+            leftWing.position.set(0.05, 0, 0);
+            g.add(leftWing);
+            g.userData.leftWing = leftWing;
+
+            const rightWing = new THREE.Mesh(wingGeo.clone(), wingMat);
+            rightWing.scale.x = -1;
+            rightWing.position.set(-0.05, 0, 0);
+            g.add(rightWing);
+            g.userData.rightWing = rightWing;
+
+            // Initialize bird userData
+            g.userData.velocity = new THREE.Vector3(
+                (Math.random() - 0.5) * 0.2,
+                0,
+                (Math.random() - 0.5) * 0.2
+            );
+            g.userData.wingPhase = Math.random() * Math.PI * 2;
+            g.userData.state = 'flying';  // 'flying', 'landing', 'landed', 'takeoff'
+
+            return g;
+        }
+
+        function mkFlock(size, startPos) {
+            const flock = {
+                birds: [],
+                center: startPos.clone(),
+                targetWaypoint: null
+            };
+
+            for (let i = 0; i < size; i++) {
+                const bird = mkBird();
+                // Scatter birds around start position
+                bird.position.set(
+                    startPos.x + (Math.random() - 0.5) * 8,
+                    startPos.y + (Math.random() - 0.5) * 4,
+                    startPos.z + (Math.random() - 0.5) * 8
+                );
+                flock.birds.push(bird);
+                scene.add(bird);
+            }
+
+            // Set initial waypoint
+            flock.targetWaypoint = getRandomWaypoint();
+
+            return flock;
+        }
+
+        function getRandomWaypoint() {
+            const margin = BIRD_CFG.boundaryMargin;
+            return new THREE.Vector3(
+                (Math.random() - 0.5) * (halfSize * 2 + margin),
+                BIRD_CFG.minHeight + Math.random() * (BIRD_CFG.maxHeight - BIRD_CFG.minHeight),
+                (Math.random() - 0.5) * (halfSize * 2 + margin)
+            );
+        }
+
+        function mkFlocks() {
+            for (let i = 0; i < CFG.flocks; i++) {
+                const size = BIRD_CFG.flockSizes[i % BIRD_CFG.flockSizes.length];
+                const startPos = new THREE.Vector3(
+                    (Math.random() - 0.5) * halfSize * 1.5,
+                    BIRD_CFG.minHeight + Math.random() * 20,
+                    (Math.random() - 0.5) * halfSize * 1.5
+                );
+                const flock = mkFlock(size, startPos);
+                flocks.push(flock);
+            }
         }
 
         function updRain() {
