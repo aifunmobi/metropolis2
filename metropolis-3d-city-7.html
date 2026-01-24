@@ -1972,6 +1972,43 @@
             notify('Subway Line now running!', 3000);
         }
 
+        function updSubway(t) {
+            if (!subwayTrain) return;
+
+            const currentStation = subwayStations[subwayTrain.userData.currentStation];
+            const nextStation = subwayStations[subwayTrain.userData.nextStation];
+
+            if (subwayTrain.userData.state === 'moving') {
+                const dx = nextStation.x - subwayTrain.position.x;
+                const dz = nextStation.z - subwayTrain.position.z;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+
+                if (dist < 1) {
+                    // Arrived at station
+                    subwayTrain.userData.state = 'stopping';
+                    subwayTrain.userData.stopTimer = 0;
+                    subwayTrain.position.set(nextStation.x, SUBWAY_CFG.trackHeight, nextStation.z);
+                } else {
+                    // Move toward next station
+                    const speed = subwayTrain.userData.spd;
+                    subwayTrain.position.x += (dx / dist) * speed;
+                    subwayTrain.position.z += (dz / dist) * speed;
+
+                    // Rotate to face direction of travel
+                    subwayTrain.rotation.y = Math.atan2(dx, dz);
+                }
+            } else if (subwayTrain.userData.state === 'stopping') {
+                subwayTrain.userData.stopTimer += 0.016;
+
+                if (subwayTrain.userData.stopTimer > SUBWAY_CFG.stopDuration) {
+                    // Update station indices
+                    subwayTrain.userData.currentStation = subwayTrain.userData.nextStation;
+                    subwayTrain.userData.nextStation = (subwayTrain.userData.nextStation + 1) % subwayStations.length;
+                    subwayTrain.userData.state = 'moving';
+                }
+            }
+        }
+
         function mkDoubleDecker() {
             const g = new THREE.Group();
 
@@ -5796,6 +5833,7 @@
             updPerformers(t);
             updBicycles(t);
             updOmnibus(t);
+            updSubway(t);
             updSpecialEvents(t);
             updGarbageTruck(t);
             updFallingPerson(t);
