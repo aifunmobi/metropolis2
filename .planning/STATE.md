@@ -11,14 +11,19 @@ See: .planning/PROJECT.md (updated 2025-01-23)
 
 - **Milestone:** v1.0 - Visual Engagement Features
 - **Phase:** 2 of 5 (Bird Flocks)
-- **Plan:** 1 of 2 completed
-- **Status:** In progress
-- **Last activity:** 2026-01-24 - Completed 02-01-PLAN.md
+- **Plan:** 2 of 2 completed
+- **Status:** Phase complete
+- **Last activity:** 2026-01-24 - Completed 02-02-PLAN.md
 
-**Progress:** ████ 80% (4/5 plans across all phases)
+**Progress:** █████ 100% (5/5 plans across all phases)
 
 ## Recent Progress
 
+- 02-02: Bird landing and scattering behavior with pedestrian proximity detection (PHASE COMPLETE)
+- Birds periodically land on rooftops (70%) and sidewalks (30%)
+- Pedestrians within 3 units cause birds to scatter and take flight
+- State machine: flying, landing, landed, takeoff with distinct animations
+- Landing duration 5-15 seconds with natural timing
 - 02-01: Bird flock system with boids algorithm (separation, cohesion, alignment)
 - 4 autonomous flocks of varying sizes (3-8 birds) flying through city
 - Wing flapping animation with sine wave motion
@@ -39,6 +44,15 @@ See: .planning/PROJECT.md (updated 2025-01-23)
 - Lighting adjusts dynamically based on time of day
 
 ## Session Notes
+
+### 2026-01-24 - Phase 02 Plan 02 (PHASE COMPLETE)
+- Implemented bird landing system with rooftop and sidewalk perch selection
+- Added findPerchSpot() helper to calculate valid landing locations
+- Created checkPedestrianProximity() for cross-system bird-pedestrian interaction
+- Built four-state bird behavior machine (flying, landing, landed, takeoff)
+- Landing chance 0.002 per frame provides occasional natural landing
+- Scatter distance 3 units balances realism with observation
+- Phase 02 complete - birds now interact dynamically with city environment
 
 ### 2026-01-24 - Phase 02 Plan 01
 - Implemented complete boids flocking algorithm with separation, cohesion, alignment
@@ -83,6 +97,10 @@ None currently.
 
 | Date | Decision | Context |
 |------|----------|---------|
+| 2026-01-24 | Bird landing chance 0.002 per frame | Occasional landing without overwhelming flocks, creates natural variety |
+| 2026-01-24 | Bird scatter distance 3 units | Pedestrian proximity causes scatter, balances realism with visibility |
+| 2026-01-24 | Rooftop landing preference 70% | Creates visual variety while keeping some birds visible on ground |
+| 2026-01-24 | Bird land duration 5-15 seconds | Natural perching without birds staying static too long |
 | 2026-01-24 | Bird separation weight 1.5 (highest) | Prevents collisions between birds, strongest boids force for safety |
 | 2026-01-24 | 4 flocks with sizes [3, 5, 6, 8] | Visual variety without performance impact (~22 total birds) |
 | 2026-01-24 | Bird height bounds 15-60 units | Visible above buildings but not too high, optimal viewing range |
@@ -104,8 +122,8 @@ None currently.
 
 ## Session Continuity
 
-- **Last session:** 2026-01-24 03:14 UTC
-- **Stopped at:** Completed 02-01-PLAN.md
+- **Last session:** 2026-01-24 03:20 UTC
+- **Stopped at:** Completed 02-02-PLAN.md
 - **Resume file:** None
 
 ---
