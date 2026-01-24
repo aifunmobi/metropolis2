@@ -1335,12 +1335,11 @@
                         disembarkPassenger(nextStop);
                     }
                     
-                    // Board waiting passengers
+                    // Board waiting passengers - pick up all waiting (up to capacity)
                     const stop = nextStop;
                     const numBoard = Math.min(
                         stop.waitingPeds.length,
-                        OMNIBUS_MAX_PASSENGERS - omnibusPassengers.length,
-                        Math.floor(Math.random() * 3) + 1
+                        OMNIBUS_MAX_PASSENGERS - omnibusPassengers.length
                     );
                     for (let i = 0; i < numBoard; i++) {
                         boardPassenger(stop);
@@ -1363,8 +1362,16 @@
             if (Math.random() < 0.003) {
                 assignPedToStop();
             }
+
+            // Dispatch jitneys to crowded stops (check every ~2 seconds)
+            if (Math.random() < 0.008) {
+                updJitneyDispatch();
+            }
+
+            // Update jitney pickups
+            updJitneyPickup();
         }
-        
+
         function assignPedToStop() {
             // Find a random walking pedestrian near a bus stop
             const eligiblePeds = peds.filter(p => 
@@ -1457,6 +1464,91 @@
                 } else {
                     dot.material.color.setHex(0x333333);
                     dot.material.opacity = 0.3;
+                }
+            });
+        }
+
+        // Dispatch jitneys to crowded bus stops
+        function updJitneyDispatch() {
+            // Find stops with 3+ waiting passengers
+            const crowdedStops = omnibusStops.filter(stop => stop.waitingPeds && stop.waitingPeds.length >= 3);
+            if (crowdedStops.length === 0) return;
+
+            // Find available jitneys (not already heading to a stop)
+            const jitneys = cars.filter(c => c.userData.busType === 'jitney' && !c.userData.dispatchedToStop);
+            if (jitneys.length === 0) return;
+
+            crowdedStops.forEach(stop => {
+                // Find nearest jitney not already dispatched
+                let nearestJitney = null;
+                let nearestDist = Infinity;
+
+                jitneys.forEach(jitney => {
+                    if (jitney.userData.dispatchedToStop) return;
+                    const dx = stop.x - jitney.position.x;
+                    const dz = stop.z - jitney.position.z;
+                    const dist = Math.sqrt(dx * dx + dz * dz);
+                    if (dist < nearestDist) {
+                        nearestDist = dist;
+                        nearestJitney = jitney;
+                    }
+                });
+
+                if (nearestJitney && nearestDist < 60) {
+                    nearestJitney.userData.dispatchedToStop = stop;
+                    nearestJitney.userData.dispatchTimeout = 10; // seconds before giving up
+                }
+            });
+        }
+
+        // Handle jitney pickup at stops
+        function updJitneyPickup() {
+            cars.forEach(car => {
+                if (car.userData.busType !== 'jitney') return;
+
+                const stop = car.userData.dispatchedToStop;
+                if (!stop) return;
+
+                // Check if arrived at stop
+                const dx = stop.x - car.position.x;
+                const dz = stop.z - car.position.z;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+
+                if (dist < 5) {
+                    // Pick up waiting passengers (up to 4)
+                    const numPickup = Math.min(stop.waitingPeds.length, 4);
+                    for (let i = 0; i < numPickup; i++) {
+                        const ped = stop.waitingPeds.shift();
+                        if (ped) {
+                            ped.visible = false;
+                            ped.userData.state = 'onBus';
+                            ped.userData.waitingForBus = false;
+                            // Jitney passengers get dropped off after a delay
+                            setTimeout(() => {
+                                if (ped) {
+                                    ped.position.set(
+                                        car.position.x + (Math.random() - 0.5) * 4,
+                                        0.15,
+                                        car.position.z + (Math.random() - 0.5) * 4
+                                    );
+                                    ped.visible = true;
+                                    ped.userData.state = 'walking';
+                                    // Find which block they're in
+                                    const bx = Math.floor((ped.position.x + halfSize) / GRID.cellSize);
+                                    const bz = Math.floor((ped.position.z + halfSize) / GRID.cellSize);
+                                    ped.userData.currentBlock = { x: Math.max(0, Math.min(GRID.gridCount - 1, bx)), z: Math.max(0, Math.min(GRID.gridCount - 1, bz)) };
+                                    setNewPedTarget(ped);
+                                }
+                            }, 3000 + Math.random() * 5000);
+                        }
+                    }
+                    car.userData.dispatchedToStop = null;
+                } else {
+                    // Timeout check
+                    car.userData.dispatchTimeout -= 0.016;
+                    if (car.userData.dispatchTimeout <= 0) {
+                        car.userData.dispatchedToStop = null;
+                    }
                 }
             });
         }
@@ -4919,10 +5011,15 @@
                             car.userData.stuckTime = 0;
                         }
                     } else {
-                        // Regular car stuck - try to self-unstick after 5 seconds
-                        if (car.userData.stuckTime > 5) {
-                            // Force unstick by reversing (and getting in proper lane) or switching lanes temporarily
-                            if (Math.random() < 0.5) {
+                        // Regular car stuck - try to self-unstick after 3 seconds
+                        if (car.userData.stuckTime > 3) {
+                            // Buses should NOT flip direction - they just wait or change lanes
+                            if (car.userData.isBus) {
+                                // Buses only change lanes, never reverse
+                                car.userData.laneOffset = -car.userData.laneOffset;
+                                car.userData.inPassingLane = true;
+                            } else if (Math.random() < 0.2) {
+                                // Regular cars rarely reverse (20% chance, down from 50%)
                                 car.userData.dir *= -1;
                                 // Update lane for new direction (right-side driving)
                                 if (car.userData.axis === 'x') {
@@ -4936,7 +5033,7 @@
                                 }
                                 car.userData.inPassingLane = false;
                             } else {
-                                // Temporarily use opposite lane to pass obstacle
+                                // Temporarily use opposite lane to pass obstacle (80% chance)
                                 car.userData.laneOffset = -car.userData.laneOffset;
                                 car.userData.inPassingLane = true;
                             }
