@@ -1118,6 +1118,123 @@
             return g;
         }
 
+        // Create a rooftop party with string lights and figures
+        function mkRooftopParty(building, x, z, h, w, d) {
+            const party = new THREE.Group();
+            party.position.set(x, h + 0.1, z);
+
+            // String lights - create a perimeter of small glowing spheres
+            const lightMat = new THREE.MeshBasicMaterial({ color: 0xffee88 });
+            const stringLights = [];
+            const numLights = 12;
+
+            for (let i = 0; i < numLights; i++) {
+                const angle = (i / numLights) * Math.PI * 2;
+                const radius = Math.min(w, d) * 0.35;
+                const lx = Math.cos(angle) * radius;
+                const lz = Math.sin(angle) * radius;
+
+                const light = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.08, 6, 6),
+                    lightMat.clone()
+                );
+                light.position.set(lx, 0.3, lz);
+                light.userData.baseIntensity = 1;
+                light.userData.phase = Math.random() * Math.PI * 2;
+                stringLights.push(light);
+                party.add(light);
+            }
+
+            // Add connecting wire between lights (thin dark line)
+            const wireMat = new THREE.MeshBasicMaterial({ color: 0x333333 });
+            for (let i = 0; i < numLights; i++) {
+                const next = (i + 1) % numLights;
+                const l1 = stringLights[i];
+                const l2 = stringLights[next];
+
+                const wire = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.01, 0.01, 0.5, 4),
+                    wireMat
+                );
+                wire.position.set(
+                    (l1.position.x + l2.position.x) / 2,
+                    0.3,
+                    (l1.position.z + l2.position.z) / 2
+                );
+                wire.rotation.z = Math.PI / 2;
+                wire.rotation.y = Math.atan2(
+                    l2.position.z - l1.position.z,
+                    l2.position.x - l1.position.x
+                );
+                party.add(wire);
+            }
+
+            // Add party figures
+            const numFigures = ROOFTOP_CFG.figuresPerParty[0] +
+                Math.floor(Math.random() * (ROOFTOP_CFG.figuresPerParty[1] - ROOFTOP_CFG.figuresPerParty[0]));
+
+            const figures = [];
+            for (let i = 0; i < numFigures; i++) {
+                const fig = mkRooftopFigure();
+                const fx = (Math.random() - 0.5) * w * 0.6;
+                const fz = (Math.random() - 0.5) * d * 0.6;
+                fig.position.set(fx, 0, fz);
+                fig.userData.baseX = fx;
+                fig.userData.baseZ = fz;
+                party.add(fig);
+                figures.push(fig);
+            }
+
+            party.userData.stringLights = stringLights;
+            party.userData.figures = figures;
+            party.userData.spawnTime = clock.getElapsedTime();
+            party.userData.duration = ROOFTOP_CFG.partyDuration[0] +
+                Math.random() * (ROOFTOP_CFG.partyDuration[1] - ROOFTOP_CFG.partyDuration[0]);
+            party.userData.building = building;
+
+            return party;
+        }
+
+        // Spawn a rooftop party on a suitable building
+        function spawnRooftopParty() {
+            if (rooftopParties.length >= ROOFTOP_CFG.maxParties) return;
+
+            // Prefer buildings with existing features, but can use any tall building
+            let candidates = activeRooftops.filter(r =>
+                !rooftopParties.some(p => p.userData.building === r.building)
+            );
+
+            // If no active rooftops available, use tall buildings without parties
+            if (candidates.length === 0) {
+                candidates = buildings
+                    .filter(b => b.userData.height > 30)
+                    .filter(b => !rooftopParties.some(p => p.userData.building === b))
+                    .map(b => ({
+                        building: b,
+                        x: b.position.x,
+                        z: b.position.z,
+                        height: b.userData.height,
+                        width: b.userData.width,
+                        depth: b.userData.depth
+                    }));
+            }
+
+            if (candidates.length === 0) return;
+
+            const target = candidates[Math.floor(Math.random() * candidates.length)];
+            const party = mkRooftopParty(
+                target.building,
+                target.x,
+                target.z,
+                target.height,
+                target.width,
+                target.depth
+            );
+
+            rooftopParties.push(party);
+            scene.add(party);
+        }
+
         function mkBillboards() {
             const tallBuildings = buildings.filter(b => b.userData.height > 45);
             const selected = tallBuildings.sort(() => Math.random() - 0.5).slice(0, 3);
