@@ -158,10 +158,9 @@
         };
 
         const PERFORMER_CFG = {
-            maxPerformers: 5,           // Maximum simultaneous performers
-            spawnInterval: 20,          // Seconds between spawn checks
-            spawnChance: 0.7,           // Chance to spawn when checked
-            performDuration: [90, 180], // Min/max seconds a performer stays
+            maxPerformers: 1,           // Only one performer at a time
+            spawnInterval: [180, 480],  // Spawn every 3-8 minutes (in seconds)
+            performDuration: 30,        // Perform for 30 seconds
             attractRadius: 15,          // Distance at which pedestrians notice
             crowdRadius: 3,             // Distance crowd stands from performer
             maxCrowd: 8                 // Maximum pedestrians watching one performer
@@ -252,6 +251,7 @@
         let lastEventCheck = 0;
         let eventCooldown = 0;
         let lastPerformerCheck = 0;
+        let nextPerformerSpawn = 0; // Time for next performer to appear
         
         // Garbage truck system
         let garbageTruck = null;
@@ -320,10 +320,9 @@
             mkSecrets();
             mkFlocks();
 
-            // Spawn initial performers (multiple to ensure visibility)
-            spawnPerformer();
-            spawnPerformer();
-            spawnPerformer();
+            // Schedule first performer spawn (3-8 minutes from start)
+            const [minInterval, maxInterval] = PERFORMER_CFG.spawnInterval;
+            nextPerformerSpawn = minInterval + Math.random() * (maxInterval - minInterval);
 
             prog(98, 'Systems...');
             setupMM();
@@ -1891,6 +1890,49 @@
             const stringLights = mkStringLights(w * 0.8, d * 0.6);
             stringLights.position.set(0, 2.5, 0);
             g.add(stringLights);
+
+            // "Jill's Bar" banner on first bar only (umbrella-sized ~1.5 units)
+            if (!mkRooftopBar.bannerAdded) {
+                mkRooftopBar.bannerAdded = true;
+                const bannerGroup = new THREE.Group();
+
+                // Banner pole
+                const poleMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
+                const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 2, 8), poleMat);
+                pole.position.y = 1;
+                bannerGroup.add(pole);
+
+                // Banner fabric (umbrella-sized, about 1.5 wide)
+                const bannerMat = new THREE.MeshStandardMaterial({ color: 0x8b0000, side: THREE.DoubleSide });
+                const banner = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.6), bannerMat);
+                banner.position.y = 1.8;
+                bannerGroup.add(banner);
+
+                // Text "Jill's Bar" using canvas texture
+                const canvas = document.createElement('canvas');
+                canvas.width = 256;
+                canvas.height = 100;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#8b0000';
+                ctx.fillRect(0, 0, 256, 100);
+                ctx.fillStyle = '#ffdd00';
+                ctx.font = 'bold 36px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText("Jill's Bar", 128, 50);
+                const texture = new THREE.CanvasTexture(canvas);
+                const textBanner = new THREE.Mesh(
+                    new THREE.PlaneGeometry(1.5, 0.6),
+                    new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide })
+                );
+                textBanner.position.y = 1.8;
+                textBanner.position.z = 0.01;
+                bannerGroup.add(textBanner);
+
+                // Position near bar counter
+                bannerGroup.position.set(barW / 2 + 0.5, 0, -d * 0.3);
+                g.add(bannerGroup);
+            }
 
             // Animated people - lots of activity at the bar!
             const numPeople = 8 + Math.floor(Math.random() * 6); // 8-13 people
@@ -6304,16 +6346,16 @@
             performer.position.set(x, 0.15, z);
             performer.rotation.y = facing;
 
-            const duration = PERFORMER_CFG.performDuration[0] +
-                Math.random() * (PERFORMER_CFG.performDuration[1] - PERFORMER_CFG.performDuration[0]);
-
             performer.userData.spawnTime = clock.getElapsedTime();
-            performer.userData.duration = duration;
+            performer.userData.duration = PERFORMER_CFG.performDuration;
             performer.userData.block = { x: bx, z: bz };
             performer.userData.watchers = []; // Track watching pedestrians
 
             performers.push(performer);
             scene.add(performer);
+
+            // Show notification
+            notify('🎭 Watch street performers!', 3000);
         }
 
         function updRain() {
@@ -7213,12 +7255,12 @@
         }
 
         function updPerformers(t) {
-            // Check for new performer spawn
-            if (t - lastPerformerCheck > PERFORMER_CFG.spawnInterval) {
-                lastPerformerCheck = t;
-                if (Math.random() < PERFORMER_CFG.spawnChance) {
-                    spawnPerformer();
-                }
+            // Check for new performer spawn (every 3-8 minutes)
+            if (performers.length === 0 && t > nextPerformerSpawn) {
+                spawnPerformer();
+                // Schedule next spawn 3-8 minutes from now
+                const [minInterval, maxInterval] = PERFORMER_CFG.spawnInterval;
+                nextPerformerSpawn = t + minInterval + Math.random() * (maxInterval - minInterval);
             }
 
             // Update existing performers
