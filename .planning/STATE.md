@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2025-01-23)
 
 **Core value:** The city feels alive and worth watching
-**Current focus:** Phase 1 - Day/Night Cycle
+**Current focus:** Phase 2 - Bird Flocks
 
 ## Current Position
 
@@ -65,7 +65,8 @@ See: .planning/PROJECT.md (updated 2025-01-23)
 
 ## Open Issues
 
-None yet.
+- Tour bus behavior: stops for long times, flips to other side of street (pre-existing)
+- Bus stop accumulation: pedestrians wait but buses don't pick them up (pre-existing)
 
 ## Key Decisions Log
 

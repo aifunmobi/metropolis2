@@ -7,12 +7,12 @@
 
 ### Day/Night Cycle
 
-- [ ] **DAY-01**: Sky color transitions smoothly from dawn to day to dusk to night
-- [ ] **DAY-02**: Sun/moon positioned in sky based on time of day
-- [ ] **DAY-03**: Ambient and directional lighting changes with time of day
-- [ ] **DAY-04**: Streetlights turn on at dusk and off at dawn
-- [ ] **DAY-05**: Vehicle headlights activate during night hours
-- [ ] **DAY-06**: Building window lights increase at night, decrease during day
+- [x] **DAY-01**: Sky color transitions smoothly from dawn to day to dusk to night
+- [x] **DAY-02**: Sun/moon positioned in sky based on time of day
+- [x] **DAY-03**: Ambient and directional lighting changes with time of day
+- [x] **DAY-04**: Streetlights turn on at dusk and off at dawn
+- [x] **DAY-05**: Vehicle headlights activate during night hours
+- [x] **DAY-06**: Building window lights increase at night, decrease during day
 
 ### Bird Flocks
 
@@ -74,12 +74,12 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DAY-01 | Phase 1 | Pending |
-| DAY-02 | Phase 1 | Pending |
-| DAY-03 | Phase 1 | Pending |
-| DAY-04 | Phase 1 | Pending |
-| DAY-05 | Phase 1 | Pending |
-| DAY-06 | Phase 1 | Pending |
+| DAY-01 | Phase 1 | Complete |
+| DAY-02 | Phase 1 | Complete |
+| DAY-03 | Phase 1 | Complete |
+| DAY-04 | Phase 1 | Complete |
+| DAY-05 | Phase 1 | Complete |
+| DAY-06 | Phase 1 | Complete |
 | BIRD-01 | Phase 2 | Pending |
 | BIRD-02 | Phase 2 | Pending |
 | BIRD-03 | Phase 2 | Pending |
