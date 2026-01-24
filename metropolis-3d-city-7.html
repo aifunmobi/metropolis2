@@ -1821,8 +1821,8 @@
             // Bar counter
             const barMat = new THREE.MeshStandardMaterial({ color: 0x5d4e37, roughness: 0.6 });
             const barW = Math.min(w * 0.7, 4);
-            const bar = new THREE.Mesh(new THREE.BoxGeometry(barW, 1, 0.5), barMat);
-            bar.position.set(0, 0.5, -d * 0.3);
+            const bar = new THREE.Mesh(new THREE.BoxGeometry(barW, 0.6, 0.5), barMat);
+            bar.position.set(0, 0.3, -d * 0.3);
             bar.castShadow = true;
             g.add(bar);
 
@@ -1831,28 +1831,28 @@
                 new THREE.BoxGeometry(barW + 0.1, 0.08, 0.6),
                 new THREE.MeshStandardMaterial({ color: 0x8b7355, roughness: 0.5 })
             );
-            barTop.position.set(0, 1.04, -d * 0.3);
+            barTop.position.set(0, 0.64, -d * 0.3);
             g.add(barTop);
 
-            // Bar stools
+            // Bar stools (shorter to match lower bar)
             const stoolMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
             const numStools = Math.floor(barW / 0.8);
             for (let i = 0; i < numStools; i++) {
                 const stoolX = -barW / 2 + 0.5 + i * (barW - 1) / Math.max(numStools - 1, 1);
                 // Stool base
                 const base = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.18, 0.05, 12), stoolMat);
-                base.position.set(stoolX, 0.025, -d * 0.3 + 0.6);
+                base.position.set(stoolX, 0.025, -d * 0.3 + 0.7);
                 g.add(base);
                 // Stool pole
-                const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.6, 8), stoolMat);
-                pole.position.set(stoolX, 0.35, -d * 0.3 + 0.6);
+                const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.35, 8), stoolMat);
+                pole.position.set(stoolX, 0.2, -d * 0.3 + 0.7);
                 g.add(pole);
                 // Stool seat
                 const seat = new THREE.Mesh(
                     new THREE.CylinderGeometry(0.15, 0.12, 0.08, 12),
                     new THREE.MeshStandardMaterial({ color: 0x8b0000 })
                 );
-                seat.position.set(stoolX, 0.68, -d * 0.3 + 0.6);
+                seat.position.set(stoolX, 0.42, -d * 0.3 + 0.7);
                 g.add(seat);
             }
 
@@ -1863,7 +1863,7 @@
                     new THREE.CylinderGeometry(0.04, 0.05, 0.25, 8),
                     new THREE.MeshStandardMaterial({ color: bottleColors[i % bottleColors.length], transparent: true, opacity: 0.8 })
                 );
-                bottle.position.set(-barW / 2 + 0.3 + i * 0.4, 1.2, -d * 0.3 - 0.1);
+                bottle.position.set(-barW / 2 + 0.3 + i * 0.4, 0.8, -d * 0.3 - 0.1);
                 g.add(bottle);
             }
 
@@ -1935,12 +1935,15 @@
             }
 
             // Animated people - lots of activity at the bar!
+            // Keep people in front of bar (positive z area) to avoid walking into bar counter
             const numPeople = 8 + Math.floor(Math.random() * 6); // 8-13 people
             const people = [];
+            const barZ = -d * 0.3; // Bar counter z position
             for (let i = 0; i < numPeople; i++) {
                 const person = mkAnimatedRooftopPerson();
                 const px = (Math.random() - 0.5) * (w - 1);
-                const pz = (Math.random() - 0.5) * (d - 1);
+                // Spawn in front of bar only (between bar and front edge)
+                const pz = barZ + 1 + Math.random() * (d * 0.5 - 1);
                 person.position.set(px, 0, pz);
                 person.userData.baseX = px;
                 person.userData.baseZ = pz;
@@ -1950,7 +1953,8 @@
                 people.push(person);
             }
             g.userData.people = people;
-            g.userData.bounds = { w: w - 1, d: d - 1 }; // Store bounds for clamping
+            // Restrict bounds to area in front of bar
+            g.userData.bounds = { w: w - 1, d: d * 0.5, minZ: barZ + 0.8 };
             rooftopAmenities.push(g);
 
             return g;
@@ -2416,7 +2420,9 @@
 
                         // Clamp to rooftop bounds - keep people on the roof!
                         newX = Math.max(-halfW, Math.min(halfW, newX));
-                        newZ = Math.max(-halfD, Math.min(halfD, newZ));
+                        // Use minZ if set (for bars to keep people away from counter)
+                        const minZ = bounds.minZ !== undefined ? bounds.minZ : -halfD;
+                        newZ = Math.max(minZ, Math.min(halfD, newZ));
 
                         person.position.x = newX;
                         person.position.z = newZ;
