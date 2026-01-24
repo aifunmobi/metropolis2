@@ -1891,47 +1891,31 @@
             stringLights.position.set(0, 2.5, 0);
             g.add(stringLights);
 
-            // "Jill's Bar" banner on first bar only (umbrella-sized ~1.5 units)
-            if (!mkRooftopBar.bannerAdded) {
-                mkRooftopBar.bannerAdded = true;
-                const bannerGroup = new THREE.Group();
+            // "Jill's Bar" text on front of bar counter (first bar only)
+            if (!mkRooftopBar.signAdded) {
+                mkRooftopBar.signAdded = true;
 
-                // Banner pole
-                const poleMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
-                const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 2, 8), poleMat);
-                pole.position.y = 1;
-                bannerGroup.add(pole);
-
-                // Banner fabric (umbrella-sized, about 1.5 wide)
-                const bannerMat = new THREE.MeshStandardMaterial({ color: 0x8b0000, side: THREE.DoubleSide });
-                const banner = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.6), bannerMat);
-                banner.position.y = 1.8;
-                bannerGroup.add(banner);
-
-                // Text "Jill's Bar" using canvas texture
+                // Create canvas texture with "Jill's Bar" text
                 const canvas = document.createElement('canvas');
                 canvas.width = 256;
-                canvas.height = 100;
+                canvas.height = 64;
                 const ctx = canvas.getContext('2d');
-                ctx.fillStyle = '#8b0000';
-                ctx.fillRect(0, 0, 256, 100);
-                ctx.fillStyle = '#ffdd00';
-                ctx.font = 'bold 36px Arial';
+                ctx.fillStyle = '#5d4e37'; // Match bar color
+                ctx.fillRect(0, 0, 256, 64);
+                ctx.fillStyle = '#ffdd00'; // Gold text
+                ctx.font = 'bold 28px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText("Jill's Bar", 128, 50);
-                const texture = new THREE.CanvasTexture(canvas);
-                const textBanner = new THREE.Mesh(
-                    new THREE.PlaneGeometry(1.5, 0.6),
-                    new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide })
-                );
-                textBanner.position.y = 1.8;
-                textBanner.position.z = 0.01;
-                bannerGroup.add(textBanner);
+                ctx.fillText("Jill's Bar", 128, 32);
 
-                // Position near bar counter
-                bannerGroup.position.set(barW / 2 + 0.5, 0, -d * 0.3);
-                g.add(bannerGroup);
+                const texture = new THREE.CanvasTexture(canvas);
+                const sign = new THREE.Mesh(
+                    new THREE.PlaneGeometry(barW * 0.8, 0.25),
+                    new THREE.MeshBasicMaterial({ map: texture })
+                );
+                // Position on front face of bar counter
+                sign.position.set(0, 0.3, -d * 0.3 + 0.26);
+                g.add(sign);
             }
 
             // Animated people - lots of activity at the bar!
