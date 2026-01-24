@@ -3528,6 +3528,10 @@
                 // Add big SUBWAY sign on the sidewalk (offset from track)
                 const subwaySign = mkSubwaySign();
                 subwaySign.position.set(station.x, 0, station.z - GRID.roadWidth/2 - 2);
+                // Rotate every other sign by 90 degrees
+                if (stationNum % 2 === 0) {
+                    subwaySign.rotation.y = Math.PI / 2;
+                }
                 scene.add(subwaySign);
             });
 
