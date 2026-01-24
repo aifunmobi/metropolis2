@@ -153,6 +153,7 @@
         let allWindows = [];
         let billboards = [];
         let streetlights = [];
+        let activeRooftops = [];  // Buildings with rooftop features (gardens/pools) for figure placement
         let vel = null, baseSpd = 0.5, boost = false;
         let raining = false, rain = null;
         
@@ -623,6 +624,19 @@
                         
                         buildings.push(b);
                         scene.add(b);
+
+                        // Track buildings with rooftop features for figure placement in Plan 02
+                        if (b.userData.hasRooftopFeature) {
+                            activeRooftops.push({
+                                building: b,
+                                x: bPosX,
+                                z: bPosZ,
+                                height: h,
+                                width: w,
+                                depth: d,
+                                type: b.userData.rooftopType
+                            });
+                        }
                     }
                 }
             }
@@ -862,7 +876,140 @@
                 antenna.position.y = h + 4;
                 g.add(antenna);
             }
-            
+
+            // Add rooftop features to some buildings
+            // ~20% of tall buildings (h > 25) get gardens
+            if (h > 25 && Math.random() < 0.20) {
+                const garden = mkRooftopGarden(w, d, h);
+                g.add(garden);
+                g.userData.hasRooftopFeature = true;
+                g.userData.rooftopType = 'garden';
+            }
+            // ~10% of remaining buildings get pools (only if no garden, and h > 20)
+            else if (h > 20 && Math.random() < 0.10) {
+                const pool = mkRooftopPool(w, d, h);
+                g.add(pool);
+                g.userData.hasRooftopFeature = true;
+                g.userData.rooftopType = 'pool';
+            }
+
+            return g;
+        }
+
+        // Create a rooftop garden with grass, planters, and shrubs
+        function mkRooftopGarden(w, d, h) {
+            const g = new THREE.Group();
+            g.position.y = h;
+
+            // Green grass patch - slightly smaller than roof
+            const grassMat = new THREE.MeshStandardMaterial({ color: 0x4a7c4e, roughness: 0.9 });
+            const grass = new THREE.Mesh(new THREE.PlaneGeometry(w - 1, d - 1), grassMat);
+            grass.rotation.x = -Math.PI / 2;
+            grass.position.y = 0.01;
+            grass.receiveShadow = true;
+            g.add(grass);
+
+            // Add 2-4 planter boxes on edges
+            const numPlanters = 2 + Math.floor(Math.random() * 3);
+            const planterMat = new THREE.MeshStandardMaterial({ color: 0x8b4513, roughness: 0.8 });
+            const shrubMat = new THREE.MeshStandardMaterial({ color: 0x2d5a2d, roughness: 0.9 });
+
+            for (let i = 0; i < numPlanters; i++) {
+                const planter = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.4, 0.8), planterMat);
+                planter.castShadow = true;
+                planter.receiveShadow = true;
+
+                // Position on edges with some randomness
+                const edge = Math.floor(Math.random() * 4);
+                const offset = (Math.random() - 0.5) * 0.6;
+                if (edge === 0) planter.position.set(offset * (w - 2), 0.2, (d - 2) / 2 * 0.8);
+                else if (edge === 1) planter.position.set(offset * (w - 2), 0.2, -(d - 2) / 2 * 0.8);
+                else if (edge === 2) planter.position.set((w - 2) / 2 * 0.8, 0.2, offset * (d - 2));
+                else planter.position.set(-(w - 2) / 2 * 0.8, 0.2, offset * (d - 2));
+
+                g.add(planter);
+
+                // Add shrub on top of some planters (1-3 shrubs total)
+                if (i < 1 + Math.floor(Math.random() * 3)) {
+                    const shrub = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), shrubMat);
+                    shrub.position.copy(planter.position);
+                    shrub.position.y = 0.55;
+                    shrub.castShadow = true;
+                    g.add(shrub);
+                }
+            }
+
+            return g;
+        }
+
+        // Create a rooftop pool with water, rim, and loungers
+        function mkRooftopPool(w, d, h) {
+            const g = new THREE.Group();
+            g.position.y = h;
+
+            // Pool basin (recessed slightly)
+            const poolW = w * 0.6;
+            const poolD = d * 0.4;
+            const basinMat = new THREE.MeshStandardMaterial({ color: 0x1a5276, roughness: 0.5 });
+            const basin = new THREE.Mesh(new THREE.BoxGeometry(poolW, 0.3, poolD), basinMat);
+            basin.position.y = -0.1;
+            basin.castShadow = true;
+            basin.receiveShadow = true;
+            g.add(basin);
+
+            // Water surface - bright blue with transparency
+            const waterMat = new THREE.MeshStandardMaterial({
+                color: 0x4fc3f7,
+                roughness: 0.1,
+                metalness: 0.3,
+                opacity: 0.8,
+                transparent: true
+            });
+            const water = new THREE.Mesh(new THREE.PlaneGeometry(poolW - 0.1, poolD - 0.1), waterMat);
+            water.rotation.x = -Math.PI / 2;
+            water.position.y = 0.05;
+            g.add(water);
+
+            // Pool edge/rim - white border
+            const rimMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.6 });
+            const rimThickness = 0.15;
+
+            // Front and back rims
+            const rimFront = new THREE.Mesh(new THREE.BoxGeometry(poolW + rimThickness * 2, 0.1, rimThickness), rimMat);
+            rimFront.position.set(0, 0.05, poolD / 2 + rimThickness / 2);
+            rimFront.castShadow = true;
+            g.add(rimFront);
+
+            const rimBack = new THREE.Mesh(new THREE.BoxGeometry(poolW + rimThickness * 2, 0.1, rimThickness), rimMat);
+            rimBack.position.set(0, 0.05, -poolD / 2 - rimThickness / 2);
+            rimBack.castShadow = true;
+            g.add(rimBack);
+
+            // Left and right rims
+            const rimLeft = new THREE.Mesh(new THREE.BoxGeometry(rimThickness, 0.1, poolD), rimMat);
+            rimLeft.position.set(-poolW / 2 - rimThickness / 2, 0.05, 0);
+            rimLeft.castShadow = true;
+            g.add(rimLeft);
+
+            const rimRight = new THREE.Mesh(new THREE.BoxGeometry(rimThickness, 0.1, poolD), rimMat);
+            rimRight.position.set(poolW / 2 + rimThickness / 2, 0.05, 0);
+            rimRight.castShadow = true;
+            g.add(rimRight);
+
+            // Add 2 pool loungers
+            const loungerMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.7 });
+            for (let i = 0; i < 2; i++) {
+                const lounger = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.1, 1.5), loungerMat);
+                lounger.position.set(
+                    (i === 0 ? -1 : 1) * (poolW / 2 + 0.8),
+                    0.05,
+                    (Math.random() - 0.5) * (poolD * 0.5)
+                );
+                lounger.castShadow = true;
+                lounger.receiveShadow = true;
+                g.add(lounger);
+            }
+
             return g;
         }
 
