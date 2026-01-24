@@ -23,6 +23,13 @@
 
 **Requirements:** DAY-01, DAY-02, DAY-03, DAY-04, DAY-05, DAY-06
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Time system with sky color and lighting transitions
+- [ ] 01-02-PLAN.md — Sun and moon positioning in sky
+- [ ] 01-03-PLAN.md — Streetlights, headlights, and window light adjustment
+
 **Success Criteria:**
 1. User observes gradual sky color change from blue (day) to orange (dusk) to dark blue (night)
 2. Sun visible during day, moon during night, positioned correctly in sky
