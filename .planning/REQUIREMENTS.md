@@ -39,10 +39,10 @@
 
 ### Rooftop Activity
 
-- [ ] **ROOF-01**: Some buildings have visible rooftop gardens
-- [ ] **ROOF-02**: Some buildings have rooftop swimming pools
-- [ ] **ROOF-03**: Occasional rooftop parties with string lights
-- [ ] **ROOF-04**: Small figures visible on active rooftops
+- [x] **ROOF-01**: Some buildings have visible rooftop gardens
+- [x] **ROOF-02**: Some buildings have rooftop swimming pools
+- [x] **ROOF-03**: Occasional rooftop parties with string lights
+- [x] **ROOF-04**: Small figures visible on active rooftops
 
 ## v2 Requirements
 
@@ -94,10 +94,10 @@
 | SUB-03 | Phase 4 | Complete |
 | SUB-04 | Phase 4 | Complete |
 | SUB-05 | Phase 4 | Complete |
-| ROOF-01 | Phase 5 | Pending |
-| ROOF-02 | Phase 5 | Pending |
-| ROOF-03 | Phase 5 | Pending |
-| ROOF-04 | Phase 5 | Pending |
+| ROOF-01 | Phase 5 | Complete |
+| ROOF-02 | Phase 5 | Complete |
+| ROOF-03 | Phase 5 | Complete |
+| ROOF-04 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 24 total
@@ -106,4 +106,4 @@
 
 ---
 *Requirements defined: 2025-01-23*
-*Last updated: 2026-01-24 after Phase 4 completion*
+*Last updated: 2026-01-24 after Phase 5 completion — v1.0 COMPLETE*

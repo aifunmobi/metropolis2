@@ -13,7 +13,7 @@
 | 2 | Bird Flocks | Organic bird movement adds life to the sky | BIRD-01 to BIRD-04 | ✓ Complete |
 | 3 | Street Performers | Sidewalk entertainment draws crowds | PERF-01 to PERF-05 | ✓ Complete |
 | 4 | Subway System | Underground transit adds infrastructure depth | SUB-01 to SUB-05 | ✓ Complete |
-| 5 | Rooftop Life | Activity visible from above | ROOF-01 to ROOF-04 | ○ Pending |
+| 5 | Rooftop Life | Activity visible from above | ROOF-01 to ROOF-04 | ✓ Complete |
 
 ---
 
@@ -116,6 +116,12 @@ Plans:
 
 **Requirements:** ROOF-01, ROOF-02, ROOF-03, ROOF-04
 
+**Plans:** 2 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Rooftop gardens and pools with static features
+- [ ] 05-02-PLAN.md — Rooftop parties with string lights and animated figures
+
 **Success Criteria:**
 1. ~20% of tall buildings have visible rooftop gardens (green patches, planters)
 2. ~10% of buildings have visible rooftop pools (blue rectangles)
@@ -133,9 +139,9 @@ Phase 1: ██████████ 100%
 Phase 2: ██████████ 100%
 Phase 3: ██████████ 100%
 Phase 4: ██████████ 100%
-Phase 5: ░░░░░░░░░░ 0%
+Phase 5: ██████████ 100%
 ─────────────────────
-Overall: ████████░░ 80%
+Overall: ██████████ 100%  ✓ MILESTONE COMPLETE
 ```
 
 ---
