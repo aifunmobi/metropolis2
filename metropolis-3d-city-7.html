@@ -126,6 +126,16 @@
             takeoffSpeed: 0.12             // Speed when taking off
         };
 
+        const PERFORMER_CFG = {
+            maxPerformers: 3,           // Maximum simultaneous performers
+            spawnInterval: 45,          // Seconds between spawn checks
+            spawnChance: 0.5,           // Chance to spawn when checked
+            performDuration: [60, 120], // Min/max seconds a performer stays
+            attractRadius: 12,          // Distance at which pedestrians notice
+            crowdRadius: 3,             // Distance crowd stands from performer
+            maxCrowd: 8                 // Maximum pedestrians watching one performer
+        };
+
         let scene, cam, renderer, clock;
         let sunLight = null;      // Directional light reference
         let ambientLight = null;  // Ambient light reference
@@ -162,6 +172,10 @@
 
         // Bird flock system
         let flocks = [];  // Array of flock groups, each containing birds[]
+
+        // Street performer system
+        let performers = [];
+
         let lastWindowToggle = 0;
         let lastBikeSpawn = 0;
         let policeChaseTarget = null;
@@ -176,6 +190,7 @@
         let eventEntities = [];
         let lastEventCheck = 0;
         let eventCooldown = 0;
+        let lastPerformerCheck = 0;
         
         // Garbage truck system
         let garbageTruck = null;
