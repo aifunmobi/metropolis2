@@ -157,15 +157,6 @@
             takeoffSpeed: 0.12             // Speed when taking off
         };
 
-        const PERFORMER_CFG = {
-            maxPerformers: 1,           // Only one performer at a time
-            spawnInterval: [180, 480],  // Spawn every 3-8 minutes (in seconds)
-            performDuration: 30,        // Perform for 30 seconds
-            attractRadius: 15,          // Distance at which pedestrians notice
-            crowdRadius: 3,             // Distance crowd stands from performer
-            maxCrowd: 8                 // Maximum pedestrians watching one performer
-        };
-
         const SUBWAY_CFG = {
             trackHeight: 6,           // Height of elevated track above ground
             trainSpeed: 0.12,         // Train movement speed
@@ -221,9 +212,6 @@
         // Bird flock system
         let flocks = [];  // Array of flock groups, each containing birds[]
 
-        // Street performer system
-        let performers = [];
-
         // Subway system
         let subwayTrain = null;
         let subwayStations = [];
@@ -250,9 +238,7 @@
         let eventEntities = [];
         let lastEventCheck = 0;
         let eventCooldown = 0;
-        let lastPerformerCheck = 0;
-        let nextPerformerSpawn = 0; // Time for next performer to appear
-        
+
         // Garbage truck system
         let garbageTruck = null;
         let lastGarbageTruck = 0;
@@ -319,9 +305,6 @@
             prog(90, 'Secrets...');
             mkSecrets();
             mkFlocks();
-
-            // Schedule first performer spawn (10 seconds for first, then 3-8 minutes after)
-            nextPerformerSpawn = 10; // First performer appears quickly for visibility
 
             prog(98, 'Systems...');
             setupMM();
@@ -2944,7 +2927,6 @@
             const eligiblePeds = peds.filter(p =>
                 p.userData.state === 'walking' &&
                 !p.userData.waitingForBus &&
-                !p.userData.watchingPerformer &&
                 p.userData.state !== 'toSubwayStation' &&
                 p.userData.state !== 'inSubway'
             );
@@ -4087,49 +4069,6 @@
                 }
             }
 
-            // 15% chance to notice a nearby performer when walking
-            if (Math.random() < 0.15 && p.userData.state === 'walking' && performers.length > 0) {
-                // Find nearest performer within attraction radius
-                let nearestPerformer = null;
-                let nearestDist = PERFORMER_CFG.attractRadius;
-
-                for (const performer of performers) {
-                    // Skip if performer already has max crowd
-                    if (performer.userData.watchers.length >= PERFORMER_CFG.maxCrowd) continue;
-
-                    const dx = performer.position.x - p.position.x;
-                    const dz = performer.position.z - p.position.z;
-                    const dist = Math.sqrt(dx * dx + dz * dz);
-
-                    if (dist < nearestDist) {
-                        nearestDist = dist;
-                        nearestPerformer = performer;
-                    }
-                }
-
-                if (nearestPerformer) {
-                    // Calculate semicircle position around performer
-                    const crowdAngle = nearestPerformer.rotation.y + Math.PI; // Face same way as performer faces
-                    const angleSpread = Math.PI * 0.8; // 144 degree semicircle
-                    const watcherIndex = nearestPerformer.userData.watchers.length;
-                    const angleOffset = (watcherIndex / PERFORMER_CFG.maxCrowd - 0.5) * angleSpread;
-                    const watchAngle = crowdAngle + angleOffset;
-
-                    const watchX = nearestPerformer.position.x + Math.sin(watchAngle) * PERFORMER_CFG.crowdRadius;
-                    const watchZ = nearestPerformer.position.z + Math.cos(watchAngle) * PERFORMER_CFG.crowdRadius;
-
-                    p.userData.state = 'towardPerformer';
-                    p.userData.target = new THREE.Vector3(watchX, 0.15, watchZ);
-                    p.userData.watchingPerformer = nearestPerformer;
-                    p.userData.watchDuration = 10 + Math.random() * 20; // 10-30 seconds watching
-                    p.userData.watchStartTime = null; // Set when arrived
-
-                    // Add to performer's watcher list
-                    nearestPerformer.userData.watchers.push(p);
-                    return;
-                }
-            }
-
             // 8% chance to go to subway station when walking
             if (Math.random() < 0.08 && p.userData.state === 'walking' && subwayStations.length > 0) {
                 // Find nearest subway station
@@ -4794,9 +4733,6 @@
             for (let i = peds.length - 1; i >= 0; i--) {
                 const ped = peds[i];
                 if (!ped.visible) continue;
-
-                // Skip pedestrians watching performers
-                if (ped.userData.state === 'watchingPerformer' || ped.userData.state === 'towardPerformer') continue;
 
                 // Skip pedestrians using subway
                 if (ped.userData.state === 'toSubwayStation' || ped.userData.state === 'inSubway') continue;
@@ -6001,169 +5937,6 @@
             return g;
         }
 
-        function mkMusician() {
-            const g = new THREE.Group();
-
-            // Body - distinctive colored outfit
-            const body = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.18, 0.22, 0.7, 8),
-                new THREE.MeshStandardMaterial({ color: 0x8b0000 }) // Dark red performer outfit
-            );
-            body.position.y = 0.45;
-            body.castShadow = true;
-            g.add(body);
-
-            // Head
-            const head = new THREE.Mesh(
-                new THREE.SphereGeometry(0.14, 8, 8),
-                new THREE.MeshStandardMaterial({ color: 0xffcc99 })
-            );
-            head.position.y = 0.95;
-            g.add(head);
-
-            // Beret/hat
-            const hat = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.16, 0.12, 0.08, 8),
-                new THREE.MeshStandardMaterial({ color: 0x111111 })
-            );
-            hat.position.y = 1.08;
-            g.add(hat);
-
-            // Legs
-            const legMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
-            const ll = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.4, 6), legMat);
-            ll.position.set(0.08, 0.2, 0);
-            g.add(ll);
-
-            const rl = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.4, 6), legMat);
-            rl.position.set(-0.08, 0.2, 0);
-            g.add(rl);
-
-            // Guitar body (acoustic guitar shape)
-            const guitarBody = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.25, 0.2, 0.08, 8),
-                new THREE.MeshStandardMaterial({ color: 0xcd853f }) // Wood brown
-            );
-            guitarBody.rotation.x = Math.PI / 2;
-            guitarBody.rotation.z = 0.3;
-            guitarBody.position.set(0.15, 0.55, 0.25);
-            g.add(guitarBody);
-
-            // Guitar neck
-            const guitarNeck = new THREE.Mesh(
-                new THREE.BoxGeometry(0.04, 0.5, 0.03),
-                new THREE.MeshStandardMaterial({ color: 0x8b4513 })
-            );
-            guitarNeck.position.set(0.08, 0.85, 0.28);
-            guitarNeck.rotation.z = 0.2;
-            g.add(guitarNeck);
-
-            // Arms positioned to hold guitar
-            const armMat = new THREE.MeshStandardMaterial({ color: 0xffcc99 });
-            const lArm = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.35, 6), armMat);
-            lArm.position.set(0.22, 0.65, 0.15);
-            lArm.rotation.z = -0.5;
-            lArm.rotation.x = 0.3;
-            g.add(lArm);
-            g.userData.strumArm = lArm; // Reference for animation
-
-            const rArm = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.35, 6), armMat);
-            rArm.position.set(-0.15, 0.75, 0.1);
-            rArm.rotation.z = 0.8;
-            g.add(rArm);
-
-            g.userData.type = 'musician';
-            g.userData.animPhase = Math.random() * Math.PI * 2;
-
-            return g;
-        }
-
-        function mkStatue() {
-            const g = new THREE.Group();
-
-            // Full body - metallic silver/bronze appearance
-            const statueMat = new THREE.MeshStandardMaterial({
-                color: 0xc0c0c0,  // Silver
-                metalness: 0.7,
-                roughness: 0.3
-            });
-
-            // Body in dramatic pose
-            const body = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.18, 0.22, 0.8, 8),
-                statueMat
-            );
-            body.position.y = 0.5;
-            body.castShadow = true;
-            g.add(body);
-
-            // Head
-            const head = new THREE.Mesh(
-                new THREE.SphereGeometry(0.14, 8, 8),
-                statueMat
-            );
-            head.position.y = 1.05;
-            g.add(head);
-
-            // Top hat (classic living statue look)
-            const hatBrim = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.2, 0.2, 0.03, 12),
-                statueMat
-            );
-            hatBrim.position.y = 1.18;
-            g.add(hatBrim);
-
-            const hatTop = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.12, 0.14, 0.25, 12),
-                statueMat
-            );
-            hatTop.position.y = 1.32;
-            g.add(hatTop);
-
-            // Legs - one forward in dramatic pose
-            const ll = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.5, 6), statueMat);
-            ll.position.set(0.08, 0.15, 0.1);
-            ll.rotation.x = 0.2;
-            g.add(ll);
-
-            const rl = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.5, 6), statueMat);
-            rl.position.set(-0.08, 0.15, -0.1);
-            rl.rotation.x = -0.15;
-            g.add(rl);
-
-            // Arms - one raised dramatically
-            const lArm = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.4, 6), statueMat);
-            lArm.position.set(0.25, 0.9, 0);
-            lArm.rotation.z = -1.2; // Arm raised up
-            g.add(lArm);
-
-            const rArm = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.4, 6), statueMat);
-            rArm.position.set(-0.2, 0.7, 0.1);
-            rArm.rotation.z = 0.4;
-            rArm.rotation.x = 0.3;
-            g.add(rArm);
-
-            // Small pedestal/base
-            const base = new THREE.Mesh(
-                new THREE.BoxGeometry(0.8, 0.15, 0.8),
-                new THREE.MeshStandardMaterial({ color: 0x555555 })
-            );
-            base.position.y = 0.075;
-            g.add(base);
-
-            // Tip jar/hat on ground
-            const tipJar = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.12, 0.1, 0.15, 8),
-                new THREE.MeshStandardMaterial({ color: 0x333333 })
-            );
-            tipJar.position.set(0.5, 0.075, 0.3);
-            g.add(tipJar);
-
-            g.userData.type = 'statue';
-
-            return g;
-        }
-
         function mkFlock(size, startPos) {
             const flock = {
                 birds: [],
@@ -6285,66 +6058,6 @@
                 const flock = mkFlock(size, startPos);
                 flocks.push(flock);
             }
-        }
-
-        function spawnPerformer() {
-            if (performers.length >= PERFORMER_CFG.maxPerformers) return;
-
-            // Pick random block
-            const bx = Math.floor(Math.random() * GRID.gridCount);
-            const bz = Math.floor(Math.random() * GRID.gridCount);
-            const blockCenterX = -halfSize + bx * GRID.cellSize + GRID.cellSize / 2;
-            const blockCenterZ = -halfSize + bz * GRID.cellSize + GRID.cellSize / 2;
-            const innerSize = GRID.cellSize - GRID.roadWidth;
-            const swOffset = GRID.sidewalkWidth / 2;
-
-            // Pick random sidewalk side (0=north, 1=south, 2=west, 3=east)
-            const side = Math.floor(Math.random() * 4);
-            let x, z, facing;
-
-            // Position on sidewalk, facing toward the road
-            const alongOffset = (Math.random() - 0.5) * (innerSize - 4);
-
-            if (side === 0) {
-                x = blockCenterX + alongOffset;
-                z = blockCenterZ - innerSize/2 + swOffset;
-                facing = Math.PI; // Face south (toward road)
-            } else if (side === 1) {
-                x = blockCenterX + alongOffset;
-                z = blockCenterZ + innerSize/2 - swOffset;
-                facing = 0; // Face north (toward road)
-            } else if (side === 2) {
-                x = blockCenterX - innerSize/2 + swOffset;
-                z = blockCenterZ + alongOffset;
-                facing = Math.PI / 2; // Face east (toward road)
-            } else {
-                x = blockCenterX + innerSize/2 - swOffset;
-                z = blockCenterZ + alongOffset;
-                facing = -Math.PI / 2; // Face west (toward road)
-            }
-
-            // Check if too close to existing performer
-            for (const p of performers) {
-                const dx = p.position.x - x;
-                const dz = p.position.z - z;
-                if (Math.sqrt(dx * dx + dz * dz) < 20) return; // Too close
-            }
-
-            // Create performer (50% musician, 50% statue)
-            const performer = Math.random() < 0.5 ? mkMusician() : mkStatue();
-            performer.position.set(x, 0.15, z);
-            performer.rotation.y = facing;
-
-            performer.userData.spawnTime = clock.getElapsedTime();
-            performer.userData.duration = PERFORMER_CFG.performDuration;
-            performer.userData.block = { x: bx, z: bz };
-            performer.userData.watchers = []; // Track watching pedestrians
-
-            performers.push(performer);
-            scene.add(performer);
-
-            // Show notification
-            notify('🎭 Watch street performers!', 3000);
         }
 
         function updRain() {
@@ -7243,54 +6956,6 @@
             });
         }
 
-        function updPerformers(t) {
-            // Check for new performer spawn (every 3-8 minutes)
-            if (performers.length === 0 && t > nextPerformerSpawn) {
-                spawnPerformer();
-                // Schedule next spawn 3-8 minutes from now
-                const [minInterval, maxInterval] = PERFORMER_CFG.spawnInterval;
-                nextPerformerSpawn = t + minInterval + Math.random() * (maxInterval - minInterval);
-            }
-
-            // Update existing performers
-            for (let i = performers.length - 1; i >= 0; i--) {
-                const performer = performers[i];
-                const elapsed = t - performer.userData.spawnTime;
-
-                // Check if performance is over
-                if (elapsed > performer.userData.duration) {
-                    // Release watchers back to walking
-                    if (performer.userData.watchers) {
-                        performer.userData.watchers.forEach(ped => {
-                            if (ped.userData.state === 'watchingPerformer') {
-                                ped.userData.state = 'walking';
-                                ped.userData.watchingPerformer = null;
-                                setNewPedTarget(ped);
-                            }
-                        });
-                    }
-                    scene.remove(performer);
-                    performers.splice(i, 1);
-                    continue;
-                }
-
-                // Animate musician strumming
-                if (performer.userData.type === 'musician' && performer.userData.strumArm) {
-                    performer.userData.animPhase += 0.1;
-                    const strum = Math.sin(performer.userData.animPhase * 3) * 0.15;
-                    performer.userData.strumArm.rotation.x = 0.3 + strum;
-                }
-
-                // Statue occasionally "breaks" stillness with tiny movement (living statue effect)
-                if (performer.userData.type === 'statue') {
-                    // Very occasional subtle head movement
-                    if (Math.random() < 0.001) {
-                        performer.children[1].rotation.y = (Math.random() - 0.5) * 0.1;
-                    }
-                }
-            }
-        }
-
         function animate() {
             requestAnimationFrame(animate);
             const dt = clock.getDelta(), t = clock.getElapsedTime();
@@ -7322,7 +6987,6 @@
 
             updCars(t);
             updPeds(t);
-            updPerformers(t);
             updBicycles(t);
             updOmnibus(t);
             updSubway(t);
@@ -8124,90 +7788,6 @@
                         const sw = Math.sin(p.userData.walk) * 0.3;
                         if (p.userData.ll) p.userData.ll.rotation.x = sw;
                         if (p.userData.rl) p.userData.rl.rotation.x = -sw;
-                    }
-                    return;
-                }
-
-                // Handle walking toward performer
-                if (p.userData.state === 'towardPerformer') {
-                    const performer = p.userData.watchingPerformer;
-
-                    // Check if performer left
-                    if (!performer || !performers.includes(performer)) {
-                        p.userData.state = 'walking';
-                        p.userData.watchingPerformer = null;
-                        setNewPedTarget(p);
-                        return;
-                    }
-
-                    const to = p.userData.target.clone().sub(p.position);
-                    to.y = 0;
-                    const d = to.length();
-
-                    if (d < 0.5) {
-                        // Arrived at watching position
-                        p.userData.state = 'watchingPerformer';
-                        p.userData.watchStartTime = t;
-                        // Face the performer
-                        const toPerformer = new THREE.Vector3(
-                            performer.position.x - p.position.x,
-                            0,
-                            performer.position.z - p.position.z
-                        );
-                        p.rotation.y = Math.atan2(toPerformer.x, toPerformer.z);
-                    } else {
-                        // Walk toward watching spot
-                        const dir = to.normalize();
-                        p.position.x += dir.x * p.userData.spd;
-                        p.position.z += dir.z * p.userData.spd;
-                        p.rotation.y = Math.atan2(dir.x, dir.z);
-
-                        // Animate walking
-                        p.userData.walk += 0.15;
-                        const sw = Math.sin(p.userData.walk) * 0.3;
-                        if (p.userData.ll) p.userData.ll.rotation.x = sw;
-                        if (p.userData.rl) p.userData.rl.rotation.x = -sw;
-                    }
-                    return;
-                }
-
-                // Handle watching performer
-                if (p.userData.state === 'watchingPerformer') {
-                    const performer = p.userData.watchingPerformer;
-
-                    // Check if performer left
-                    if (!performer || !performers.includes(performer)) {
-                        p.userData.state = 'walking';
-                        p.userData.watchingPerformer = null;
-                        setNewPedTarget(p);
-                        return;
-                    }
-
-                    // Keep facing the performer (in case they move slightly)
-                    const toPerformer = new THREE.Vector3(
-                        performer.position.x - p.position.x,
-                        0,
-                        performer.position.z - p.position.z
-                    );
-                    p.rotation.y = Math.atan2(toPerformer.x, toPerformer.z);
-
-                    // Stand still - reset leg positions
-                    if (p.userData.ll) p.userData.ll.rotation.x = 0;
-                    if (p.userData.rl) p.userData.rl.rotation.x = 0;
-
-                    // Check if done watching
-                    const watchElapsed = t - p.userData.watchStartTime;
-                    if (watchElapsed > p.userData.watchDuration) {
-                        // Remove from performer's watcher list
-                        const watcherIdx = performer.userData.watchers.indexOf(p);
-                        if (watcherIdx >= 0) {
-                            performer.userData.watchers.splice(watcherIdx, 1);
-                        }
-
-                        p.userData.state = 'walking';
-                        p.userData.watchingPerformer = null;
-                        p.userData.watchStartTime = null;
-                        setNewPedTarget(p);
                     }
                     return;
                 }
