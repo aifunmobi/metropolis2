@@ -1980,6 +1980,10 @@
                 SUBWAY_CFG.trackHeight,
                 subwayStations[0].z
             );
+            // Set initial rotation to face second station
+            const initDx = subwayStations[1].x - subwayStations[0].x;
+            const initDz = subwayStations[1].z - subwayStations[0].z;
+            subwayTrain.rotation.y = Math.atan2(initDx, initDz) - Math.PI / 2;
             scene.add(subwayTrain);
 
             notify('Subway Line now running!', 3000);
@@ -2007,8 +2011,8 @@
                     subwayTrain.position.x += (dx / dist) * speed;
                     subwayTrain.position.z += (dz / dist) * speed;
 
-                    // Rotate to face direction of travel
-                    subwayTrain.rotation.y = Math.atan2(dx, dz);
+                    // Rotate to face direction of travel (train built along X-axis, needs offset)
+                    subwayTrain.rotation.y = Math.atan2(dx, dz) - Math.PI / 2;
                 }
             } else if (subwayTrain.userData.state === 'stopping') {
                 subwayTrain.userData.stopTimer += 0.016;
