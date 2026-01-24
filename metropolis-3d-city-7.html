@@ -1749,12 +1749,14 @@
                 g.add(w);
             });
             
-            const hlMat = new THREE.MeshBasicMaterial({ color: 0xffffee });
+            const hlMat = new THREE.MeshBasicMaterial({ color: 0x333322 }); // Dim when off
+            g.userData.headlights = [];
             [0.35, -0.35].forEach(z => {
-                const hl = new THREE.Mesh(new THREE.CircleGeometry(0.1), hlMat);
+                const hl = new THREE.Mesh(new THREE.CircleGeometry(0.1), hlMat.clone());
                 hl.position.set(1.11, 0.38, z);
                 hl.rotation.y = Math.PI / 2;
                 g.add(hl);
+                g.userData.headlights.push(hl);
             });
             
             const tlMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
@@ -5081,8 +5083,20 @@
                     }
                 }
             }
+
+            // Update headlights based on time of day
+            cars.forEach(car => {
+                if (car.userData.headlights) {
+                    const headlightColor = isNight ? 0xffffee : 0x333322;
+                    car.userData.headlights.forEach(hl => {
+                        if (hl.material) { // Mesh, not light
+                            hl.material.color.setHex(headlightColor);
+                        }
+                    });
+                }
+            });
         }
-        
+
         function spawnTrafficCop(targetCar) {
             const cop = new THREE.Group();
             
