@@ -95,8 +95,19 @@
         };
         
         const CFG = { cars: 10, emergencyVehicles: 2, peds: 40, bikes: 3 };
-        
+
+        const SKY_COLORS = {
+            midnight: 0x0a0a2e,    // Deep dark blue
+            dawn: 0xffb366,        // Orange/pink
+            day: 0x87CEEB,         // Sky blue
+            dusk: 0xff6b4a,        // Orange/red
+            night: 0x1a1a3e        // Dark blue
+        };
+
         let scene, cam, renderer, clock;
+        let sunLight = null;      // Directional light reference
+        let ambientLight = null;  // Ambient light reference
+        let hemiLight = null;     // Hemisphere light reference
         let buildings = [], cars = [], emergencyVehicles = [], peds = [], tlights = [];
         let bicycles = [];
         let buildingEntrances = [];
@@ -114,6 +125,12 @@
         let lastLightning = 0;
         let windDirection = { x: 0, z: 0 };
         let windStrength = 0;
+
+        // Day/night cycle system
+        let timeOfDay = 0.25; // 0-1 where 0=midnight, 0.25=dawn, 0.5=noon, 0.75=dusk
+        let dayNightSpeed = 0.005; // How fast time passes (full cycle in ~200 seconds at 60fps)
+        let isNight = false; // Computed from timeOfDay for quick checks
+
         let yaw = 0, pitch = -0.3, keys = {}, discoveries = new Set();
         let secrets = [], mmCtx;
         let lastWindowToggle = 0;
@@ -216,22 +233,24 @@
         }
 
         function mkLighting() {
-            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-            
-            const sun = new THREE.DirectionalLight(0xfffacd, 1.2);
-            sun.position.set(80, 120, 60);
-            sun.castShadow = true;
-            sun.shadow.mapSize.width = 2048;
-            sun.shadow.mapSize.height = 2048;
-            sun.shadow.camera.near = 10;
-            sun.shadow.camera.far = 300;
-            sun.shadow.camera.left = -120;
-            sun.shadow.camera.right = 120;
-            sun.shadow.camera.top = 120;
-            sun.shadow.camera.bottom = -120;
-            scene.add(sun);
-            
-            scene.add(new THREE.HemisphereLight(0x87CEEB, 0x3d5c3d, 0.5));
+            ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            sunLight = new THREE.DirectionalLight(0xfffacd, 1.2);
+            sunLight.position.set(80, 120, 60);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 2048;
+            sunLight.shadow.mapSize.height = 2048;
+            sunLight.shadow.camera.near = 10;
+            sunLight.shadow.camera.far = 300;
+            sunLight.shadow.camera.left = -120;
+            sunLight.shadow.camera.right = 120;
+            sunLight.shadow.camera.top = 120;
+            sunLight.shadow.camera.bottom = -120;
+            scene.add(sunLight);
+
+            hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x3d5c3d, 0.5);
+            scene.add(hemiLight);
         }
 
         function mkCityLayout() {
