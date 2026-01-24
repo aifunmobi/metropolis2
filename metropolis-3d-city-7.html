@@ -320,9 +320,8 @@
             mkSecrets();
             mkFlocks();
 
-            // Schedule first performer spawn (3-8 minutes from start)
-            const [minInterval, maxInterval] = PERFORMER_CFG.spawnInterval;
-            nextPerformerSpawn = minInterval + Math.random() * (maxInterval - minInterval);
+            // Schedule first performer spawn (10 seconds for first, then 3-8 minutes after)
+            nextPerformerSpawn = 10; // First performer appears quickly for visibility
 
             prog(98, 'Systems...');
             setupMM();
