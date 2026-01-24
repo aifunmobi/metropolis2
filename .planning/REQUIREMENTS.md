@@ -23,11 +23,11 @@
 
 ### Street Performers
 
-- [ ] **PERF-01**: Street performers appear at random sidewalk locations
-- [ ] **PERF-02**: Nearby pedestrians are attracted to performers
-- [ ] **PERF-03**: Crowds form in semicircle around performers
-- [ ] **PERF-04**: Pedestrians watch for a duration then continue walking
-- [ ] **PERF-05**: Performer types include musician and statue performer
+- [x] **PERF-01**: Street performers appear at random sidewalk locations
+- [x] **PERF-02**: Nearby pedestrians are attracted to performers
+- [x] **PERF-03**: Crowds form in semicircle around performers
+- [x] **PERF-04**: Pedestrians watch for a duration then continue walking
+- [x] **PERF-05**: Performer types include musician and statue performer
 
 ### Subway System
 
@@ -84,11 +84,11 @@
 | BIRD-02 | Phase 2 | Complete |
 | BIRD-03 | Phase 2 | Complete |
 | BIRD-04 | Phase 2 | Complete |
-| PERF-01 | Phase 3 | Pending |
-| PERF-02 | Phase 3 | Pending |
-| PERF-03 | Phase 3 | Pending |
-| PERF-04 | Phase 3 | Pending |
-| PERF-05 | Phase 3 | Pending |
+| PERF-01 | Phase 3 | Complete |
+| PERF-02 | Phase 3 | Complete |
+| PERF-03 | Phase 3 | Complete |
+| PERF-04 | Phase 3 | Complete |
+| PERF-05 | Phase 3 | Complete |
 | SUB-01 | Phase 4 | Pending |
 | SUB-02 | Phase 4 | Pending |
 | SUB-03 | Phase 4 | Pending |
