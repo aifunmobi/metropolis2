@@ -212,6 +212,7 @@
             
             prog(70, 'Traffic system...');
             mkTrafficLights();
+            mkStreetlights();
             mkCars();
             mkEmergencyVehicles();
             mkBuses();
@@ -430,6 +431,96 @@
                         crosswalks.push({ x: ix + hw + 3, z: iz, axis: 'z', width: GRID.roadWidth });
                     }
                 }
+            }
+        }
+
+        function mkStreetlights() {
+            const poleHeight = 6;
+            const armLength = 2;
+            const poleMat = new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.8 });
+            const bulbMat = new THREE.MeshBasicMaterial({ color: 0x222211 }); // Off by default
+
+            // Place streetlights along all roads
+            for (let i = 0; i <= GRID.gridCount; i++) {
+                const roadPos = -halfSize + i * GRID.cellSize;
+
+                // Horizontal roads (along X axis)
+                for (let x = -halfSize + 8; x < halfSize - 4; x += 16) {
+                    // Skip intersection areas
+                    const nearIntersection = Array.from({length: GRID.gridCount + 1}, (_, j) =>
+                        -halfSize + j * GRID.cellSize
+                    ).some(iPos => Math.abs(x - iPos) < GRID.roadWidth);
+
+                    if (!nearIntersection) {
+                        // North side of road
+                        mkStreetlight(x, roadPos - GRID.roadWidth/2 - 1, 0);
+                        // South side of road
+                        mkStreetlight(x, roadPos + GRID.roadWidth/2 + 1, Math.PI);
+                    }
+                }
+
+                // Vertical roads (along Z axis)
+                for (let z = -halfSize + 8; z < halfSize - 4; z += 16) {
+                    const nearIntersection = Array.from({length: GRID.gridCount + 1}, (_, j) =>
+                        -halfSize + j * GRID.cellSize
+                    ).some(iPos => Math.abs(z - iPos) < GRID.roadWidth);
+
+                    if (!nearIntersection) {
+                        // East side of road
+                        mkStreetlight(roadPos + GRID.roadWidth/2 + 1, z, -Math.PI/2);
+                        // West side of road
+                        mkStreetlight(roadPos - GRID.roadWidth/2 - 1, z, Math.PI/2);
+                    }
+                }
+            }
+
+            function mkStreetlight(x, z, rotation) {
+                const g = new THREE.Group();
+
+                // Pole
+                const pole = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.12, 0.15, poleHeight, 8),
+                    poleMat
+                );
+                pole.position.y = poleHeight / 2;
+                g.add(pole);
+
+                // Curved arm
+                const arm = new THREE.Mesh(
+                    new THREE.BoxGeometry(armLength, 0.1, 0.1),
+                    poleMat
+                );
+                arm.position.set(armLength/2, poleHeight - 0.1, 0);
+                g.add(arm);
+
+                // Light housing
+                const housing = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.3, 0.4, 0.3, 8),
+                    poleMat
+                );
+                housing.position.set(armLength, poleHeight - 0.3, 0);
+                g.add(housing);
+
+                // Bulb (visual)
+                const bulb = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.25, 8, 8),
+                    bulbMat.clone() // Clone so each can be controlled independently
+                );
+                bulb.position.set(armLength, poleHeight - 0.5, 0);
+                g.add(bulb);
+                g.userData.bulb = bulb;
+
+                // Point light (actual light emission) - starts off
+                const light = new THREE.PointLight(0xffeecc, 0, 15);
+                light.position.set(armLength, poleHeight - 0.6, 0);
+                g.add(light);
+                g.userData.light = light;
+
+                g.position.set(x, 0, z);
+                g.rotation.y = rotation;
+
+                streetlights.push(g);
+                scene.add(g);
             }
         }
 
