@@ -70,6 +70,12 @@ Plans:
 
 **Requirements:** PERF-01, PERF-02, PERF-03, PERF-04, PERF-05
 
+**Plans:** 2 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Performer system with musician and statue types
+- [ ] 03-02-PLAN.md — Crowd attraction and watching behavior
+
 **Success Criteria:**
 1. Performers spawn at random sidewalk locations periodically
 2. Nearby pedestrians change behavior to approach performer
