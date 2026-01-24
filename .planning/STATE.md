@@ -11,14 +11,19 @@ See: .planning/PROJECT.md (updated 2025-01-23)
 
 - **Milestone:** v1.0 - Visual Engagement Features
 - **Phase:** 1 of 5 (Day/Night Cycle)
-- **Plan:** 2 of 3 completed
-- **Status:** In progress
-- **Last activity:** 2026-01-24 - Completed 01-02-PLAN.md
+- **Plan:** 3 of 3 completed
+- **Status:** Phase complete
+- **Last activity:** 2026-01-24 - Completed 01-03-PLAN.md
 
-**Progress:** ██░ 67% (2/3 plans in phase 01)
+**Progress:** ███ 100% (3/3 plans in phase 01)
 
 ## Recent Progress
 
+- 01-03: Streetlights, car headlights, and window lighting activate at night
+- Streetlight poles along roads emit warm light at night (intensity 1.5)
+- Car headlights brighten from dim to yellow at night
+- Building windows shift from 20% lit (day) to 70% lit (night)
+- Bulk window updates during day/night transitions for immediate impact
 - 01-02: Sun and moon celestial bodies tracking across sky with time control
 - Visible sun during day (0.2-0.8) and moon during night (0.8-0.2)
 - Celestial bodies arc from east to west with realistic orbital motion
@@ -30,6 +35,15 @@ See: .planning/PROJECT.md (updated 2025-01-23)
 - Lighting adjusts dynamically based on time of day
 
 ## Session Notes
+
+### 2026-01-24 - Phase 01 Plan 03 (PHASE COMPLETE)
+- Created streetlight poles along all roads at 16-unit intervals
+- Implemented updStreetlights() for smooth intensity transitions
+- Streetlights emit warm yellow light at night with PointLights
+- Car headlights tracked in userData.headlights, brighten at night
+- Window lighting uses probability (70% night, 20% day)
+- Bulk window updates during day/night transitions
+- Phase 01 complete - full day/night cycle with all planned effects
 
 ### 2026-01-24 - Phase 01 Plan 02
 - Created sun and moon celestial body meshes with visual detail
@@ -57,6 +71,10 @@ None yet.
 
 | Date | Decision | Context |
 |------|----------|---------|
+| 2026-01-24 | Window night probability 70%, day 20% | Creates clear day/night distinction, represents realistic building occupancy |
+| 2026-01-24 | Car headlights material color only, no PointLights | Visual effect without performance overhead for 25+ vehicles |
+| 2026-01-24 | Streetlight intensity 1.5 at night | Strong road illumination, warm inviting atmosphere |
+| 2026-01-24 | Streetlights every 16 units, skip intersections | Consistent illumination without clutter, avoids traffic light conflicts |
 | 2026-01-24 | Time speed control: normal -> fast -> paused | Normal (0.005) for observation, fast (0.05) for testing, paused for screenshots |
 | 2026-01-24 | Directional light synced to sun position | Realistic shadow movement throughout day enhances time perception |
 | 2026-01-24 | Sun orbit radius 150, peak height 120 | Large enough to be visible from anywhere in city, high enough to clear buildings |
@@ -70,9 +88,9 @@ None yet.
 
 ## Session Continuity
 
-- **Last session:** 2026-01-24 02:37 UTC
-- **Stopped at:** Completed 01-02-PLAN.md
-- **Resume file:** None - plan complete
+- **Last session:** 2026-01-24 02:45 UTC
+- **Stopped at:** Completed 01-03-PLAN.md (Phase 01 complete)
+- **Resume file:** None - phase complete
 
 ---
 *Last updated: 2026-01-24*
