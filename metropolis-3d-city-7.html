@@ -131,6 +131,7 @@
         let timeOfDay = 0.25; // 0-1 where 0=midnight, 0.25=dawn, 0.5=noon, 0.75=dusk
         let dayNightSpeed = 0.005; // How fast time passes (full cycle in ~200 seconds at 60fps)
         let isNight = false; // Computed from timeOfDay for quick checks
+        let prevIsNight; // Track previous night state for transition detection
         let sunMesh = null;   // Visual sun sphere
         let moonMesh = null;  // Visual moon sphere
 
@@ -4474,6 +4475,25 @@
                     moonMesh.visible = false;
                 }
             }
+
+            // Track previous night state for transition detection
+            if (typeof prevIsNight === 'undefined') prevIsNight = isNight;
+
+            // On day/night transition, update many windows at once
+            if (isNight !== prevIsNight) {
+                const transitionCount = Math.floor(allWindows.length * 0.3); // Update 30% of windows
+                const litProbability = isNight ? 0.7 : 0.2;
+
+                for (let i = 0; i < transitionCount; i++) {
+                    const win = allWindows[Math.floor(Math.random() * allWindows.length)];
+                    const shouldBeLit = Math.random() < litProbability;
+                    win.userData.isLit = shouldBeLit;
+                    win.material.color.setHex(shouldBeLit ? 0xffeeaa : 0x334455);
+                    win.material.needsUpdate = true;
+                }
+
+                prevIsNight = isNight;
+            }
         }
 
         // Helper function for color interpolation
@@ -5585,19 +5605,29 @@
         }
 
         function updWindowLights(t) {
-            // Toggle multiple windows frequently for visible effect
             if (t >= lastWindowToggle) {
                 if (allWindows.length > 0) {
-                    // Toggle 5-10 random windows at once
+                    // More activity at night, less during day
                     const numToToggle = 5 + Math.floor(Math.random() * 6);
+
                     for (let i = 0; i < numToToggle; i++) {
                         const win = allWindows[Math.floor(Math.random() * allWindows.length)];
-                        win.userData.isLit = !win.userData.isLit;
-                        win.material.color.setHex(win.userData.isLit ? 0xffeeaa : 0x334455);
-                        win.material.needsUpdate = true;
+
+                        // Probability of being lit depends on time
+                        // Night (isNight=true): 70% chance lit
+                        // Day (isNight=false): 20% chance lit
+                        const litProbability = isNight ? 0.7 : 0.2;
+
+                        // Instead of just toggling, set based on probability
+                        const shouldBeLit = Math.random() < litProbability;
+
+                        if (shouldBeLit !== win.userData.isLit) {
+                            win.userData.isLit = shouldBeLit;
+                            win.material.color.setHex(win.userData.isLit ? 0xffeeaa : 0x334455);
+                            win.material.needsUpdate = true;
+                        }
                     }
                 }
-                // Schedule next toggle 0.5-1.5 seconds from now
                 lastWindowToggle = t + 0.5 + Math.random() * 1;
             }
         }
