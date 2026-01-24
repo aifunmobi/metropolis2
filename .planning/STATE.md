@@ -5,20 +5,25 @@
 See: .planning/PROJECT.md (updated 2025-01-23)
 
 **Core value:** The city feels alive and worth watching
-**Current focus:** Phase 5 - Rooftop Features (in progress)
+**Current focus:** Phase 5 - Rooftop Features (COMPLETE)
 
 ## Current Position
 
-- **Milestone:** v1.0 - Visual Engagement Features
-- **Phase:** 5 of 5 (Rooftop Life)
-- **Plan:** 1 of 2 completed
-- **Status:** In progress
-- **Last activity:** 2026-01-24 - Completed 05-01-PLAN.md
+- **Milestone:** v1.0 - Visual Engagement Features (COMPLETE)
+- **Phase:** 5 of 5 (Rooftop Life) - COMPLETE
+- **Plan:** 2 of 2 completed
+- **Status:** All phases complete
+- **Last activity:** 2026-01-24 - Completed 05-02-PLAN.md
 
-**Progress:** █████████████░ 91% (10/11 plans across all phases)
+**Progress:** ████████████████ 100% (11/11 plans across all phases)
 
 ## Recent Progress
 
+- 05-02: Rooftop parties with string lights and animated figures (PHASE COMPLETE)
+- Parties spawn every 60 seconds with 40% chance (max 2 simultaneous)
+- Twinkling string lights in perimeter pattern with 12 lights per party
+- 4-8 party figures wandering subtly within party area
+- Static figures on gardens (1-3) and pools (1-2) with gentle animation
 - 05-01: Static rooftop features (gardens and pools) with activeRooftops tracking
 - Rooftop gardens with grass patch, 2-4 planters, 1-3 shrubs on ~20% tall buildings
 - Rooftop pools with water surface, white rim, 2 loungers on ~10% remaining buildings
@@ -67,6 +72,16 @@ See: .planning/PROJECT.md (updated 2025-01-23)
 - Lighting adjusts dynamically based on time of day
 
 ## Session Notes
+
+### 2026-01-24 - Phase 05 Plan 02 (PHASE COMPLETE, MILESTONE COMPLETE)
+- Created ROOFTOP_CFG with partySpawnInterval (60), partySpawnChance (0.4), partyDuration [90, 180]
+- Implemented mkRooftopFigure() with colorful body/head and wandering animation userData
+- Built mkRooftopParty() with 12 twinkling string lights and 4-8 party figures
+- Created spawnRooftopParty() selecting from activeRooftops or tall buildings (h > 30)
+- Added updRooftopParties() for spawn timer, light twinkling, figure wandering, despawn
+- Added updRooftopFigures() for static garden/pool figure animation
+- Integrated static figure placement into mkBuildings() for rooftop features
+- Phase 05 complete - all v1.0 visual engagement features implemented
 
 ### 2026-01-24 - Phase 05 Plan 01
 - Created mkRooftopGarden() with grass patch (0x4a7c4e), 2-4 planters (0x8b4513), 1-3 shrubs (0x2d5a2d)
@@ -167,6 +182,12 @@ None currently.
 
 | Date | Decision | Context |
 |------|----------|---------|
+| 2026-01-24 | Parties spawn every 60 seconds with 40% chance | Occasional but not constant, feels like city life |
+| 2026-01-24 | Max 2 simultaneous parties | Prevents performance impact, maintains specialness |
+| 2026-01-24 | Party duration 90-180 seconds | Long enough to observe, short enough for variety |
+| 2026-01-24 | 12 string lights per party | Visible perimeter without overdoing it |
+| 2026-01-24 | 4-8 party figures, 1-3 garden figures, 1-2 pool figures | Balanced density |
+| 2026-01-24 | Figure 5-color palette (coral, teal, yellow, mint, pink) | Colorful and distinguishable from above |
 | 2026-01-24 | Gardens on 20% of tall buildings (h > 25) | Visual variety without overcrowding, tall buildings more likely to have amenities |
 | 2026-01-24 | Pools on 10% of remaining buildings (h > 20) | Rarer premium feature, excluded from buildings with gardens |
 | 2026-01-24 | activeRooftops[] tracks building, position, dimensions, type | Enables Plan 02 figure placement with full context |
@@ -213,8 +234,8 @@ None currently.
 
 ## Session Continuity
 
-- **Last session:** 2026-01-24 04:47 UTC
-- **Stopped at:** Completed 05-01-PLAN.md
+- **Last session:** 2026-01-24 04:56 UTC
+- **Stopped at:** Completed 05-02-PLAN.md (MILESTONE COMPLETE)
 - **Resume file:** None
 
 ---
