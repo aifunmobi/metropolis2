@@ -2009,7 +2009,50 @@
                     return;
                 }
             }
-            
+
+            // 15% chance to notice a nearby performer when walking
+            if (Math.random() < 0.15 && p.userData.state === 'walking' && performers.length > 0) {
+                // Find nearest performer within attraction radius
+                let nearestPerformer = null;
+                let nearestDist = PERFORMER_CFG.attractRadius;
+
+                for (const performer of performers) {
+                    // Skip if performer already has max crowd
+                    if (performer.userData.watchers.length >= PERFORMER_CFG.maxCrowd) continue;
+
+                    const dx = performer.position.x - p.position.x;
+                    const dz = performer.position.z - p.position.z;
+                    const dist = Math.sqrt(dx * dx + dz * dz);
+
+                    if (dist < nearestDist) {
+                        nearestDist = dist;
+                        nearestPerformer = performer;
+                    }
+                }
+
+                if (nearestPerformer) {
+                    // Calculate semicircle position around performer
+                    const crowdAngle = nearestPerformer.rotation.y + Math.PI; // Face same way as performer faces
+                    const angleSpread = Math.PI * 0.8; // 144 degree semicircle
+                    const watcherIndex = nearestPerformer.userData.watchers.length;
+                    const angleOffset = (watcherIndex / PERFORMER_CFG.maxCrowd - 0.5) * angleSpread;
+                    const watchAngle = crowdAngle + angleOffset;
+
+                    const watchX = nearestPerformer.position.x + Math.sin(watchAngle) * PERFORMER_CFG.crowdRadius;
+                    const watchZ = nearestPerformer.position.z + Math.cos(watchAngle) * PERFORMER_CFG.crowdRadius;
+
+                    p.userData.state = 'towardPerformer';
+                    p.userData.target = new THREE.Vector3(watchX, 0.15, watchZ);
+                    p.userData.watchingPerformer = nearestPerformer;
+                    p.userData.watchDuration = 10 + Math.random() * 20; // 10-30 seconds watching
+                    p.userData.watchStartTime = null; // Set when arrived
+
+                    // Add to performer's watcher list
+                    nearestPerformer.userData.watchers.push(p);
+                    return;
+                }
+            }
+
             // Default: walk along current sidewalk to a random point, staying on same side
             let targetX, targetZ;
             const alongOffset = (Math.random() - 0.5) * (innerSize - 2);
