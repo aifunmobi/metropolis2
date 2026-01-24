@@ -10,15 +10,19 @@ See: .planning/PROJECT.md (updated 2025-01-23)
 ## Current Position
 
 - **Milestone:** v1.0 - Visual Engagement Features
-- **Phase:** 1 of 5 (Day/Night Cycle)
-- **Plan:** 3 of 3 completed
-- **Status:** Phase complete
-- **Last activity:** 2026-01-24 - Completed 01-03-PLAN.md
+- **Phase:** 2 of 5 (Bird Flocks)
+- **Plan:** 1 of 2 completed
+- **Status:** In progress
+- **Last activity:** 2026-01-24 - Completed 02-01-PLAN.md
 
-**Progress:** ███ 100% (3/3 plans in phase 01)
+**Progress:** ████ 80% (4/5 plans across all phases)
 
 ## Recent Progress
 
+- 02-01: Bird flock system with boids algorithm (separation, cohesion, alignment)
+- 4 autonomous flocks of varying sizes (3-8 birds) flying through city
+- Wing flapping animation with sine wave motion
+- Waypoint navigation system for flocks to traverse city airspace
 - 01-03: Streetlights, car headlights, and window lighting activate at night
 - Streetlight poles along roads emit warm light at night (intensity 1.5)
 - Car headlights brighten from dim to yellow at night
@@ -35,6 +39,14 @@ See: .planning/PROJECT.md (updated 2025-01-23)
 - Lighting adjusts dynamically based on time of day
 
 ## Session Notes
+
+### 2026-01-24 - Phase 02 Plan 01
+- Implemented complete boids flocking algorithm with separation, cohesion, alignment
+- Created 4 bird flocks with varying sizes [3, 5, 6, 8] for visual diversity
+- Added wing flapping animation using sine wave on wingPhase
+- Waypoint navigation allows flocks to autonomously traverse city
+- Birds stay within height bounds 15-60 units for optimal visibility
+- Turn speed 0.03 creates smooth, organic movement
 
 ### 2026-01-24 - Phase 01 Plan 03 (PHASE COMPLETE)
 - Created streetlight poles along all roads at 16-unit intervals
@@ -71,6 +83,10 @@ None currently.
 
 | Date | Decision | Context |
 |------|----------|---------|
+| 2026-01-24 | Bird separation weight 1.5 (highest) | Prevents collisions between birds, strongest boids force for safety |
+| 2026-01-24 | 4 flocks with sizes [3, 5, 6, 8] | Visual variety without performance impact (~22 total birds) |
+| 2026-01-24 | Bird height bounds 15-60 units | Visible above buildings but not too high, optimal viewing range |
+| 2026-01-24 | Bird turn speed 0.03 | Smooth organic turns rather than sharp jerky movement |
 | 2026-01-24 | Window night probability 70%, day 20% | Creates clear day/night distinction, represents realistic building occupancy |
 | 2026-01-24 | Car headlights material color only, no PointLights | Visual effect without performance overhead for 25+ vehicles |
 | 2026-01-24 | Streetlight intensity 1.5 at night | Strong road illumination, warm inviting atmosphere |
@@ -88,9 +104,9 @@ None currently.
 
 ## Session Continuity
 
-- **Last session:** 2026-01-24 02:45 UTC
-- **Stopped at:** Completed 01-03-PLAN.md (Phase 01 complete)
-- **Resume file:** None - phase complete
+- **Last session:** 2026-01-24 03:14 UTC
+- **Stopped at:** Completed 02-01-PLAN.md
+- **Resume file:** None
 
 ---
 *Last updated: 2026-01-24*
