@@ -113,6 +113,7 @@
         let buildingEntrances = [];
         let allWindows = [];
         let billboards = [];
+        let streetlights = [];
         let vel = null, baseSpd = 0.5, boost = false;
         let raining = false, rain = null;
         
@@ -130,6 +131,8 @@
         let timeOfDay = 0.25; // 0-1 where 0=midnight, 0.25=dawn, 0.5=noon, 0.75=dusk
         let dayNightSpeed = 0.005; // How fast time passes (full cycle in ~200 seconds at 60fps)
         let isNight = false; // Computed from timeOfDay for quick checks
+        let sunMesh = null;   // Visual sun sphere
+        let moonMesh = null;  // Visual moon sphere
 
         let yaw = 0, pitch = -0.3, keys = {}, discoveries = new Set();
         let secrets = [], mmCtx;
@@ -196,10 +199,11 @@
             
             prog(10, 'Lighting...');
             mkLighting();
-            
+            mkCelestialBodies();
+
             prog(20, 'City layout...');
             mkCityLayout();
-            
+
             prog(50, 'Buildings...');
             mkBuildings();
             
@@ -251,6 +255,58 @@
 
             hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x3d5c3d, 0.5);
             scene.add(hemiLight);
+        }
+
+        function mkCelestialBodies() {
+            // Sun - bright yellow sphere with glow effect
+            const sunGeo = new THREE.SphereGeometry(8, 32, 32);
+            const sunMat = new THREE.MeshBasicMaterial({
+                color: 0xffdd44,
+                transparent: true,
+                opacity: 1.0
+            });
+            sunMesh = new THREE.Mesh(sunGeo, sunMat);
+            sunMesh.position.set(0, 100, 0); // Will be updated by updDayNight
+            scene.add(sunMesh);
+
+            // Sun glow halo
+            const glowGeo = new THREE.SphereGeometry(12, 32, 32);
+            const glowMat = new THREE.MeshBasicMaterial({
+                color: 0xffff88,
+                transparent: true,
+                opacity: 0.3,
+                side: THREE.BackSide
+            });
+            const sunGlow = new THREE.Mesh(glowGeo, glowMat);
+            sunMesh.add(sunGlow); // Attach glow to sun
+
+            // Moon - pale white/gray sphere
+            const moonGeo = new THREE.SphereGeometry(5, 32, 32);
+            const moonMat = new THREE.MeshBasicMaterial({
+                color: 0xeeeecc,
+                transparent: true,
+                opacity: 1.0
+            });
+            moonMesh = new THREE.Mesh(moonGeo, moonMat);
+            moonMesh.position.set(0, -100, 0); // Start below horizon
+            scene.add(moonMesh);
+
+            // Moon crater details (simple dark spots)
+            const craterMat = new THREE.MeshBasicMaterial({ color: 0xccccaa });
+            const craterPositions = [
+                { x: 1, y: 0.5, z: 4, size: 0.8 },
+                { x: -1.5, y: -0.8, z: 3.5, size: 1.0 },
+                { x: 0.5, y: 1.2, z: 3.8, size: 0.6 }
+            ];
+            craterPositions.forEach(cp => {
+                const crater = new THREE.Mesh(
+                    new THREE.CircleGeometry(cp.size, 12),
+                    craterMat
+                );
+                crater.position.set(cp.x, cp.y, cp.z);
+                crater.lookAt(0, 0, 0); // Face outward from center
+                moonMesh.add(crater);
+            });
         }
 
         function mkCityLayout() {
