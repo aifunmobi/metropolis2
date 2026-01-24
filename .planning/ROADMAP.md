@@ -47,6 +47,12 @@ Plans:
 
 **Requirements:** BIRD-01, BIRD-02, BIRD-03, BIRD-04
 
+**Plans:** 2 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Core bird flock system with boids flocking behavior
+- [ ] 02-02-PLAN.md — Landing, perching, and pedestrian scattering behavior
+
 **Success Criteria:**
 1. Multiple bird flocks visible flying through city airspace
 2. Flocks exhibit natural flocking behavior (cohesion, alignment, separation)
@@ -122,4 +128,4 @@ Overall: ██░░░░░░░░ 20%
 
 ---
 *Roadmap created: 2025-01-23*
-*Last updated: 2025-01-23*
+*Last updated: 2026-01-23*
