@@ -94,7 +94,7 @@
             gridCount: 4
         };
         
-        const CFG = { cars: 25, emergencyVehicles: 3, peds: 50, bikes: 4 };
+        const CFG = { cars: 10, emergencyVehicles: 2, peds: 40, bikes: 3 };
         
         let scene, cam, renderer, clock;
         let buildings = [], cars = [], emergencyVehicles = [], peds = [], tlights = [];
@@ -148,7 +148,8 @@
         let flashCount = 0;
         
         let crosswalks = [];
-        
+        let signalizedIntersections = []; // Intersections with crosswalks and signals
+
         const totalSize = GRID.cellSize * GRID.gridCount;
         const halfSize = totalSize / 2;
 
@@ -304,31 +305,54 @@
                 }
             }
             
-            for (let i = 0; i <= GRID.gridCount; i++) {
-                for (let j = 0; j <= GRID.gridCount; j++) {
-                    const ix = -halfSize + i * GRID.cellSize;
-                    const iz = -halfSize + j * GRID.cellSize;
-                    
-                    if (i < GRID.gridCount) {
-                        const cwX = ix + GRID.roadWidth / 2 + 3;
-                        for (let s = 0; s < 6; s++) {
-                            const stripe = new THREE.Mesh(new THREE.PlaneGeometry(3, 0.5), whiteMat);
-                            stripe.rotation.x = -Math.PI / 2;
-                            stripe.position.set(cwX, 0.02, iz - GRID.roadWidth/2 + 1.5 + s * 1);
-                            scene.add(stripe);
-                        }
-                        crosswalks.push({ x: cwX, z: iz, axis: 'z', width: GRID.roadWidth });
-                    }
-                    
-                    if (j < GRID.gridCount) {
-                        const cwZ = iz + GRID.roadWidth / 2 + 3;
+            // Randomly select which interior intersections get crosswalks and signals
+            // Interior intersections are at i,j from 1 to GRID.gridCount-1
+            for (let i = 1; i < GRID.gridCount; i++) {
+                for (let j = 1; j < GRID.gridCount; j++) {
+                    // ~60% chance of having crosswalks at this intersection
+                    if (Math.random() < 0.6) {
+                        const ix = -halfSize + i * GRID.cellSize;
+                        const iz = -halfSize + j * GRID.cellSize;
+                        signalizedIntersections.push({ x: ix, z: iz });
+
+                        // Create all 4 crosswalks around this intersection
+                        const hw = GRID.roadWidth / 2;
+
+                        // North crosswalk (crossing Z-axis road, north of intersection)
                         for (let s = 0; s < 6; s++) {
                             const stripe = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 3), whiteMat);
                             stripe.rotation.x = -Math.PI / 2;
-                            stripe.position.set(ix - GRID.roadWidth/2 + 1.5 + s * 1, 0.02, cwZ);
+                            stripe.position.set(ix - hw + 1.5 + s * 1, 0.02, iz - hw - 3);
                             scene.add(stripe);
                         }
-                        crosswalks.push({ x: ix, z: cwZ, axis: 'x', width: GRID.roadWidth });
+                        crosswalks.push({ x: ix, z: iz - hw - 3, axis: 'x', width: GRID.roadWidth });
+
+                        // South crosswalk (crossing Z-axis road, south of intersection)
+                        for (let s = 0; s < 6; s++) {
+                            const stripe = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 3), whiteMat);
+                            stripe.rotation.x = -Math.PI / 2;
+                            stripe.position.set(ix - hw + 1.5 + s * 1, 0.02, iz + hw + 3);
+                            scene.add(stripe);
+                        }
+                        crosswalks.push({ x: ix, z: iz + hw + 3, axis: 'x', width: GRID.roadWidth });
+
+                        // West crosswalk (crossing X-axis road, west of intersection)
+                        for (let s = 0; s < 6; s++) {
+                            const stripe = new THREE.Mesh(new THREE.PlaneGeometry(3, 0.5), whiteMat);
+                            stripe.rotation.x = -Math.PI / 2;
+                            stripe.position.set(ix - hw - 3, 0.02, iz - hw + 1.5 + s * 1);
+                            scene.add(stripe);
+                        }
+                        crosswalks.push({ x: ix - hw - 3, z: iz, axis: 'z', width: GRID.roadWidth });
+
+                        // East crosswalk (crossing X-axis road, east of intersection)
+                        for (let s = 0; s < 6; s++) {
+                            const stripe = new THREE.Mesh(new THREE.PlaneGeometry(3, 0.5), whiteMat);
+                            stripe.rotation.x = -Math.PI / 2;
+                            stripe.position.set(ix + hw + 3, 0.02, iz - hw + 1.5 + s * 1);
+                            scene.add(stripe);
+                        }
+                        crosswalks.push({ x: ix + hw + 3, z: iz, axis: 'z', width: GRID.roadWidth });
                     }
                 }
             }
@@ -691,88 +715,92 @@
         }
 
         function mkTrafficLights() {
-            for (let i = 1; i < GRID.gridCount; i++) {
-                for (let j = 1; j < GRID.gridCount; j++) {
-                    const ix = -halfSize + i * GRID.cellSize;
-                    const iz = -halfSize + j * GRID.cellSize;
-                    
-                    const tl = mkTL();
-                    tl.position.set(ix + GRID.roadWidth/2 - 0.5, 0, iz + GRID.roadWidth/2 - 0.5);
-                    tl.userData.phase = Math.random() * Math.PI * 2;
-                    tl.userData.intersection = { x: ix, z: iz };
-                    tlights.push(tl);
-                    scene.add(tl);
-                }
+            // Only create traffic lights at intersections with crosswalks
+            for (const intersection of signalizedIntersections) {
+                const tl = mkTL();
+                tl.position.set(intersection.x, 0, intersection.z);
+                tl.userData.phase = 0; // Synchronized lights
+                tl.userData.intersection = { x: intersection.x, z: intersection.z };
+                tlights.push(tl);
+                scene.add(tl);
             }
         }
 
         function mkTL() {
             const g = new THREE.Group();
-            const poleMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
-            
-            // Main pole
-            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 7), poleMat);
-            pole.position.y = 3.5;
-            g.add(pole);
-            
-            // Cross arms for 4-way signals
-            const armLength = 2.5;
-            const armHeight = 7;
-            
-            // Horizontal arm (X direction)
-            const armX = new THREE.Mesh(new THREE.BoxGeometry(armLength * 2, 0.15, 0.15), poleMat);
-            armX.position.set(0, armHeight, 0);
-            g.add(armX);
-            
-            // Horizontal arm (Z direction)
-            const armZ = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, armLength * 2), poleMat);
-            armZ.position.set(0, armHeight, 0);
-            g.add(armZ);
-            
-            const lts = [];
-            const cols = [0xff0000, 0xffff00, 0x00ff00];
-            
-            // Create signal boxes on all 4 sides
-            // Each side has 3 lights (red, yellow, green from top to bottom)
-            const sides = [
-                { x: armLength, z: 0, rotY: -Math.PI / 2, axis: 'x', dir: 1 },    // East-facing (for westbound traffic)
-                { x: -armLength, z: 0, rotY: Math.PI / 2, axis: 'x', dir: -1 },   // West-facing (for eastbound traffic)
-                { x: 0, z: armLength, rotY: Math.PI, axis: 'z', dir: 1 },         // South-facing (for northbound traffic)
-                { x: 0, z: -armLength, rotY: 0, axis: 'z', dir: -1 }              // North-facing (for southbound traffic)
+            const poleMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+            const boxMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+
+            g.userData.lts = [];
+
+            // 4 corners of intersection - each gets a pole with signal
+            // Signal on corner, rotated 180 degrees to face approaching traffic
+            const corners = [
+                // SW corner - faces WEST toward westbound traffic (-X dir)
+                { x: -5, z: 5, facingX: -1, facingZ: 0, axis: 'x', dir: -1 },
+                // NW corner - faces NORTH toward northbound traffic (-Z dir)
+                { x: -5, z: -5, facingX: 0, facingZ: -1, axis: 'z', dir: -1 },
+                // NE corner - faces EAST toward eastbound traffic (+X dir)
+                { x: 5, z: -5, facingX: 1, facingZ: 0, axis: 'x', dir: 1 },
+                // SE corner - faces SOUTH toward southbound traffic (+Z dir)
+                { x: 5, z: 5, facingX: 0, facingZ: 1, axis: 'z', dir: 1 }
             ];
-            
-            sides.forEach(side => {
-                // Signal box
-                const box = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.4, 0.3), poleMat);
-                box.position.set(side.x, armHeight - 0.2, side.z);
-                box.rotation.y = side.rotY;
+
+            corners.forEach(corner => {
+                // Pole - street corner style
+                const pole = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.08, 0.1, 5),
+                    poleMat
+                );
+                pole.position.set(corner.x, 2.5, corner.z);
+                pole.castShadow = true;
+                g.add(pole);
+
+                // Signal housing (vertical 3-light box)
+                const box = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.5, 1.2, 0.35),
+                    boxMat
+                );
+                box.position.set(corner.x, 5.3, corner.z);
+                box.rotation.y = Math.atan2(corner.facingX, corner.facingZ);
                 g.add(box);
-                
-                // Three lights
-                cols.forEach((c, i) => {
+
+                // Visor/hood over the signal (extends in facing direction)
+                const visor = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.6, 0.1, 0.5),
+                    boxMat
+                );
+                visor.position.set(
+                    corner.x + corner.facingX * 0.2,
+                    5.95,
+                    corner.z + corner.facingZ * 0.2
+                );
+                visor.rotation.y = Math.atan2(corner.facingX, corner.facingZ);
+                g.add(visor);
+
+                // Three lights: red (top), yellow (middle), green (bottom)
+                const colors = [0xff0000, 0xffff00, 0x00ff00];
+                const yPositions = [5.65, 5.3, 4.95];
+
+                colors.forEach((col, idx) => {
                     const light = new THREE.Mesh(
-                        new THREE.SphereGeometry(0.12),
+                        new THREE.SphereGeometry(0.1),
                         new THREE.MeshBasicMaterial({ color: 0x222222 })
                     );
-                    
-                    // Position light on front face of box
-                    const offsetX = Math.sin(side.rotY) * 0.16;
-                    const offsetZ = Math.cos(side.rotY) * 0.16;
+                    // Position lights on the front face of signal box
                     light.position.set(
-                        side.x + offsetX,
-                        armHeight + 0.3 - i * 0.4,
-                        side.z + offsetZ
+                        corner.x + corner.facingX * 0.2,
+                        yPositions[idx],
+                        corner.z + corner.facingZ * 0.2
                     );
-                    
-                    light.userData.activeCol = c;
-                    light.userData.axis = side.axis;  // Which road this light controls
-                    light.userData.lightIndex = i;    // 0=red, 1=yellow, 2=green
-                    lts.push(light);
+                    light.userData.axis = corner.axis;
+                    light.userData.lightIndex = idx; // 0=red, 1=yellow, 2=green
+                    light.userData.activeCol = col;
                     g.add(light);
+                    g.userData.lts.push(light);
                 });
             });
-            
-            g.userData.lts = lts;
+
             return g;
         }
 
@@ -1519,8 +1547,10 @@
             }
             
             car.userData.laneOffset = laneOffset;
+            car.userData.originalLaneOffset = laneOffset; // Store original lane for returning after passing
+            car.userData.inPassingLane = false;
             car.userData.spd = 0.12 + Math.random() * 0.06;
-            
+
             // Gridlock tracking
             car.userData.lastPos = { x: car.position.x, z: car.position.z };
             car.userData.stuckTime = 0;
@@ -1596,9 +1626,11 @@
                 p.userData.currentBlock = { x: bx, z: bz };
                 p.userData.state = 'walking';
                 setNewPedTarget(p);
-                
+
                 p.userData.spd = 0.02 + Math.random() * 0.015;
                 p.userData.walk = Math.random() * Math.PI * 2;
+                p.userData.stuckTime = 0;
+                p.userData.beingHelped = false;
                 peds.push(p);
                 scene.add(p);
             }
@@ -4197,7 +4229,9 @@
                         const ix = tl.userData.intersection.x;
                         const iz = tl.userData.intersection.z;
                         const phase = (t + tl.userData.phase) % 10;
-                        const isRedForX = phase < 5;
+                        // X-axis: GREEN 0-4.5, YELLOW 4.5-5, RED 5-10
+                        // Z-axis: RED 0-5, GREEN 5-9.5, YELLOW 9.5-10
+                        const isRedForX = phase >= 5;
                         
                         if (car.userData.axis === 'x') {
                             const dist = (ix - car.position.x) * car.userData.dir;
@@ -4268,22 +4302,40 @@
                     });
                 }
                 
-                // Check for cars directly ahead in SAME lane - only stop if very close
+                // Check for cars ahead - widen detection to prevent clipping
                 cars.forEach(other => {
                     if (other === car) return;
                     const dx = other.position.x - car.position.x;
                     const dz = other.position.z - car.position.z;
-                    
-                    if (car.userData.axis === 'x') {
-                        const ahead = dx * car.userData.dir;
-                        const sameLane = Math.abs(other.position.z - car.position.z) < 1.5;
-                        if (ahead > 0 && ahead < 4 && sameLane) {
-                            shouldStop = true;
+                    const dist = Math.sqrt(dx * dx + dz * dz);
+
+                    // Check cars on same axis (same road direction)
+                    if (other.userData.axis === car.userData.axis) {
+                        if (car.userData.axis === 'x') {
+                            const ahead = dx * car.userData.dir;
+                            const nearLane = Math.abs(dz) < 3; // Wider than before (was 1.5)
+                            if (ahead > 0 && ahead < 5 && nearLane) {
+                                shouldStop = true;
+                            }
+                        } else {
+                            const ahead = dz * car.userData.dir;
+                            const nearLane = Math.abs(dx) < 3;
+                            if (ahead > 0 && ahead < 5 && nearLane) {
+                                shouldStop = true;
+                            }
                         }
-                    } else {
-                        const ahead = dz * car.userData.dir;
-                        const sameLane = Math.abs(other.position.x - car.position.x) < 1.5;
-                        if (ahead > 0 && ahead < 4 && sameLane) {
+                    }
+                    // Check cars on perpendicular roads (at intersections)
+                    // Only stop if both cars are approaching the same point
+                    else if (dist < 3.5) {
+                        const myAhead = car.userData.axis === 'x'
+                            ? dx * car.userData.dir
+                            : dz * car.userData.dir;
+                        const theirAhead = other.userData.axis === 'x'
+                            ? -dx * other.userData.dir
+                            : -dz * other.userData.dir;
+                        // Both cars must be approaching collision point
+                        if (myAhead > 0 && myAhead < 4 && theirAhead > 0 && theirAhead < 4) {
                             shouldStop = true;
                         }
                     }
@@ -4356,7 +4408,62 @@
                 // Move car if not stopped
                 if (!shouldStop && !obstacleAhead) {
                     const speed = car.userData.isEmergency ? car.userData.spd * 1.5 : car.userData.spd;
-                    
+
+                    // If in passing lane, check if we can return to original lane
+                    if (car.userData.inPassingLane && car.userData.originalLaneOffset !== undefined) {
+                        const origOffset = car.userData.originalLaneOffset;
+                        let originalLaneClear = true;
+
+                        // Check if original lane is clear ahead
+                        cars.forEach(other => {
+                            if (other === car) return;
+                            if (other.userData.axis !== car.userData.axis) return;
+
+                            const dx = other.position.x - car.position.x;
+                            const dz = other.position.z - car.position.z;
+                            const dist = Math.sqrt(dx * dx + dz * dz);
+
+                            if (dist < 8) {
+                                // Check if other car is in our original lane
+                                if (car.userData.axis === 'x') {
+                                    if (Math.abs(other.position.z - (car.userData.roadPos + origOffset)) < 1.5) {
+                                        // Check if it's ahead of us
+                                        if (dx * car.userData.dir > 0) {
+                                            originalLaneClear = false;
+                                        }
+                                    }
+                                } else {
+                                    if (Math.abs(other.position.x - (car.userData.roadPos + origOffset)) < 1.5) {
+                                        if (dz * car.userData.dir > 0) {
+                                            originalLaneClear = false;
+                                        }
+                                    }
+                                }
+                            }
+                        });
+
+                        // Also check for oncoming traffic before merging back
+                        cars.forEach(other => {
+                            if (other === car) return;
+                            if (other.userData.axis !== car.userData.axis) return;
+                            if (other.userData.dir === car.userData.dir) return;
+
+                            const dx = other.position.x - car.position.x;
+                            const dz = other.position.z - car.position.z;
+                            const dist = Math.sqrt(dx * dx + dz * dz);
+
+                            if (dist < 12) {
+                                originalLaneClear = false;
+                            }
+                        });
+
+                        if (originalLaneClear) {
+                            // Return to original lane
+                            car.userData.laneOffset = origOffset;
+                            car.userData.inPassingLane = false;
+                        }
+                    }
+
                     if (car.userData.axis === 'x') {
                         car.position.x += speed * car.userData.dir;
                         car.position.z = car.userData.roadPos + car.userData.laneOffset;
@@ -4405,10 +4512,11 @@
                     });
                     
                     if (oppositeClear && obstacleAhead) {
-                        // Switch lanes to go around
+                        // Switch lanes to go around - mark as in passing lane
                         car.userData.laneOffset = oppositeOffset;
+                        car.userData.inPassingLane = true;
                         const speed = car.userData.spd * 0.8;
-                        
+
                         if (car.userData.axis === 'x') {
                             car.position.x += speed * car.userData.dir;
                             car.position.z = car.userData.roadPos + oppositeOffset;
@@ -4474,14 +4582,18 @@
                                 // Update lane for new direction (right-side driving)
                                 if (car.userData.axis === 'x') {
                                     car.userData.laneOffset = car.userData.dir * 1.8;
+                                    car.userData.originalLaneOffset = car.userData.laneOffset;
                                     car.rotation.y = car.userData.dir > 0 ? 0 : Math.PI;
                                 } else {
                                     car.userData.laneOffset = -car.userData.dir * 1.8;
+                                    car.userData.originalLaneOffset = car.userData.laneOffset;
                                     car.rotation.y = car.userData.dir > 0 ? -Math.PI / 2 : Math.PI / 2;
                                 }
+                                car.userData.inPassingLane = false;
                             } else {
                                 // Temporarily use opposite lane to pass obstacle
                                 car.userData.laneOffset = -car.userData.laneOffset;
+                                car.userData.inPassingLane = true;
                             }
                             car.userData.stuckTime = 0;
                         }
@@ -4529,67 +4641,109 @@
                 car.userData.lastPos = { x: car.position.x, z: car.position.z };
             });
             
-            // Find a stuck car that needs help (stuck > 10 seconds)
+            // Find a stuck car or pedestrian that needs help (stuck > 15 seconds)
             if (!trafficCop && !trafficCopTarget) {
-                const stuckCar = cars.find(c => 
-                    c.userData.stuckTime > 10 && 
-                    !c.userData.beingHelped && 
+                // Check for stuck cars first
+                const stuckCar = cars.find(c =>
+                    c.userData.stuckTime > 15 &&
+                    !c.userData.beingHelped &&
                     !c.userData.isEmergency
                 );
-                
-                if (stuckCar) {
-                    // Dispatch traffic cop!
-                    stuckCar.userData.beingHelped = true;
-                    trafficCopTarget = stuckCar;
-                    spawnTrafficCop(stuckCar);
-                    notify('🚔 Traffic cop dispatched to clear gridlock!', 2500);
+
+                // Also check for stuck pedestrians
+                const stuckPed = peds.find(p =>
+                    p.userData.stuckTime > 15 &&
+                    !p.userData.beingHelped
+                );
+
+                const stuckEntity = stuckCar || stuckPed;
+
+                if (stuckEntity) {
+                    // Dispatch police car to help!
+                    stuckEntity.userData.beingHelped = true;
+                    trafficCopTarget = stuckEntity;
+
+                    // Find the police car
+                    const policeCar = emergencyVehicles.find(ev => ev.userData.emergencyType === 'police');
+                    if (policeCar && !policeChaseTarget) {
+                        // Use police car instead of traffic cop pedestrian
+                        policeCar.userData.respondingToGridlock = true;
+                        policeCar.userData.gridlockTarget = stuckEntity;
+                        trafficCop = policeCar; // Reuse trafficCop variable to track response
+                        notify('🚔 Police car dispatched to assist!', 2500);
+                    } else {
+                        // Fallback to traffic cop pedestrian if police is busy
+                        spawnTrafficCop(stuckEntity);
+                        notify('🚔 Traffic cop dispatched to clear gridlock!', 2500);
+                    }
                 }
             }
             
-            // Update traffic cop
+            // Update traffic cop or police car response
             if (trafficCop && trafficCopTarget) {
                 const dx = trafficCopTarget.position.x - trafficCop.position.x;
                 const dz = trafficCopTarget.position.z - trafficCop.position.z;
                 const dist = Math.sqrt(dx * dx + dz * dz);
-                
-                if (dist < 3) {
-                    // Arrived at gridlock - clear it!
-                    clearGridlock(trafficCopTarget);
-                    
-                    // Cop walks away
-                    trafficCop.userData.state = 'leaving';
-                    trafficCop.userData.leaveTimer = 0;
-                } else if (trafficCop.userData.state === 'approaching') {
-                    // Walk toward stuck car
-                    const speed = 0.08;
-                    trafficCop.position.x += (dx / dist) * speed;
-                    trafficCop.position.z += (dz / dist) * speed;
-                    trafficCop.rotation.y = Math.atan2(dx, dz);
-                    
-                    // Animate walking
-                    trafficCop.userData.walk = (trafficCop.userData.walk || 0) + 0.2;
-                    const sw = Math.sin(trafficCop.userData.walk) * 0.4;
-                    if (trafficCop.userData.ll) trafficCop.userData.ll.rotation.x = sw;
-                    if (trafficCop.userData.rl) trafficCop.userData.rl.rotation.x = -sw;
-                }
-                
-                if (trafficCop.userData.state === 'leaving') {
-                    trafficCop.userData.leaveTimer += 0.016;
-                    
-                    // Walk to edge of road
-                    trafficCop.position.x += 0.05;
-                    trafficCop.rotation.y = Math.PI / 2;
-                    
-                    trafficCop.userData.walk = (trafficCop.userData.walk || 0) + 0.2;
-                    const sw = Math.sin(trafficCop.userData.walk) * 0.4;
-                    if (trafficCop.userData.ll) trafficCop.userData.ll.rotation.x = sw;
-                    if (trafficCop.userData.rl) trafficCop.userData.rl.rotation.x = -sw;
-                    
-                    if (trafficCop.userData.leaveTimer > 3) {
-                        // Remove cop
-                        scene.remove(trafficCop);
+
+                // Check if this is a police car responding to gridlock
+                if (trafficCop.userData.respondingToGridlock) {
+                    if (dist < 6) {
+                        // Police car arrived - clear the gridlock!
+                        clearGridlock(trafficCopTarget);
+                        trafficCop.userData.respondingToGridlock = false;
+                        trafficCop.userData.gridlockTarget = null;
+                        trafficCop.userData.returningToRoad = true;
+                        trafficCopTarget.userData.beingHelped = false;
                         trafficCop = null;
                         trafficCopTarget = null;
+                    } else {
+                        // Police car drives toward stuck entity
+                        const speed = 0.25;
+                        trafficCop.position.x += (dx / dist) * speed;
+                        trafficCop.position.z += (dz / dist) * speed;
+                        trafficCop.rotation.y = Math.atan2(dx, dz);
+                    }
+                } else {
+                    // Regular traffic cop pedestrian logic
+                    if (dist < 3) {
+                        // Arrived at gridlock - clear it!
+                        clearGridlock(trafficCopTarget);
+
+                        // Cop walks away
+                        trafficCop.userData.state = 'leaving';
+                        trafficCop.userData.leaveTimer = 0;
+                    } else if (trafficCop.userData.state === 'approaching') {
+                        // Walk toward stuck car
+                        const speed = 0.08;
+                        trafficCop.position.x += (dx / dist) * speed;
+                        trafficCop.position.z += (dz / dist) * speed;
+                        trafficCop.rotation.y = Math.atan2(dx, dz);
+
+                        // Animate walking
+                        trafficCop.userData.walk = (trafficCop.userData.walk || 0) + 0.2;
+                        const sw = Math.sin(trafficCop.userData.walk) * 0.4;
+                        if (trafficCop.userData.ll) trafficCop.userData.ll.rotation.x = sw;
+                        if (trafficCop.userData.rl) trafficCop.userData.rl.rotation.x = -sw;
+                    }
+
+                    if (trafficCop.userData.state === 'leaving') {
+                        trafficCop.userData.leaveTimer += 0.016;
+
+                        // Walk to edge of road
+                        trafficCop.position.x += 0.05;
+                        trafficCop.rotation.y = Math.PI / 2;
+
+                        trafficCop.userData.walk = (trafficCop.userData.walk || 0) + 0.2;
+                        const sw = Math.sin(trafficCop.userData.walk) * 0.4;
+                        if (trafficCop.userData.ll) trafficCop.userData.ll.rotation.x = sw;
+                        if (trafficCop.userData.rl) trafficCop.userData.rl.rotation.x = -sw;
+
+                        if (trafficCop.userData.leaveTimer > 3) {
+                            // Remove cop
+                            scene.remove(trafficCop);
+                            trafficCop = null;
+                            trafficCopTarget = null;
+                        }
                     }
                 }
             }
@@ -4668,39 +4822,59 @@
         function clearGridlock(stuckCar) {
             // Force all nearby stuck cars to move
             const clearRadius = 15;
-            
+
             cars.forEach(car => {
                 const dx = car.position.x - stuckCar.position.x;
                 const dz = car.position.z - stuckCar.position.z;
                 const dist = Math.sqrt(dx * dx + dz * dz);
-                
+
                 if (dist < clearRadius && car.userData.stuckTime > 5) {
                     // Unstick this car by reversing direction or switching lanes
                     if (Math.random() < 0.5) {
-                        // Reverse direction
+                        // Reverse direction and update to correct lane for new direction
                         car.userData.dir *= -1;
                         if (car.userData.axis === 'x') {
+                            car.userData.laneOffset = car.userData.dir * 1.8;
+                            car.userData.originalLaneOffset = car.userData.laneOffset;
                             car.rotation.y = car.userData.dir > 0 ? 0 : Math.PI;
                         } else {
+                            car.userData.laneOffset = -car.userData.dir * 1.8;
+                            car.userData.originalLaneOffset = car.userData.laneOffset;
                             car.rotation.y = car.userData.dir > 0 ? -Math.PI / 2 : Math.PI / 2;
                         }
+                        car.userData.inPassingLane = false;
                     } else {
-                        // Switch lanes
+                        // Switch lanes temporarily
                         car.userData.laneOffset = -car.userData.laneOffset;
+                        car.userData.inPassingLane = true;
                     }
-                    
+
                     // Give it a little push
                     if (car.userData.axis === 'x') {
                         car.position.x += car.userData.dir * 2;
                     } else {
                         car.position.z += car.userData.dir * 2;
                     }
-                    
+
                     car.userData.stuckTime = 0;
                     car.userData.beingHelped = false;
                 }
             });
-            
+
+            // Also unstick any nearby stuck pedestrians
+            peds.forEach(p => {
+                const dx = p.position.x - stuckCar.position.x;
+                const dz = p.position.z - stuckCar.position.z;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+
+                if (dist < clearRadius && p.userData.stuckTime > 5) {
+                    // Give pedestrian a new target
+                    p.userData.state = 'walking';
+                    p.userData.stuckTime = 0;
+                    setNewPedTarget(p);
+                }
+            });
+
             notify('🚗 Traffic cleared!', 2000);
         }
 
@@ -4861,24 +5035,46 @@
                     // Check for other pedestrians - avoid walking through each other
                     let blocked = false;
                     const targetDir = to.clone().normalize();
-                    
+
                     for (const other of peds) {
                         if (other === p || !other.visible) continue;
-                        
+
                         const dx = other.position.x - p.position.x;
                         const dz = other.position.z - p.position.z;
                         const dist = Math.sqrt(dx * dx + dz * dz);
-                        
-                        // Check if other ped is directly ahead
-                        if (dist < 0.8) {
-                            // Check if we're walking toward them
-                            const dot = targetDir.x * dx + targetDir.z * dz;
-                            if (dot > 0) {
-                                // They're ahead of us, slow down or stop
-                                moveSpeed *= 0.2;
-                                if (dist < 0.5) blocked = true;
-                                break;
+
+                        // Personal space bubble - push away from nearby pedestrians
+                        if (dist < 1.0 && dist > 0.01) {
+                            // Normalize direction to other ped
+                            const toOtherX = dx / dist;
+                            const toOtherZ = dz / dist;
+
+                            // Slow down significantly when close
+                            if (dist < 0.6) {
+                                blocked = true;
+                            } else {
+                                moveSpeed *= 0.3;
                             }
+
+                            // Push away from other pedestrian (sideways avoidance)
+                            const pushStrength = (1.0 - dist) * 0.015;
+                            p.position.x -= toOtherX * pushStrength;
+                            p.position.z -= toOtherZ * pushStrength;
+                        }
+                    }
+
+                    // Also avoid cars even when not crossing (e.g., near curbs)
+                    for (const car of cars) {
+                        const cdx = car.position.x - p.position.x;
+                        const cdz = car.position.z - p.position.z;
+                        const cdist = Math.sqrt(cdx * cdx + cdz * cdz);
+
+                        if (cdist < 2.5 && cdist > 0.01) {
+                            // Push pedestrian away from car
+                            const pushX = -cdx / cdist * 0.025;
+                            const pushZ = -cdz / cdist * 0.025;
+                            p.position.x += pushX;
+                            p.position.z += pushZ;
                         }
                     }
                     
@@ -4944,19 +5140,42 @@
         }
 
         function isSafeToCross(cw) {
+            const t = clock.getElapsedTime();
+
+            // First check traffic signal - pedestrians must obey walk signals
+            for (const tl of tlights) {
+                const tdx = Math.abs(cw.x - tl.userData.intersection.x);
+                const tdz = Math.abs(cw.z - tl.userData.intersection.z);
+                // If crosswalk is near this traffic light
+                if (tdx < 15 && tdz < 15) {
+                    const phase = (t + tl.userData.phase) % 10;
+                    // Pedestrians can cross when perpendicular traffic has green
+                    if (cw.axis === 'z') {
+                        // Crossing a Z-axis road - wait for X-axis traffic to have green
+                        const xGreen = phase < 4.5;
+                        if (!xGreen) return false; // Don't cross, X-traffic has red
+                    } else {
+                        // Crossing an X-axis road - wait for Z-axis traffic to have green
+                        const zGreen = phase >= 5 && phase < 9.5;
+                        if (!zGreen) return false; // Don't cross, Z-traffic has red
+                    }
+                }
+            }
+
+            // Also check for approaching cars
             for (const car of cars) {
                 const dx = cw.x - car.position.x;
                 const dz = cw.z - car.position.z;
-                
+
                 if (cw.axis === 'z' && car.userData.axis === 'x') {
                     if (Math.abs(car.position.z - cw.z) < 5) {
                         const dist = Math.abs(dx);
-                        if (dist < 20) return false;
+                        if (dist < 15) return false;
                     }
                 } else if (cw.axis === 'x' && car.userData.axis === 'z') {
                     if (Math.abs(car.position.x - cw.x) < 5) {
                         const dist = Math.abs(dz);
-                        if (dist < 20) return false;
+                        if (dist < 15) return false;
                     }
                 }
             }
