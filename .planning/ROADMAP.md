@@ -10,7 +10,7 @@
 | # | Phase | Goal | Requirements | Status |
 |---|-------|------|--------------|--------|
 | 1 | Day/Night Cycle | City transitions through time with dynamic lighting | DAY-01 to DAY-06 | ✓ Complete |
-| 2 | Bird Flocks | Organic bird movement adds life to the sky | BIRD-01 to BIRD-04 | ○ Pending |
+| 2 | Bird Flocks | Organic bird movement adds life to the sky | BIRD-01 to BIRD-04 | ✓ Complete |
 | 3 | Street Performers | Sidewalk entertainment draws crowds | PERF-01 to PERF-05 | ○ Pending |
 | 4 | Subway System | Underground transit adds infrastructure depth | SUB-01 to SUB-05 | ○ Pending |
 | 5 | Rooftop Life | Activity visible from above | ROOF-01 to ROOF-04 | ○ Pending |
@@ -118,12 +118,12 @@ Plans:
 
 ```
 Phase 1: ██████████ 100%
-Phase 2: ░░░░░░░░░░ 0%
+Phase 2: ██████████ 100%
 Phase 3: ░░░░░░░░░░ 0%
 Phase 4: ░░░░░░░░░░ 0%
 Phase 5: ░░░░░░░░░░ 0%
 ─────────────────────
-Overall: ██░░░░░░░░ 20%
+Overall: ████░░░░░░ 40%
 ```
 
 ---

@@ -16,10 +16,10 @@
 
 ### Bird Flocks
 
-- [ ] **BIRD-01**: Flocks of birds fly through the city with organic movement
-- [ ] **BIRD-02**: Birds land on rooftops and sidewalks periodically
-- [ ] **BIRD-03**: Landed birds scatter when pedestrians approach
-- [ ] **BIRD-04**: Multiple flocks with varying sizes and flight patterns
+- [x] **BIRD-01**: Flocks of birds fly through the city with organic movement
+- [x] **BIRD-02**: Birds land on rooftops and sidewalks periodically
+- [x] **BIRD-03**: Landed birds scatter when pedestrians approach
+- [x] **BIRD-04**: Multiple flocks with varying sizes and flight patterns
 
 ### Street Performers
 
@@ -80,10 +80,10 @@
 | DAY-04 | Phase 1 | Complete |
 | DAY-05 | Phase 1 | Complete |
 | DAY-06 | Phase 1 | Complete |
-| BIRD-01 | Phase 2 | Pending |
-| BIRD-02 | Phase 2 | Pending |
-| BIRD-03 | Phase 2 | Pending |
-| BIRD-04 | Phase 2 | Pending |
+| BIRD-01 | Phase 2 | Complete |
+| BIRD-02 | Phase 2 | Complete |
+| BIRD-03 | Phase 2 | Complete |
+| BIRD-04 | Phase 2 | Complete |
 | PERF-01 | Phase 3 | Pending |
 | PERF-02 | Phase 3 | Pending |
 | PERF-03 | Phase 3 | Pending |
