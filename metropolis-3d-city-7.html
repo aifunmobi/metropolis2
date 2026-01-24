@@ -266,6 +266,9 @@
             mkSecrets();
             mkFlocks();
 
+            // Spawn initial performer
+            spawnPerformer();
+
             prog(98, 'Systems...');
             setupMM();
             setupInput();
@@ -4419,6 +4422,66 @@
             }
         }
 
+        function spawnPerformer() {
+            if (performers.length >= PERFORMER_CFG.maxPerformers) return;
+
+            // Pick random block
+            const bx = Math.floor(Math.random() * GRID.gridCount);
+            const bz = Math.floor(Math.random() * GRID.gridCount);
+            const blockCenterX = -halfSize + bx * GRID.cellSize + GRID.cellSize / 2;
+            const blockCenterZ = -halfSize + bz * GRID.cellSize + GRID.cellSize / 2;
+            const innerSize = GRID.cellSize - GRID.roadWidth;
+            const swOffset = GRID.sidewalkWidth / 2;
+
+            // Pick random sidewalk side (0=north, 1=south, 2=west, 3=east)
+            const side = Math.floor(Math.random() * 4);
+            let x, z, facing;
+
+            // Position on sidewalk, facing toward the road
+            const alongOffset = (Math.random() - 0.5) * (innerSize - 4);
+
+            if (side === 0) {
+                x = blockCenterX + alongOffset;
+                z = blockCenterZ - innerSize/2 + swOffset;
+                facing = Math.PI; // Face south (toward road)
+            } else if (side === 1) {
+                x = blockCenterX + alongOffset;
+                z = blockCenterZ + innerSize/2 - swOffset;
+                facing = 0; // Face north (toward road)
+            } else if (side === 2) {
+                x = blockCenterX - innerSize/2 + swOffset;
+                z = blockCenterZ + alongOffset;
+                facing = Math.PI / 2; // Face east (toward road)
+            } else {
+                x = blockCenterX + innerSize/2 - swOffset;
+                z = blockCenterZ + alongOffset;
+                facing = -Math.PI / 2; // Face west (toward road)
+            }
+
+            // Check if too close to existing performer
+            for (const p of performers) {
+                const dx = p.position.x - x;
+                const dz = p.position.z - z;
+                if (Math.sqrt(dx * dx + dz * dz) < 20) return; // Too close
+            }
+
+            // Create performer (50% musician, 50% statue)
+            const performer = Math.random() < 0.5 ? mkMusician() : mkStatue();
+            performer.position.set(x, 0.15, z);
+            performer.rotation.y = facing;
+
+            const duration = PERFORMER_CFG.performDuration[0] +
+                Math.random() * (PERFORMER_CFG.performDuration[1] - PERFORMER_CFG.performDuration[0]);
+
+            performer.userData.spawnTime = clock.getElapsedTime();
+            performer.userData.duration = duration;
+            performer.userData.block = { x: bx, z: bz };
+            performer.userData.watchers = []; // Track watching pedestrians
+
+            performers.push(performer);
+            scene.add(performer);
+        }
+
         function updRain() {
             if (!rain) return;
             const p = rain.geometry.attributes.position.array, v = rain.geometry.attributes.velocity.array;
@@ -5230,6 +5293,54 @@
             });
         }
 
+        function updPerformers(t) {
+            // Check for new performer spawn
+            if (t - lastPerformerCheck > PERFORMER_CFG.spawnInterval) {
+                lastPerformerCheck = t;
+                if (Math.random() < PERFORMER_CFG.spawnChance) {
+                    spawnPerformer();
+                }
+            }
+
+            // Update existing performers
+            for (let i = performers.length - 1; i >= 0; i--) {
+                const performer = performers[i];
+                const elapsed = t - performer.userData.spawnTime;
+
+                // Check if performance is over
+                if (elapsed > performer.userData.duration) {
+                    // Release watchers back to walking
+                    if (performer.userData.watchers) {
+                        performer.userData.watchers.forEach(ped => {
+                            if (ped.userData.state === 'watchingPerformer') {
+                                ped.userData.state = 'walking';
+                                ped.userData.watchingPerformer = null;
+                                setNewPedTarget(ped);
+                            }
+                        });
+                    }
+                    scene.remove(performer);
+                    performers.splice(i, 1);
+                    continue;
+                }
+
+                // Animate musician strumming
+                if (performer.userData.type === 'musician' && performer.userData.strumArm) {
+                    performer.userData.animPhase += 0.1;
+                    const strum = Math.sin(performer.userData.animPhase * 3) * 0.15;
+                    performer.userData.strumArm.rotation.x = 0.3 + strum;
+                }
+
+                // Statue occasionally "breaks" stillness with tiny movement (living statue effect)
+                if (performer.userData.type === 'statue') {
+                    // Very occasional subtle head movement
+                    if (Math.random() < 0.001) {
+                        performer.children[1].rotation.y = (Math.random() - 0.5) * 0.1;
+                    }
+                }
+            }
+        }
+
         function animate() {
             requestAnimationFrame(animate);
             const dt = clock.getDelta(), t = clock.getElapsedTime();
@@ -5259,8 +5370,9 @@
             updDayNight(dt);
             updStreetlights();
 
-            updCars(t); 
-            updPeds(t); 
+            updCars(t);
+            updPeds(t);
+            updPerformers(t);
             updBicycles(t);
             updOmnibus(t);
             updSpecialEvents(t);
