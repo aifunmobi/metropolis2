@@ -93,6 +93,12 @@ Plans:
 
 **Requirements:** SUB-01, SUB-02, SUB-03, SUB-04, SUB-05
 
+**Plans:** 2 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Subway infrastructure: stations, elevated tracks, and train movement
+- [ ] 04-02-PLAN.md — Pedestrian subway interaction and station activity
+
 **Success Criteria:**
 1. Visible station entrances at street level (stairs down or covered entrance)
 2. Trains emerge from underground at designated points
