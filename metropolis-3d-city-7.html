@@ -6217,7 +6217,91 @@
                     }
                     return;
                 }
-                
+
+                // Handle walking toward performer
+                if (p.userData.state === 'towardPerformer') {
+                    const performer = p.userData.watchingPerformer;
+
+                    // Check if performer left
+                    if (!performer || !performers.includes(performer)) {
+                        p.userData.state = 'walking';
+                        p.userData.watchingPerformer = null;
+                        setNewPedTarget(p);
+                        return;
+                    }
+
+                    const to = p.userData.target.clone().sub(p.position);
+                    to.y = 0;
+                    const d = to.length();
+
+                    if (d < 0.5) {
+                        // Arrived at watching position
+                        p.userData.state = 'watchingPerformer';
+                        p.userData.watchStartTime = t;
+                        // Face the performer
+                        const toPerformer = new THREE.Vector3(
+                            performer.position.x - p.position.x,
+                            0,
+                            performer.position.z - p.position.z
+                        );
+                        p.rotation.y = Math.atan2(toPerformer.x, toPerformer.z);
+                    } else {
+                        // Walk toward watching spot
+                        const dir = to.normalize();
+                        p.position.x += dir.x * p.userData.spd;
+                        p.position.z += dir.z * p.userData.spd;
+                        p.rotation.y = Math.atan2(dir.x, dir.z);
+
+                        // Animate walking
+                        p.userData.walk += 0.15;
+                        const sw = Math.sin(p.userData.walk) * 0.3;
+                        if (p.userData.ll) p.userData.ll.rotation.x = sw;
+                        if (p.userData.rl) p.userData.rl.rotation.x = -sw;
+                    }
+                    return;
+                }
+
+                // Handle watching performer
+                if (p.userData.state === 'watchingPerformer') {
+                    const performer = p.userData.watchingPerformer;
+
+                    // Check if performer left
+                    if (!performer || !performers.includes(performer)) {
+                        p.userData.state = 'walking';
+                        p.userData.watchingPerformer = null;
+                        setNewPedTarget(p);
+                        return;
+                    }
+
+                    // Keep facing the performer (in case they move slightly)
+                    const toPerformer = new THREE.Vector3(
+                        performer.position.x - p.position.x,
+                        0,
+                        performer.position.z - p.position.z
+                    );
+                    p.rotation.y = Math.atan2(toPerformer.x, toPerformer.z);
+
+                    // Stand still - reset leg positions
+                    if (p.userData.ll) p.userData.ll.rotation.x = 0;
+                    if (p.userData.rl) p.userData.rl.rotation.x = 0;
+
+                    // Check if done watching
+                    const watchElapsed = t - p.userData.watchStartTime;
+                    if (watchElapsed > p.userData.watchDuration) {
+                        // Remove from performer's watcher list
+                        const watcherIdx = performer.userData.watchers.indexOf(p);
+                        if (watcherIdx >= 0) {
+                            performer.userData.watchers.splice(watcherIdx, 1);
+                        }
+
+                        p.userData.state = 'walking';
+                        p.userData.watchingPerformer = null;
+                        p.userData.watchStartTime = null;
+                        setNewPedTarget(p);
+                    }
+                    return;
+                }
+
                 const to = p.userData.target.clone().sub(p.position);
                 to.y = 0;
                 const d = to.length();
