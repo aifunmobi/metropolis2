@@ -11,20 +11,32 @@ See: .planning/PROJECT.md (updated 2025-01-23)
 
 - **Milestone:** v1.0 - Visual Engagement Features
 - **Phase:** 1 of 5 (Day/Night Cycle)
-- **Plan:** 1 of 3 completed
+- **Plan:** 2 of 3 completed
 - **Status:** In progress
-- **Last activity:** 2026-01-24 - Completed 01-01-PLAN.md
+- **Last activity:** 2026-01-24 - Completed 01-02-PLAN.md
 
-**Progress:** █░░ 33% (1/3 plans in phase 01)
+**Progress:** ██░ 67% (2/3 plans in phase 01)
 
 ## Recent Progress
 
+- 01-02: Sun and moon celestial bodies tracking across sky with time control
+- Visible sun during day (0.2-0.8) and moon during night (0.8-0.2)
+- Celestial bodies arc from east to west with realistic orbital motion
+- Directional light follows sun position for dynamic shadows
+- T key cycles time speed: normal, 10x fast, paused
 - 01-01: Core time system with sky transitions and dynamic lighting implemented
 - Time-of-day variable advances continuously (0-1 cycle)
 - Sky colors transition through 5 phases (midnight, dawn, day, dusk, night)
 - Lighting adjusts dynamically based on time of day
 
 ## Session Notes
+
+### 2026-01-24 - Phase 01 Plan 02
+- Created sun and moon celestial body meshes with visual detail
+- Sun has glow halo effect, moon has crater detail spots
+- Positioned celestial bodies in updDayNight based on timeOfDay
+- Directional light tracks sun position for realistic shadow movement
+- Added T key time speed control (normal/fast/paused)
 
 ### 2026-01-24 - Phase 01 Plan 01
 - Implemented core time-of-day system
@@ -45,6 +57,10 @@ None yet.
 
 | Date | Decision | Context |
 |------|----------|---------|
+| 2026-01-24 | Time speed control: normal -> fast -> paused | Normal (0.005) for observation, fast (0.05) for testing, paused for screenshots |
+| 2026-01-24 | Directional light synced to sun position | Realistic shadow movement throughout day enhances time perception |
+| 2026-01-24 | Sun orbit radius 150, peak height 120 | Large enough to be visible from anywhere in city, high enough to clear buildings |
+| 2026-01-24 | Sun visible 0.2-0.8, moon visible 0.8-0.2 | Corresponds to dawn-dusk and night periods, wrapping handles midnight |
 | 2026-01-24 | Time starts at 0.25 (dawn) | Visually interesting orange/pink sky at startup |
 | 2026-01-24 | Full day/night cycle in ~200 seconds | Allows observation of full cycle in 3-4 minutes |
 | 2026-01-24 | Sine wave for lighting intensity | Natural smooth transition peaking at noon |
@@ -54,8 +70,8 @@ None yet.
 
 ## Session Continuity
 
-- **Last session:** 2026-01-24 02:31 UTC
-- **Stopped at:** Completed 01-01-PLAN.md
+- **Last session:** 2026-01-24 02:37 UTC
+- **Stopped at:** Completed 01-02-PLAN.md
 - **Resume file:** None - plan complete
 
 ---
