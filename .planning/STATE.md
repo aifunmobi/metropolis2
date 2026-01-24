@@ -5,20 +5,25 @@
 See: .planning/PROJECT.md (updated 2025-01-23)
 
 **Core value:** The city feels alive and worth watching
-**Current focus:** Phase 4 - Subway System
+**Current focus:** Phase 5 - Rooftop Features (next)
 
 ## Current Position
 
 - **Milestone:** v1.0 - Visual Engagement Features
-- **Phase:** 4 of 5 (Subway System)
-- **Plan:** 1 of 2 completed
-- **Status:** In progress
-- **Last activity:** 2026-01-24 - Completed 04-01-PLAN.md
+- **Phase:** 4 of 5 (Subway System) - COMPLETE
+- **Plan:** 2 of 2 completed
+- **Status:** Phase complete, ready for Phase 5
+- **Last activity:** 2026-01-24 - Completed 04-02-PLAN.md
 
-**Progress:** ████████░░░░░░ 57% (8/14 plans across all phases)
+**Progress:** ████████████░░ 64% (9/14 plans across all phases)
 
 ## Recent Progress
 
+- 04-02: Pedestrian subway interaction with station activity indicators (PHASE COMPLETE)
+- Pedestrians within 30 units of stations have 8% chance to walk toward entrance
+- Pedestrians disappear when entering, reappear at different station after 8-20 seconds
+- Station activity lights glow green when pedestrians entering/exiting or train stopped
+- Cross-system protection prevents bus/garbage interruption of subway passengers
 - 04-01: Subway infrastructure with 3 stations, elevated track, moving train
 - Station entrances at ground level with covered stairway and platform
 - Elevated track with support columns connecting L-shaped route
@@ -58,6 +63,15 @@ See: .planning/PROJECT.md (updated 2025-01-23)
 - Lighting adjusts dynamically based on time of day
 
 ## Session Notes
+
+### 2026-01-24 - Phase 04 Plan 02 (PHASE COMPLETE)
+- Added subwayPassengers array and SUBWAY_MAX_PASSENGERS (12) constant
+- Implemented 8% subway attraction chance in setNewPedTarget() for nearby stations
+- Added toSubwayStation state: pedestrians walk to station entrance
+- Added inSubway state: pedestrians invisible for 8-20 seconds, exit at different station
+- Station activity lights glow green when pedestrians using station or train stopped
+- Protected subway pedestrians from bus assignment and garbage truck suction
+- Phase 04 complete - subway system fully operational with passenger flow
 
 ### 2026-01-24 - Phase 04 Plan 01
 - Created SUBWAY_CFG with trackHeight (6), trainSpeed (0.12), stopDuration (5)
@@ -141,6 +155,11 @@ None currently.
 
 | Date | Decision | Context |
 |------|----------|---------|
+| 2026-01-24 | Subway attraction chance 8% | Balances against bus (10%), performers (15%), buildings (10%) |
+| 2026-01-24 | Subway attraction radius 30 units | Matches performer attraction radius for consistency |
+| 2026-01-24 | Subway ride duration 8-20 seconds | Observable transit time, not too long to feel stuck |
+| 2026-01-24 | Max 12 subway passengers | Prevents draining pedestrian population |
+| 2026-01-24 | Station activity lights green | Consistent with active/go signaling |
 | 2026-01-24 | Track height 6 units above ground | Visible elevated transit above street traffic, connected to city |
 | 2026-01-24 | Train speed 0.12, stop duration 5 seconds | Observable travel between stations, noticeable pauses |
 | 2026-01-24 | L-shaped route with 3 stations | Covers two city edges, extensible to full loop |
@@ -179,8 +198,8 @@ None currently.
 
 ## Session Continuity
 
-- **Last session:** 2026-01-24 04:10 UTC
-- **Stopped at:** Completed 04-01-PLAN.md
+- **Last session:** 2026-01-24 04:14 UTC
+- **Stopped at:** Completed 04-02-PLAN.md (Phase 04 complete)
 - **Resume file:** None
 
 ---
