@@ -72,7 +72,7 @@
     
     <div id="weather">☀️ Sunny 24°C</div>
     <div id="minimap"><canvas id="mm"></canvas></div>
-    <div id="controls">WASD: Move • Q/E: Up/Down • Mouse: Look • Scroll: Zoom • R: Rain • Space: Boost • Click to start</div>
+    <div id="controls">WASD: Move • Q/E: Up/Down • Mouse: Look • Scroll: Zoom • R: Rain • T: Cycle time • Space: Boost • Click to start</div>
     <div id="notif"></div>
 
     <script type="importmap">
@@ -4318,6 +4318,19 @@
                     notify(weatherNames[weatherState], 2000);
                     weatherTimer = 0; // Reset timer
                 }
+                if (e.code === 'KeyT') {
+                    // Toggle time speed: normal -> fast -> frozen -> normal
+                    if (dayNightSpeed === 0) {
+                        dayNightSpeed = 0.005;
+                        notify('Time: Normal', 1500);
+                    } else if (dayNightSpeed === 0.005) {
+                        dayNightSpeed = 0.05; // 10x faster
+                        notify('Time: Fast forward', 1500);
+                    } else {
+                        dayNightSpeed = 0;
+                        notify('Time: Paused', 1500);
+                    }
+                }
                 if (e.code === 'Space') boost = true;
             });
             addEventListener('keyup', e => { keys[e.code] = false; if (e.code === 'Space') boost = false; });
@@ -4468,6 +4481,25 @@
             return new THREE.Color().lerpColors(color1, color2, t).getHex();
         }
 
+        function updStreetlights() {
+            const targetIntensity = isNight ? 1.5 : 0;
+            const targetColor = isNight ? 0xffeeaa : 0x222211;
+
+            streetlights.forEach(sl => {
+                const light = sl.userData.light;
+                const bulb = sl.userData.bulb;
+
+                if (light) {
+                    // Smooth transition
+                    light.intensity += (targetIntensity - light.intensity) * 0.05;
+                }
+
+                if (bulb) {
+                    bulb.material.color.setHex(targetColor);
+                }
+            });
+        }
+
         function animate() {
             requestAnimationFrame(animate);
             const dt = clock.getDelta(), t = clock.getElapsedTime();
@@ -4495,6 +4527,7 @@
             $('pos').textContent = `${Math.round(cam.position.x)},${Math.round(cam.position.z)}`;
 
             updDayNight(dt);
+            updStreetlights();
 
             updCars(t); 
             updPeds(t); 
