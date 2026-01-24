@@ -1438,7 +1438,9 @@
             const eligiblePeds = peds.filter(p =>
                 p.userData.state === 'walking' &&
                 !p.userData.waitingForBus &&
-                !p.userData.watchingPerformer
+                !p.userData.watchingPerformer &&
+                p.userData.state !== 'toSubwayStation' &&
+                p.userData.state !== 'inSubway'
             );
             
             if (eligiblePeds.length === 0) return;
@@ -3134,6 +3136,9 @@
 
                 // Skip pedestrians watching performers
                 if (ped.userData.state === 'watchingPerformer' || ped.userData.state === 'towardPerformer') continue;
+
+                // Skip pedestrians using subway
+                if (ped.userData.state === 'toSubwayStation' || ped.userData.state === 'inSubway') continue;
 
                 const dx = ped.position.x - nozzleWorldPos.x;
                 const dz = ped.position.z - nozzleWorldPos.z;
@@ -6750,10 +6755,75 @@
                     return;
                 }
 
+                // Pedestrian walking to subway station
+                if (p.userData.state === 'toSubwayStation') {
+                    const dx = p.userData.target.x - p.position.x;
+                    const dz = p.userData.target.z - p.position.z;
+                    const dist = Math.sqrt(dx * dx + dz * dz);
+
+                    if (dist < 0.5) {
+                        // Arrived at station entrance - enter subway
+                        p.userData.state = 'inSubway';
+                        p.userData.subwayStartTime = t;
+                        p.userData.rideDuration = 8 + Math.random() * 12; // 8-20 seconds ride
+                        // Pick a different exit station
+                        const currentIdx = subwayStations.indexOf(p.userData.targetStation);
+                        const otherStations = subwayStations.filter((_, i) => i !== currentIdx);
+                        p.userData.exitStation = otherStations[Math.floor(Math.random() * otherStations.length)];
+                        p.visible = false; // Disappear into station
+                        subwayPassengers.push(p);
+                    } else {
+                        // Walk toward station
+                        const spd = p.userData.spd;
+                        p.position.x += (dx / dist) * spd;
+                        p.position.z += (dz / dist) * spd;
+                        p.rotation.y = Math.atan2(dx, dz);
+
+                        // Walking animation
+                        p.userData.walk += 0.15;
+                        const legSwing = Math.sin(p.userData.walk) * 0.3;
+                        if (p.userData.ll) p.userData.ll.rotation.x = legSwing;
+                        if (p.userData.rl) p.userData.rl.rotation.x = -legSwing;
+                    }
+                    return;
+                }
+
+                // Pedestrian riding subway (invisible, waiting to exit)
+                if (p.userData.state === 'inSubway') {
+                    if (t - p.userData.subwayStartTime > p.userData.rideDuration) {
+                        // Exit at designated station
+                        const exitStation = p.userData.exitStation;
+                        p.position.set(
+                            exitStation.x + Math.sin(exitStation.rotation) * 2 + (Math.random() - 0.5) * 2,
+                            0.15,
+                            exitStation.z + Math.cos(exitStation.rotation) * 2 + (Math.random() - 0.5) * 2
+                        );
+                        p.visible = true;
+                        p.userData.state = 'walking';
+                        p.userData.targetStation = null;
+                        p.userData.exitStation = null;
+
+                        // Remove from passengers
+                        const idx = subwayPassengers.indexOf(p);
+                        if (idx > -1) subwayPassengers.splice(idx, 1);
+
+                        // Update block assignment
+                        const bx = Math.floor((p.position.x + halfSize) / GRID.cellSize);
+                        const bz = Math.floor((p.position.z + halfSize) / GRID.cellSize);
+                        p.userData.currentBlock = {
+                            x: Math.max(0, Math.min(GRID.gridCount - 1, bx)),
+                            z: Math.max(0, Math.min(GRID.gridCount - 1, bz))
+                        };
+
+                        setNewPedTarget(p);
+                    }
+                    return;
+                }
+
                 const to = p.userData.target.clone().sub(p.position);
                 to.y = 0;
                 const d = to.length();
-                
+
                 if (d < 0.5) {
                     if (p.userData.state === 'toBuilding') {
                         // Arrived at building entrance - go inside
