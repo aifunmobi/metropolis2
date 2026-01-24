@@ -1092,8 +1092,11 @@
             
             // Create omnibus line
             createOmnibusLine();
+
+            // Create subway line
+            createSubwayLine();
         }
-        
+
         let omnibus = null;
         let omnibusStops = [];
         let omnibusPassengers = [];
@@ -1801,6 +1804,172 @@
 
             g.userData = { type: 'subwayTrack' };
             return g;
+        }
+
+        function mkSubwayTrain() {
+            const g = new THREE.Group();
+
+            // Train body - elongated silver/gray metallic
+            const bodyMat = new THREE.MeshStandardMaterial({
+                color: 0xcccccc,
+                metalness: 0.6,
+                roughness: 0.4
+            });
+
+            const body = new THREE.Mesh(
+                new THREE.BoxGeometry(6, 1.8, 2),
+                bodyMat
+            );
+            body.position.y = 0.9;
+            body.castShadow = true;
+            g.add(body);
+
+            // Front and back end caps (slightly darker)
+            const endCapMat = new THREE.MeshStandardMaterial({
+                color: 0x999999,
+                metalness: 0.5,
+                roughness: 0.5
+            });
+
+            const frontCap = new THREE.Mesh(
+                new THREE.BoxGeometry(0.2, 1.6, 1.8),
+                endCapMat
+            );
+            frontCap.position.set(3.1, 0.9, 0);
+            g.add(frontCap);
+
+            const backCap = new THREE.Mesh(
+                new THREE.BoxGeometry(0.2, 1.6, 1.8),
+                endCapMat
+            );
+            backCap.position.set(-3.1, 0.9, 0);
+            g.add(backCap);
+
+            // Windows - series of light blue rectangles along sides
+            const windowMat = new THREE.MeshBasicMaterial({ color: 0x88ccff });
+            for (let i = 0; i < 5; i++) {
+                // Right side windows
+                const winR = new THREE.Mesh(
+                    new THREE.PlaneGeometry(0.8, 0.7),
+                    windowMat
+                );
+                winR.position.set(-2 + i * 1.1, 1.1, 1.01);
+                g.add(winR);
+
+                // Left side windows
+                const winL = new THREE.Mesh(
+                    new THREE.PlaneGeometry(0.8, 0.7),
+                    windowMat
+                );
+                winL.position.set(-2 + i * 1.1, 1.1, -1.01);
+                winL.rotation.y = Math.PI;
+                g.add(winL);
+            }
+
+            // Front windshield
+            const windshield = new THREE.Mesh(
+                new THREE.PlaneGeometry(1.5, 1.0),
+                windowMat
+            );
+            windshield.position.set(3.01, 1.1, 0);
+            windshield.rotation.y = Math.PI / 2;
+            g.add(windshield);
+
+            // Roof details - AC units
+            const acMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
+            for (let i = 0; i < 3; i++) {
+                const ac = new THREE.Mesh(
+                    new THREE.BoxGeometry(1, 0.3, 1.2),
+                    acMat
+                );
+                ac.position.set(-1.5 + i * 1.5, 1.95, 0);
+                g.add(ac);
+            }
+
+            // Wheels (simplified - dark cylinders underneath)
+            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+            const wheelPositions = [
+                [2, 0.2, 0.9], [2, 0.2, -0.9],
+                [0, 0.2, 0.9], [0, 0.2, -0.9],
+                [-2, 0.2, 0.9], [-2, 0.2, -0.9]
+            ];
+            wheelPositions.forEach(pos => {
+                const wheel = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.2, 0.2, 0.15, 12),
+                    wheelMat
+                );
+                wheel.rotation.x = Math.PI / 2;
+                wheel.position.set(...pos);
+                g.add(wheel);
+            });
+
+            // Headlights
+            const headlightMat = new THREE.MeshBasicMaterial({ color: 0xffffcc });
+            [-0.6, 0.6].forEach(z => {
+                const light = new THREE.Mesh(
+                    new THREE.CircleGeometry(0.15, 12),
+                    headlightMat
+                );
+                light.position.set(3.12, 0.5, z);
+                light.rotation.y = Math.PI / 2;
+                g.add(light);
+            });
+
+            // Red stripe along bottom
+            const stripe = new THREE.Mesh(
+                new THREE.BoxGeometry(5.8, 0.15, 2.05),
+                new THREE.MeshStandardMaterial({ color: 0xcc3333 })
+            );
+            stripe.position.y = 0.15;
+            g.add(stripe);
+
+            g.userData = {
+                type: 'subway',
+                state: 'moving',
+                currentStation: 0,
+                nextStation: 1,
+                stopTimer: 0,
+                spd: SUBWAY_CFG.trainSpeed
+            };
+
+            return g;
+        }
+
+        function createSubwayLine() {
+            // Define 3 stations forming an L-shaped route along city edges
+            subwayStations = [
+                { x: -halfSize + 12, z: -halfSize + 12, name: 'North', rotation: 0 },
+                { x: -halfSize + 12, z: halfSize - 12, name: 'Central', rotation: 0 },
+                { x: halfSize - 12, z: halfSize - 12, name: 'East', rotation: Math.PI / 2 }
+            ];
+
+            // Create stations
+            subwayStations.forEach((station, i) => {
+                const stationMesh = mkSubwayStation(i + 1);
+                stationMesh.position.set(station.x, 0, station.z);
+                stationMesh.rotation.y = station.rotation;
+                scene.add(stationMesh);
+                station.mesh = stationMesh;
+            });
+
+            // Create elevated track segments between consecutive stations
+            for (let i = 0; i < subwayStations.length; i++) {
+                const current = subwayStations[i];
+                const next = subwayStations[(i + 1) % subwayStations.length];
+                const track = mkSubwayTrack(current.x, current.z, next.x, next.z);
+                scene.add(track);
+            }
+
+            // Create train and position at first station
+            subwayTrain = mkSubwayTrain();
+            subwayTrain.position.set(
+                subwayStations[0].x,
+                SUBWAY_CFG.trackHeight,
+                subwayStations[0].z
+            );
+            scene.add(subwayTrain);
+
+            notify('Subway Line now running!', 3000);
         }
 
         function mkDoubleDecker() {
