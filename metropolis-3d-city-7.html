@@ -502,20 +502,16 @@
                 housing.position.set(armLength, poleHeight - 0.3, 0);
                 g.add(housing);
 
-                // Bulb (visual)
+                // Bulb (visual) - use emissive material instead of PointLight for performance
+                const bulbMaterial = new THREE.MeshBasicMaterial({ color: 0x222211 });
                 const bulb = new THREE.Mesh(
                     new THREE.SphereGeometry(0.25, 8, 8),
-                    bulbMat.clone() // Clone so each can be controlled independently
+                    bulbMaterial
                 );
                 bulb.position.set(armLength, poleHeight - 0.5, 0);
                 g.add(bulb);
                 g.userData.bulb = bulb;
-
-                // Point light (actual light emission) - starts off
-                const light = new THREE.PointLight(0xffeecc, 0, 15);
-                light.position.set(armLength, poleHeight - 0.6, 0);
-                g.add(light);
-                g.userData.light = light;
+                // No PointLight - too expensive with many streetlights
 
                 g.position.set(x, 0, z);
                 g.rotation.y = rotation;
@@ -4504,18 +4500,11 @@
         }
 
         function updStreetlights() {
-            const targetIntensity = isNight ? 1.5 : 0;
+            // Use emissive color for bulbs - no PointLights for performance
             const targetColor = isNight ? 0xffeeaa : 0x222211;
 
             streetlights.forEach(sl => {
-                const light = sl.userData.light;
                 const bulb = sl.userData.bulb;
-
-                if (light) {
-                    // Smooth transition
-                    light.intensity += (targetIntensity - light.intensity) * 0.05;
-                }
-
                 if (bulb) {
                     bulb.material.color.setHex(targetColor);
                 }
