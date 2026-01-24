@@ -3033,17 +3033,49 @@
                 } else {
                     // Check for obstacles ahead
                     let omnibusBlocked = false;
-                    
-                    // Check cars
+                    const dirX = dx / dist;
+                    const dirZ = dz / dist;
+
+                    // Check cars - use proper forward/lateral distance
                     for (const car of cars) {
                         const cdx = car.position.x - omnibus.position.x;
                         const cdz = car.position.z - omnibus.position.z;
-                        const cdist = Math.sqrt(cdx * cdx + cdz * cdz);
-                        // Check if car is in our path
-                        const dotProduct = (cdx * dx + cdz * dz) / dist;
-                        if (dotProduct > 0 && cdist < 5) {
+                        // Forward distance (along bus direction)
+                        const forward = cdx * dirX + cdz * dirZ;
+                        // Lateral distance (perpendicular to bus direction)
+                        const lateral = Math.abs(cdx * (-dirZ) + cdz * dirX);
+                        // Block if car is ahead (0-8 units) and in our lane (within 2.5 units)
+                        if (forward > 0 && forward < 8 && lateral < 2.5) {
                             omnibusBlocked = true;
                             break;
+                        }
+                    }
+
+                    // Check emergency vehicles
+                    if (!omnibusBlocked) {
+                        for (const ev of emergencyVehicles) {
+                            const edx = ev.position.x - omnibus.position.x;
+                            const edz = ev.position.z - omnibus.position.z;
+                            const forward = edx * dirX + edz * dirZ;
+                            const lateral = Math.abs(edx * (-dirZ) + edz * dirX);
+                            if (forward > 0 && forward < 8 && lateral < 2.5) {
+                                omnibusBlocked = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Check bicycles
+                    if (!omnibusBlocked) {
+                        for (const bike of bicycles) {
+                            const bdx = bike.position.x - omnibus.position.x;
+                            const bdz = bike.position.z - omnibus.position.z;
+                            const forward = bdx * dirX + bdz * dirZ;
+                            const lateral = Math.abs(bdx * (-dirZ) + bdz * dirX);
+                            if (forward > 0 && forward < 6 && lateral < 2) {
+                                omnibusBlocked = true;
+                                break;
+                            }
                         }
                     }
                     
@@ -3051,23 +3083,37 @@
                     if (!omnibusBlocked && garbageTruck && garbageTruckActive) {
                         const gdx = garbageTruck.position.x - omnibus.position.x;
                         const gdz = garbageTruck.position.z - omnibus.position.z;
-                        const gdist = Math.sqrt(gdx * gdx + gdz * gdz);
-                        if (gdist < 8) {
+                        const forward = gdx * dirX + gdz * dirZ;
+                        const lateral = Math.abs(gdx * (-dirZ) + gdz * dirX);
+                        if (forward > 0 && forward < 10 && lateral < 3) {
                             omnibusBlocked = true;
                         }
                     }
-                    
-                    // Check pedestrians (but not ones waiting for bus)
-                    for (const ped of peds) {
-                        if (!ped.visible) continue;
-                        if (ped.userData.waitingForBus) continue; // Don't let waiting passengers block the bus
-                        const pdx = ped.position.x - omnibus.position.x;
-                        const pdz = ped.position.z - omnibus.position.z;
-                        const pdist = Math.sqrt(pdx * pdx + pdz * pdz);
-                        const dotProduct = (pdx * dx + pdz * dz) / dist;
-                        if (dotProduct > 0 && pdist < 4) { // Reduced from 6 to 4
+
+                    // Check wrecker
+                    if (!omnibusBlocked && wrecker) {
+                        const wdx = wrecker.position.x - omnibus.position.x;
+                        const wdz = wrecker.position.z - omnibus.position.z;
+                        const forward = wdx * dirX + wdz * dirZ;
+                        const lateral = Math.abs(wdx * (-dirZ) + wdz * dirX);
+                        if (forward > 0 && forward < 10 && lateral < 3) {
                             omnibusBlocked = true;
-                            break;
+                        }
+                    }
+
+                    // Check pedestrians (but not ones waiting for bus)
+                    if (!omnibusBlocked) {
+                        for (const ped of peds) {
+                            if (!ped.visible) continue;
+                            if (ped.userData.waitingForBus) continue;
+                            const pdx = ped.position.x - omnibus.position.x;
+                            const pdz = ped.position.z - omnibus.position.z;
+                            const forward = pdx * dirX + pdz * dirZ;
+                            const lateral = Math.abs(pdx * (-dirZ) + pdz * dirX);
+                            if (forward > 0 && forward < 5 && lateral < 2) {
+                                omnibusBlocked = true;
+                                break;
+                            }
                         }
                     }
                     
