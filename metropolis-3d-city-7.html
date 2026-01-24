@@ -601,9 +601,12 @@
                         const w = Math.min(maxW, 5 + Math.random() * 7);
                         const d = Math.min(innerSize - 4, 5 + Math.random() * 7);
                         
-                        const b = mkBuilding(w, h, d, t.col);
                         const offsetX = numBuildings > 1 ? (i - 0.5) * (innerSize / 2) : 0;
-                        b.position.set(blockCenterX + offsetX, 0, blockCenterZ);
+                        const bPosX = blockCenterX + offsetX;
+                        const bPosZ = blockCenterZ;
+                        const tunnelInfo = getSubwayTunnelInfo(bPosX, bPosZ, w, d);
+                        const b = mkBuilding(w, h, d, t.col, tunnelInfo);
+                        b.position.set(bPosX, 0, bPosZ);
                         b.userData.height = h;
                         b.userData.width = w;
                         b.userData.depth = d;
@@ -625,15 +628,129 @@
             }
         }
 
-        function mkBuilding(w, h, d, col) {
+        // Check if a building position needs a subway tunnel
+        function getSubwayTunnelInfo(bx, bz, w, d) {
+            // Subway track paths (will be set after createSubwayLine defines stations)
+            // Track 1: x = -36 (from North to Central, vertical)
+            // Track 2: z = 36 (from Central to East, horizontal)
+            const trackX = -halfSize + 12;  // -36
+            const trackZ = halfSize - 12;   // 36
+            const tunnelWidth = 4;  // Width of tunnel opening
+            const tunnelHeight = 4; // Height of tunnel opening
+            const tunnelBottom = SUBWAY_CFG.trackHeight - 1; // Bottom of tunnel
+
+            // Check if building intersects with vertical track (x = -36)
+            if (Math.abs(bx - trackX) < w/2 + 1) {
+                return { direction: 'z', tunnelWidth, tunnelHeight, tunnelBottom };
+            }
+            // Check if building intersects with horizontal track (z = 36)
+            if (Math.abs(bz - trackZ) < d/2 + 1) {
+                return { direction: 'x', tunnelWidth, tunnelHeight, tunnelBottom };
+            }
+            return null;
+        }
+
+        function mkBuilding(w, h, d, col, tunnelInfo = null) {
             const g = new THREE.Group();
-            
+
             const mat = new THREE.MeshStandardMaterial({ color: col, roughness: 0.7, metalness: 0.1 });
-            const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-            m.position.y = h / 2;
-            m.castShadow = true;
-            m.receiveShadow = true;
-            g.add(m);
+
+            if (tunnelInfo && h > tunnelInfo.tunnelBottom + tunnelInfo.tunnelHeight) {
+                // Building with tunnel - create as multiple parts
+                const tunnelW = tunnelInfo.tunnelWidth;
+                const tunnelH = tunnelInfo.tunnelHeight;
+                const tunnelBot = tunnelInfo.tunnelBottom;
+                const tunnelTop = tunnelBot + tunnelH;
+
+                if (tunnelInfo.direction === 'z') {
+                    // Tunnel runs through building in Z direction
+                    // Bottom section (ground to tunnel bottom)
+                    if (tunnelBot > 0) {
+                        const bottom = new THREE.Mesh(new THREE.BoxGeometry(w, tunnelBot, d), mat);
+                        bottom.position.y = tunnelBot / 2;
+                        bottom.castShadow = true;
+                        bottom.receiveShadow = true;
+                        g.add(bottom);
+                    }
+
+                    // Left pillar (tunnel height section, left of tunnel)
+                    const pillarWidth = (w - tunnelW) / 2;
+                    if (pillarWidth > 0) {
+                        const leftPillar = new THREE.Mesh(new THREE.BoxGeometry(pillarWidth, tunnelH, d), mat);
+                        leftPillar.position.set(-(w/2 - pillarWidth/2), tunnelBot + tunnelH/2, 0);
+                        leftPillar.castShadow = true;
+                        g.add(leftPillar);
+
+                        const rightPillar = new THREE.Mesh(new THREE.BoxGeometry(pillarWidth, tunnelH, d), mat);
+                        rightPillar.position.set(w/2 - pillarWidth/2, tunnelBot + tunnelH/2, 0);
+                        rightPillar.castShadow = true;
+                        g.add(rightPillar);
+                    }
+
+                    // Top section (tunnel top to building height)
+                    const topHeight = h - tunnelTop;
+                    if (topHeight > 0) {
+                        const top = new THREE.Mesh(new THREE.BoxGeometry(w, topHeight, d), mat);
+                        top.position.y = tunnelTop + topHeight / 2;
+                        top.castShadow = true;
+                        top.receiveShadow = true;
+                        g.add(top);
+                    }
+                } else {
+                    // Tunnel runs through building in X direction
+                    // Bottom section
+                    if (tunnelBot > 0) {
+                        const bottom = new THREE.Mesh(new THREE.BoxGeometry(w, tunnelBot, d), mat);
+                        bottom.position.y = tunnelBot / 2;
+                        bottom.castShadow = true;
+                        bottom.receiveShadow = true;
+                        g.add(bottom);
+                    }
+
+                    // Front and back pillars
+                    const pillarDepth = (d - tunnelW) / 2;
+                    if (pillarDepth > 0) {
+                        const frontPillar = new THREE.Mesh(new THREE.BoxGeometry(w, tunnelH, pillarDepth), mat);
+                        frontPillar.position.set(0, tunnelBot + tunnelH/2, d/2 - pillarDepth/2);
+                        frontPillar.castShadow = true;
+                        g.add(frontPillar);
+
+                        const backPillar = new THREE.Mesh(new THREE.BoxGeometry(w, tunnelH, pillarDepth), mat);
+                        backPillar.position.set(0, tunnelBot + tunnelH/2, -(d/2 - pillarDepth/2));
+                        backPillar.castShadow = true;
+                        g.add(backPillar);
+                    }
+
+                    // Top section
+                    const topHeight = h - tunnelTop;
+                    if (topHeight > 0) {
+                        const top = new THREE.Mesh(new THREE.BoxGeometry(w, topHeight, d), mat);
+                        top.position.y = tunnelTop + topHeight / 2;
+                        top.castShadow = true;
+                        top.receiveShadow = true;
+                        g.add(top);
+                    }
+                }
+
+                // Add dark tunnel interior for visual depth
+                const tunnelMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+                if (tunnelInfo.direction === 'z') {
+                    const tunnelInterior = new THREE.Mesh(new THREE.BoxGeometry(tunnelW - 0.2, tunnelH - 0.2, d + 0.1), tunnelMat);
+                    tunnelInterior.position.y = tunnelBot + tunnelH/2;
+                    g.add(tunnelInterior);
+                } else {
+                    const tunnelInterior = new THREE.Mesh(new THREE.BoxGeometry(w + 0.1, tunnelH - 0.2, tunnelW - 0.2), tunnelMat);
+                    tunnelInterior.position.y = tunnelBot + tunnelH/2;
+                    g.add(tunnelInterior);
+                }
+            } else {
+                // Regular solid building
+                const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+                m.position.y = h / 2;
+                m.castShadow = true;
+                m.receiveShadow = true;
+                g.add(m);
+            }
             
             // Add entrance doors (1-2 per building)
             const numEntrances = 1 + Math.floor(Math.random() * 2);
