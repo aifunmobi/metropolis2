@@ -31,11 +31,11 @@
 
 ### Subway System
 
-- [ ] **SUB-01**: Subway station entrances visible at street level
-- [ ] **SUB-02**: Trains emerge from underground at stations
-- [ ] **SUB-03**: Trains stop at platforms for passenger loading
-- [ ] **SUB-04**: Pedestrians enter/exit stations
-- [ ] **SUB-05**: Trains travel between stations on visible elevated/ground sections
+- [x] **SUB-01**: Subway station entrances visible at street level
+- [x] **SUB-02**: Trains emerge from underground at stations
+- [x] **SUB-03**: Trains stop at platforms for passenger loading
+- [x] **SUB-04**: Pedestrians enter/exit stations
+- [x] **SUB-05**: Trains travel between stations on visible elevated/ground sections
 
 ### Rooftop Activity
 
@@ -89,11 +89,11 @@
 | PERF-03 | Phase 3 | Complete |
 | PERF-04 | Phase 3 | Complete |
 | PERF-05 | Phase 3 | Complete |
-| SUB-01 | Phase 4 | Pending |
-| SUB-02 | Phase 4 | Pending |
-| SUB-03 | Phase 4 | Pending |
-| SUB-04 | Phase 4 | Pending |
-| SUB-05 | Phase 4 | Pending |
+| SUB-01 | Phase 4 | Complete |
+| SUB-02 | Phase 4 | Complete |
+| SUB-03 | Phase 4 | Complete |
+| SUB-04 | Phase 4 | Complete |
+| SUB-05 | Phase 4 | Complete |
 | ROOF-01 | Phase 5 | Pending |
 | ROOF-02 | Phase 5 | Pending |
 | ROOF-03 | Phase 5 | Pending |
@@ -106,4 +106,4 @@
 
 ---
 *Requirements defined: 2025-01-23*
-*Last updated: 2025-01-23 after initial definition*
+*Last updated: 2026-01-24 after Phase 4 completion*
