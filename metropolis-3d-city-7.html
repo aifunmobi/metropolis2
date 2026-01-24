@@ -4399,6 +4399,66 @@
             if (hemiLight) {
                 hemiLight.intensity = 0.1 + dayFactor * 0.4; // Dimmer at night
             }
+
+            // Position sun and moon based on time
+            // Sun arc: rises at 0.2 (east), peaks at 0.5 (south), sets at 0.8 (west)
+            // Moon arc: rises at 0.8 (east), peaks at 0.0/1.0 (south), sets at 0.2 (west)
+
+            const cityCenter = totalSize / 2; // Center point for orbits
+            const orbitRadius = 150; // Distance from city center
+            const orbitHeight = 120; // Peak height at noon/midnight
+
+            if (sunMesh) {
+                // Sun visible from 0.2 to 0.8 (day hours)
+                if (t >= 0.2 && t <= 0.8) {
+                    const sunProgress = (t - 0.2) / 0.6; // 0-1 during day
+                    const sunAngle = Math.PI * sunProgress; // 0 to PI (east to west)
+
+                    sunMesh.position.x = cityCenter + Math.cos(sunAngle) * orbitRadius;
+                    sunMesh.position.y = Math.sin(sunAngle) * orbitHeight;
+                    sunMesh.position.z = cityCenter - 30; // Slightly south
+
+                    sunMesh.visible = true;
+                    sunMesh.material.opacity = sunProgress < 0.1 ? sunProgress / 0.1 :
+                                               sunProgress > 0.9 ? (1 - sunProgress) / 0.1 : 1;
+                } else {
+                    sunMesh.visible = false;
+                }
+
+                // Sync directional light with sun position
+                if (sunLight && sunMesh.visible) {
+                    sunLight.position.copy(sunMesh.position);
+                    sunLight.target.position.set(cityCenter, 0, cityCenter);
+                }
+            }
+
+            if (moonMesh) {
+                // Moon visible from 0.8 to 0.2 (night hours, wrapping around midnight)
+                let moonVisible = t >= 0.8 || t <= 0.2;
+
+                if (moonVisible) {
+                    // Normalize moon progress: 0.8->1.0->0.0->0.2 becomes 0->1
+                    let moonProgress;
+                    if (t >= 0.8) {
+                        moonProgress = (t - 0.8) / 0.4; // 0.8-1.0 = 0-0.5
+                    } else {
+                        moonProgress = 0.5 + (t / 0.4); // 0-0.2 = 0.5-1.0
+                    }
+                    moonProgress = Math.min(1, moonProgress); // Clamp
+
+                    const moonAngle = Math.PI * moonProgress;
+
+                    moonMesh.position.x = cityCenter + Math.cos(moonAngle) * orbitRadius;
+                    moonMesh.position.y = Math.sin(moonAngle) * (orbitHeight - 20); // Slightly lower arc
+                    moonMesh.position.z = cityCenter + 30; // Slightly north
+
+                    moonMesh.visible = true;
+                    moonMesh.material.opacity = moonProgress < 0.1 ? moonProgress / 0.1 :
+                                                moonProgress > 0.9 ? (1 - moonProgress) / 0.1 : 1;
+                } else {
+                    moonMesh.visible = false;
+                }
+            }
         }
 
         // Helper function for color interpolation
