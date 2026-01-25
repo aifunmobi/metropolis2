@@ -61,10 +61,12 @@ Plans:
 4. Bellagio has visible fountain lake (water surface)
 5. Scale feels appropriate relative to each other
 
-**Plans:**
-- 02-01: Luxor Pyramid and Paris Eiffel Tower
-- 02-02: Bellagio with fountain lake and Caesars Palace
-- 02-03: Excalibur Castle
+**Plans:** 3 plans in 3 waves
+
+Plans:
+- [ ] v2-02-01-PLAN.md — Luxor Pyramid and Paris Eiffel Tower (Wave 1)
+- [ ] v2-02-02-PLAN.md — Bellagio with fountain lake and Caesars Palace (Wave 2)
+- [ ] v2-02-03-PLAN.md — Excalibur Castle (Wave 3)
 
 ---
 
@@ -210,4 +212,4 @@ Overall: █░░░░░░░░░ 17% (1/6 phases)
 
 ---
 *Roadmap created: 2026-01-25*
-*Last updated: 2026-01-25 after Phase 1 complete*
+*Last updated: 2026-01-25 after Phase 2 planned*
