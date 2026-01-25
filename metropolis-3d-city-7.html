@@ -323,6 +323,7 @@
             mkParisEiffelTower();
             mkBellagio();
             mkCaesarsPalace();
+            mkExcaliburCastle();
 
             prog(50, 'Buildings...');
             mkBuildings();
@@ -1572,6 +1573,212 @@
 
             scene.add(caesars);
             return caesars;
+        }
+
+        // Vegas landmarks positioned along Strip:
+        // West side (south to north): Luxor, Excalibur, Bellagio
+        // East side (south to north): Caesars, Paris Eiffel
+        function mkExcaliburCastle() {
+            const castle = new THREE.Group();
+
+            // Colors
+            const stoneColor = 0xf5f5f0; // White/cream stone
+            const gateColor = 0x4a3728; // Dark wood for gate
+            const foundationColor = 0x888888; // Gray stone foundation
+            const moatColor = 0x4080c0; // Blue for moat hint
+            const redTurret = 0xcc3333;
+            const blueTurret = 0x3333cc;
+            const goldSpire = 0xffd700;
+
+            const stoneMat = new THREE.MeshStandardMaterial({
+                color: stoneColor,
+                roughness: 0.8,
+                metalness: 0.1
+            });
+
+            const gateMat = new THREE.MeshStandardMaterial({
+                color: gateColor,
+                roughness: 0.9
+            });
+
+            const foundationMat = new THREE.MeshStandardMaterial({
+                color: foundationColor,
+                roughness: 0.7
+            });
+
+            // 1. Foundation/moat hint
+            const foundation = new THREE.Mesh(
+                new THREE.BoxGeometry(40, 2, 22),
+                foundationMat
+            );
+            foundation.position.set(0, 1, 0);
+            foundation.receiveShadow = true;
+            castle.add(foundation);
+
+            // Thin blue strip around base suggesting moat
+            const moatMat = new THREE.MeshStandardMaterial({ color: moatColor });
+            const moatWidth = 1;
+            // Front moat
+            const moatFront = new THREE.Mesh(
+                new THREE.BoxGeometry(42, 0.3, moatWidth),
+                moatMat
+            );
+            moatFront.position.set(0, 0.15, 12);
+            castle.add(moatFront);
+            // Back moat
+            const moatBack = new THREE.Mesh(
+                new THREE.BoxGeometry(42, 0.3, moatWidth),
+                moatMat
+            );
+            moatBack.position.set(0, 0.15, -12);
+            castle.add(moatBack);
+            // Side moats
+            const moatLeft = new THREE.Mesh(
+                new THREE.BoxGeometry(moatWidth, 0.3, 24),
+                moatMat
+            );
+            moatLeft.position.set(-21, 0.15, 0);
+            castle.add(moatLeft);
+            const moatRight = new THREE.Mesh(
+                new THREE.BoxGeometry(moatWidth, 0.3, 24),
+                moatMat
+            );
+            moatRight.position.set(21, 0.15, 0);
+            castle.add(moatRight);
+
+            // 2. Main castle body
+            const mainBody = new THREE.Mesh(
+                new THREE.BoxGeometry(35, 15, 18),
+                stoneMat
+            );
+            mainBody.position.set(0, 2 + 7.5, 0);
+            mainBody.castShadow = true;
+            mainBody.receiveShadow = true;
+            castle.add(mainBody);
+
+            // 3. Battlements (crenellated top)
+            const battlementMat = stoneMat.clone();
+            for (let i = 0; i < 10; i++) {
+                const battlement = new THREE.Mesh(
+                    new THREE.BoxGeometry(1, 2, 1),
+                    battlementMat
+                );
+                battlement.position.set(-16 + i * 3.5, 2 + 15 + 1, 9.5); // Front edge
+                battlement.castShadow = true;
+                castle.add(battlement);
+            }
+            // Back edge battlements
+            for (let i = 0; i < 10; i++) {
+                const battlement = new THREE.Mesh(
+                    new THREE.BoxGeometry(1, 2, 1),
+                    battlementMat
+                );
+                battlement.position.set(-16 + i * 3.5, 2 + 15 + 1, -9.5);
+                battlement.castShadow = true;
+                castle.add(battlement);
+            }
+
+            // 4. Entry gate
+            const gate = new THREE.Mesh(
+                new THREE.BoxGeometry(6, 8, 0.5),
+                gateMat
+            );
+            gate.position.set(0, 2 + 4, 9.3);
+            castle.add(gate);
+
+            // 5. Corner turrets (4 total) with conical tops
+            const turretPositions = [
+                { x: -17.5, z: 9, color: redTurret },   // Front-left: red
+                { x: 17.5, z: 9, color: blueTurret },   // Front-right: blue
+                { x: -17.5, z: -9, color: blueTurret }, // Back-left: blue
+                { x: 17.5, z: -9, color: redTurret }    // Back-right: red
+            ];
+
+            turretPositions.forEach(tp => {
+                const turretMat = new THREE.MeshStandardMaterial({
+                    color: tp.color,
+                    roughness: 0.6,
+                    metalness: 0.2
+                });
+
+                // Turret cylinder
+                const turret = new THREE.Mesh(
+                    new THREE.CylinderGeometry(2.5, 2.5, 12, 16),
+                    turretMat
+                );
+                turret.position.set(tp.x, 2 + 6, tp.z);
+                turret.castShadow = true;
+                castle.add(turret);
+
+                // Conical roof
+                const cone = new THREE.Mesh(
+                    new THREE.ConeGeometry(3.5, 5, 16),
+                    turretMat
+                );
+                cone.position.set(tp.x, 2 + 12 + 2.5, tp.z);
+                cone.castShadow = true;
+                castle.add(cone);
+
+                // Flag hint
+                const flagMat = new THREE.MeshStandardMaterial({ color: tp.color });
+                const flag = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.1, 3, 2),
+                    flagMat
+                );
+                flag.position.set(tp.x, 2 + 12 + 5 + 1.5, tp.z + 1);
+                castle.add(flag);
+            });
+
+            // 6. Central tower (taller, white with gold spire)
+            const centralTower = new THREE.Mesh(
+                new THREE.CylinderGeometry(3, 3, 20, 16),
+                stoneMat
+            );
+            centralTower.position.set(0, 2 + 10, -5);
+            centralTower.castShadow = true;
+            castle.add(centralTower);
+
+            // Gold spire on central tower
+            const goldMat = new THREE.MeshStandardMaterial({
+                color: goldSpire,
+                metalness: 0.8,
+                roughness: 0.3
+            });
+            const spire = new THREE.Mesh(
+                new THREE.ConeGeometry(4, 6, 16),
+                goldMat
+            );
+            spire.position.set(0, 2 + 20 + 3, -5);
+            spire.castShadow = true;
+            castle.add(spire);
+
+            // Position on west side of Strip, between Luxor and Bellagio
+            const stripCenterX = theStrip.userData.centerX;
+            const stripStartZ = theStrip.userData.startZ;
+            const stripLength = theStrip.userData.endZ - stripStartZ;
+            const sidewalkWidth = theStrip.userData.sidewalkWidth;
+            const stripWidth = theStrip.userData.width;
+
+            castle.position.set(
+                stripCenterX - stripWidth / 2 - sidewalkWidth - 22, // West side parking lot
+                0,
+                stripStartZ + stripLength * 0.35 // Between Luxor (south) and Bellagio (north)
+            );
+
+            // Rotate to face Strip (entrance faces east/Strip)
+            castle.rotation.y = Math.PI / 2;
+
+            // Store userData for Phase 3 lighting
+            castle.userData = {
+                type: 'excalibur',
+                hasTurrets: true
+            };
+
+            // Add to landmarks array
+            vegasLandmarks.push(castle);
+
+            scene.add(castle);
+            return castle;
         }
 
         function mkStreetlights() {
