@@ -10,16 +10,24 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 ## Current Position
 
 - **Milestone:** v2.0 - Las Vegas Expansion
-- **Phase:** 1 of 6 (Vegas Infrastructure - In Progress)
-- **Plan:** 1 of 13 completed
-- **Status:** Phase 1 in progress
-- **Last activity:** 2026-01-25 - Completed v2-01-01-PLAN.md (Vegas Infrastructure Foundation)
+- **Phase:** 1 of 6 (Vegas Infrastructure - COMPLETE)
+- **Plan:** 2 of 13 completed
+- **Status:** Phase 1 complete, ready for Phase 2
+- **Last activity:** 2026-01-25 - Completed v2-01-02-PLAN.md (Vegas Strip Infrastructure)
 
-**Progress:** █░░░░░░░░░░░░░░░ 8% (1/13 plans across all phases)
+**Progress:** ██░░░░░░░░░░░░░░ 15% (2/13 plans across all phases)
 
 ## Recent Progress
 
 ### v2.0 In Progress
+- v2-01-02: The Strip road with sidewalks, independent Vegas sunny weather, temperature billboard (PHASE COMPLETE)
+- The Strip (12 units wide, 70 units long) positioned at highway end, running north-south
+- Double yellow center line, white edge lines, wide sidewalks (4 units) with curbs
+- Sandy parking lot areas (30 units wide) beside sidewalks for future casinos
+- Vegas weather isolation: stays sunny regardless of Metropolis weather state
+- Rain particles constrained to Metropolis using position checks in updRain()
+- Location-aware HUD displays Vegas sunny weather with hot temperature (95-115°F)
+- Temperature billboard with canvas display, LED border animation, updates every 30 seconds
 - v2-01-01: Route 66 highway with iconic marker sign connecting Metropolis to Vegas
 - Highway extends 60 units east from Metropolis edge (X=48 to X=108)
 - Desert terrain (0xc2956e sandy color) distinguishes Vegas zone from city grass
@@ -82,6 +90,30 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 - Lighting adjusts dynamically based on time of day
 
 ## Session Notes
+
+### 2026-01-25 - Phase v2-01 Plan 02 (Vegas Strip Infrastructure - PHASE COMPLETE)
+- Created mkTheStrip() with 12-unit wide road at end of highway (X=108)
+- Strip runs north-south (along Z axis) with 70-unit length
+- Double yellow center line (two 0.15-unit strips at ±0.2 offset) indicates no passing
+- White edge lines at road boundaries, 4-unit wide sidewalks on both sides
+- Gray curbs (0.3x0.15 units) separate road from sidewalks
+- Sandy parking lot areas (30 units wide, 0xd4c4a8 color) beside sidewalks
+- T-intersection connects highway to Strip cleanly
+- Added vegasWeatherState variable (always 'sunny')
+- Created isInVegasZone() helper checking if X > 58 (10-unit buffer)
+- Modified updRain() to constrain rain particles to Metropolis (X within -48 to +48)
+- Updated updateWeatherUI() to show location-aware weather display
+- Vegas shows "☀️ Sunny [temp]°F" with randomized hot temperature
+- Metropolis shows variable weather (sunny/cloudy/rain/storm)
+- Created mkTemperatureBillboard() with Vegas-style LED display
+- Two support poles (8 units tall), dark backing (6x3 units)
+- Canvas display (512x256) shows TEMPERATURE, temp value (95-115°F), LAS VEGAS
+- Temperature updates every 30 seconds with ±2°F fluctuation
+- 20 LED border lights with animated chase pattern (sine wave phase)
+- Billboard positioned at Strip entrance (east side, near south end)
+- 3 tasks completed, 3 commits: a208558, 2677a49, 85e42dc
+- Execution time: 3 minutes 13 seconds
+- Phase v2-01 complete - Vegas infrastructure ready for landmark construction
 
 ### 2026-01-25 - Phase v2-01 Plan 01 (Vegas Infrastructure Foundation)
 - Created VEGAS_CFG constant with zone dimensions (100x80 units, zone starts at X=68)
@@ -216,6 +248,13 @@ None currently.
 
 | Date | Decision | Context |
 |------|----------|---------|
+| 2026-01-25 | Strip perpendicular to highway (north-south) | Creates natural T-intersection, maximizes casino frontage on both sides |
+| 2026-01-25 | Double yellow center line on Strip | Indicates no-passing zone, matches real Vegas Strip traffic rules |
+| 2026-01-25 | Wide sidewalks (4 units vs city 2 units) | Vegas Strip has very wide sidewalks for tourist crowds |
+| 2026-01-25 | Weather zone isolation via position checks | Cleanest implementation, Vegas stays sunny regardless of Metropolis weather |
+| 2026-01-25 | Location-aware HUD weather display | User sees accurate local weather, more immersive experience |
+| 2026-01-25 | Temperature billboard updates every 30 seconds | Frequent enough to feel dynamic, slow enough to be observable |
+| 2026-01-25 | LED chase pattern with sine wave | Classic Vegas billboard aesthetic, visually engaging |
 | 2026-01-25 | Vegas zone east of Metropolis (positive X) | Simplifies navigation, clear directional separation (city west, Vegas east) |
 | 2026-01-25 | Highway width 10 units (vs city roads 8 units) | Highway should feel wider and more open than city streets |
 | 2026-01-25 | Separate mkVegasZoneGround() function | Cleaner separation, Vegas zone extensible without touching core city code |
@@ -274,9 +313,9 @@ None currently.
 ## Session Continuity
 
 - **Last session:** 2026-01-25
-- **Stopped at:** Completed v2-01-01-PLAN.md (Vegas Infrastructure Foundation)
+- **Stopped at:** Completed v2-01-02-PLAN.md (Vegas Strip Infrastructure - Phase v2-01 COMPLETE)
 - **Resume file:** None
-- **Next:** v2-01-02-PLAN.md (Vegas Strip foundation) or continue with Phase 1
+- **Next:** v2-02-01-PLAN.md (Begin Phase 2: Vegas Landmarks) or continue with Phase 2
 
 ---
 *Last updated: 2026-01-25*
