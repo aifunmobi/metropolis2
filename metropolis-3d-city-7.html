@@ -273,13 +273,13 @@
 
         const VEGAS_CFG = {
             // Vegas zone is located east of Metropolis (positive X direction)
-            zoneStartX: halfSize + 20,        // Highway starts 20 units past Metropolis edge
-            zoneWidth: 100,                   // Vegas zone width
-            zoneDepth: 80,                    // Vegas zone depth (Z axis)
+            zoneStartX: halfSize + 60,        // Highway starts 60 units past Metropolis edge (desert buffer)
+            zoneWidth: 120,                   // Vegas zone width (expanded for landmarks)
+            zoneDepth: 100,                   // Vegas zone depth (Z axis)
             stripWidth: 12,                   // The Strip is wider than regular roads
             stripLength: 70,                  // Length of The Strip
             highwayWidth: 10,                 // Highway wider than city roads
-            highwayLength: 40                 // Length of connecting highway
+            highwayLength: 100                // Length of connecting highway (longer journey)
         };
 
         function prog(p, t) {
@@ -293,7 +293,7 @@
             vel = new THREE.Vector3();
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x87CEEB);
-            scene.fog = new THREE.Fog(0x87CEEB, 80, 350);
+            scene.fog = new THREE.Fog(0x87CEEB, 100, 450);
             
             cam = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.1, 500);
             cam.position.set(0, 40, 0);
@@ -734,8 +734,8 @@
             signBack.position.z = -0.05;
             sign.add(signBack);
 
-            // Position sign near highway start (just past Metropolis edge)
-            sign.position.set(halfSize + 5, 0, -VEGAS_CFG.highwayWidth / 2 - 3);
+            // Position sign near highway start
+            sign.position.set(VEGAS_CFG.zoneStartX - 5, 0, -VEGAS_CFG.highwayWidth / 2 - 3);
 
             scene.add(sign);
             return sign;
@@ -8336,8 +8336,8 @@
                 case 'sunny':
                     // Don't set fixed color - let day/night cycle control it
                     // Just initialize fog if it doesn't exist
-                    if (!scene.fog || scene.fog.far !== 350) {
-                        scene.fog = new THREE.Fog(0x87CEEB, 80, 350);
+                    if (!scene.fog || scene.fog.far !== 450) {
+                        scene.fog = new THREE.Fog(0x87CEEB, 100, 450);
                     }
                     windStrength = 0;
                     raining = false;
