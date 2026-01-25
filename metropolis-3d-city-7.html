@@ -258,6 +258,17 @@
         const totalSize = GRID.cellSize * GRID.gridCount;
         const halfSize = totalSize / 2;
 
+        const VEGAS_CFG = {
+            // Vegas zone is located east of Metropolis (positive X direction)
+            zoneStartX: halfSize + 20,        // Highway starts 20 units past Metropolis edge
+            zoneWidth: 100,                   // Vegas zone width
+            zoneDepth: 80,                    // Vegas zone depth (Z axis)
+            stripWidth: 12,                   // The Strip is wider than regular roads
+            stripLength: 70,                  // Length of The Strip
+            highwayWidth: 10,                 // Highway wider than city roads
+            highwayLength: 40                 // Length of connecting highway
+        };
+
         function prog(p, t) {
             $('prog').style.width = p + '%';
             $('ltxt').textContent = t.toUpperCase();
@@ -288,6 +299,7 @@
 
             prog(20, 'City layout...');
             mkCityLayout();
+            mkVegasZoneGround();
 
             prog(50, 'Buildings...');
             mkBuildings();
@@ -523,6 +535,34 @@
                     }
                 }
             }
+        }
+
+        function mkVegasZoneGround() {
+            // Create desert ground extending from Metropolis edge to Vegas zone
+            const desertMat = new THREE.MeshStandardMaterial({
+                color: 0xc2956e, // Sandy desert color
+                roughness: 0.95
+            });
+
+            // Calculate Vegas ground dimensions
+            const vegasGroundWidth = VEGAS_CFG.zoneStartX + VEGAS_CFG.zoneWidth - halfSize;
+            const vegasGroundDepth = VEGAS_CFG.zoneDepth;
+
+            // Vegas ground plane positioned to extend from Metropolis edge eastward
+            const vegasGround = new THREE.Mesh(
+                new THREE.PlaneGeometry(vegasGroundWidth, vegasGroundDepth),
+                desertMat
+            );
+            vegasGround.rotation.x = -Math.PI / 2;
+            vegasGround.position.set(
+                halfSize + vegasGroundWidth / 2,
+                0,
+                0
+            );
+            vegasGround.receiveShadow = true;
+            scene.add(vegasGround);
+
+            return vegasGround;
         }
 
         function mkStreetlights() {
@@ -8045,6 +8085,8 @@
                 }
                 
                 // Check for cars ahead - widen detection to prevent clipping
+                // Buses need longer detection distance due to size
+                const stopDist = (car.userData.isBus || car.userData.isTaxi) ? 7 : 5;
                 cars.forEach(other => {
                     if (other === car) return;
                     const dx = other.position.x - car.position.x;
@@ -8053,32 +8095,39 @@
 
                     // Check cars on same axis (same road direction)
                     if (other.userData.axis === car.userData.axis) {
+                        // Use longer distance if either vehicle is a bus
+                        const detectDist = (other.userData.isBus || car.userData.isBus) ? 8 : stopDist;
                         if (car.userData.axis === 'x') {
                             const ahead = dx * car.userData.dir;
-                            const nearLane = Math.abs(dz) < 3; // Wider than before (was 1.5)
-                            if (ahead > 0 && ahead < 5 && nearLane) {
+                            const nearLane = Math.abs(dz) < 3;
+                            if (ahead > 0 && ahead < detectDist && nearLane) {
                                 shouldStop = true;
                             }
                         } else {
                             const ahead = dz * car.userData.dir;
                             const nearLane = Math.abs(dx) < 3;
-                            if (ahead > 0 && ahead < 5 && nearLane) {
+                            if (ahead > 0 && ahead < detectDist && nearLane) {
                                 shouldStop = true;
                             }
                         }
                     }
                     // Check cars on perpendicular roads (at intersections)
                     // Only stop if both cars are approaching the same point
-                    else if (dist < 3.5) {
-                        const myAhead = car.userData.axis === 'x'
-                            ? dx * car.userData.dir
-                            : dz * car.userData.dir;
-                        const theirAhead = other.userData.axis === 'x'
-                            ? -dx * other.userData.dir
-                            : -dz * other.userData.dir;
-                        // Both cars must be approaching collision point
-                        if (myAhead > 0 && myAhead < 4 && theirAhead > 0 && theirAhead < 4) {
-                            shouldStop = true;
+                    else {
+                        // Larger detection radius for buses
+                        const crossDist = (car.userData.isBus || other.userData.isBus) ? 5 : 3.5;
+                        const crossAhead = (car.userData.isBus || other.userData.isBus) ? 6 : 4;
+                        if (dist < crossDist) {
+                            const myAhead = car.userData.axis === 'x'
+                                ? dx * car.userData.dir
+                                : dz * car.userData.dir;
+                            const theirAhead = other.userData.axis === 'x'
+                                ? -dx * other.userData.dir
+                                : -dz * other.userData.dir;
+                            // Both cars must be approaching collision point
+                            if (myAhead > 0 && myAhead < crossAhead && theirAhead > 0 && theirAhead < crossAhead) {
+                                shouldStop = true;
+                            }
                         }
                     }
                 });
