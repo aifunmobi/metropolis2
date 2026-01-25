@@ -7,14 +7,14 @@
 
 ## Overview
 
-| # | Phase | Goal | Requirements | Plans |
-|---|-------|------|--------------|-------|
-| 1 | Vegas Infrastructure | Highway connection and Strip layout | INFRA-01, INFRA-02, INFRA-03, INFRA-04 | 2 |
-| 2 | Iconic Landmarks | 5 recognizable casino buildings | LAND-01, LAND-02, LAND-03, LAND-04, LAND-05 | 3 |
-| 3 | Vegas Lights | Dramatic night lighting | LITE-01, LITE-02, LITE-03, LITE-04 | 2 |
-| 4 | Entertainment | Fountain show, chapels, Elvis | ENTR-01, ENTR-02, ENTR-03, ENTR-04 | 2 |
-| 5 | Tourists | Photo-taking visitors | PED-01, PED-02, PED-03, PED-04 | 2 |
-| 6 | Vegas Vehicles | Exotic cars and tour buses | VEH-01, VEH-02, VEH-03, VEH-04 | 2 |
+| # | Phase | Goal | Requirements | Plans | Status |
+|---|-------|------|--------------|-------|--------|
+| 1 | Vegas Infrastructure | Highway connection and Strip layout | INFRA-01, INFRA-02, INFRA-03, INFRA-04 | 2 | ✓ Complete |
+| 2 | Iconic Landmarks | 5 recognizable casino buildings | LAND-01, LAND-02, LAND-03, LAND-04, LAND-05 | 3 | Pending |
+| 3 | Vegas Lights | Dramatic night lighting | LITE-01, LITE-02, LITE-03, LITE-04 | 2 | Pending |
+| 4 | Entertainment | Fountain show, chapels, Elvis | ENTR-01, ENTR-02, ENTR-03, ENTR-04 | 2 | Pending |
+| 5 | Tourists | Photo-taking visitors | PED-01, PED-02, PED-03, PED-04 | 2 | Pending |
+| 6 | Vegas Vehicles | Exotic cars and tour buses | VEH-01, VEH-02, VEH-03, VEH-04 | 2 | Pending |
 
 ## Phase Details
 
@@ -35,11 +35,11 @@
 4. Temperature billboard displays 95-115°F range
 5. Camera can fly smoothly between Metropolis and Vegas
 
-**Plans:** 2 plans in 2 waves
+**Plans:** 2 plans in 2 waves ✓ Complete
 
 Plans:
-- [ ] v2-01-01-PLAN.md — Highway connection, Route 66 marker, Vegas ground extension (Wave 1)
-- [ ] v2-01-02-PLAN.md — Strip layout, weather zone, temperature billboard (Wave 2)
+- [x] v2-01-01-PLAN.md — Highway connection, Route 66 marker, Vegas ground extension (Wave 1)
+- [x] v2-01-02-PLAN.md — Strip layout, weather zone, temperature billboard (Wave 2)
 
 ---
 
@@ -195,6 +195,19 @@ When v2.0 is complete:
 4. **Vegas vibe**: Tourists, exotic cars, Elvis, fountain shows create atmosphere
 5. **Independent weather**: Vegas stays sunny while Metropolis may have storms
 
+## Progress
+
+```
+Phase 1: ██████████ 100% ✓
+Phase 2: ░░░░░░░░░░ 0%
+Phase 3: ░░░░░░░░░░ 0%
+Phase 4: ░░░░░░░░░░ 0%
+Phase 5: ░░░░░░░░░░ 0%
+Phase 6: ░░░░░░░░░░ 0%
+─────────────────────
+Overall: █░░░░░░░░░ 17% (1/6 phases)
+```
+
 ---
 *Roadmap created: 2026-01-25*
-*Last updated: 2026-01-25 after initial definition*
+*Last updated: 2026-01-25 after Phase 1 complete*

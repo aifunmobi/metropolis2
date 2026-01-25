@@ -9,10 +9,10 @@ Requirements for Las Vegas expansion. Each maps to roadmap phases.
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: Route 66 highway extends from Metropolis to Vegas with highway marker sign
-- [ ] **INFRA-02**: The Strip main road with sidewalks appropriate for Vegas layout
-- [ ] **INFRA-03**: Vegas zone has independent sunny weather (ignores Metropolis weather cycle)
-- [ ] **INFRA-04**: Temperature billboard displays Vegas temperature (always hot, 95-115°F)
+- [x] **INFRA-01**: Route 66 highway extends from Metropolis to Vegas with highway marker sign
+- [x] **INFRA-02**: The Strip main road with sidewalks appropriate for Vegas layout
+- [x] **INFRA-03**: Vegas zone has independent sunny weather (ignores Metropolis weather cycle)
+- [x] **INFRA-04**: Temperature billboard displays Vegas temperature (always hot, 95-115°F)
 
 ### Landmarks
 
@@ -66,10 +66,10 @@ Requirements for Las Vegas expansion. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | Phase 1 | Pending |
-| INFRA-02 | Phase 1 | Pending |
-| INFRA-03 | Phase 1 | Pending |
-| INFRA-04 | Phase 1 | Pending |
+| INFRA-01 | Phase 1 | Complete |
+| INFRA-02 | Phase 1 | Complete |
+| INFRA-03 | Phase 1 | Complete |
+| INFRA-04 | Phase 1 | Complete |
 | LAND-01 | Phase 2 | Pending |
 | LAND-02 | Phase 2 | Pending |
 | LAND-03 | Phase 2 | Pending |
