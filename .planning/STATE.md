@@ -10,16 +10,21 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 ## Current Position
 
 - **Milestone:** v2.0 - Las Vegas Expansion
-- **Phase:** 1 of 6 (Vegas Infrastructure - COMPLETE)
-- **Plan:** 2 of 13 completed
-- **Status:** Phase 1 complete, ready for Phase 2
-- **Last activity:** 2026-01-25 - Completed v2-01-02-PLAN.md (Vegas Strip Infrastructure)
+- **Phase:** 2 of 6 (Iconic Landmarks - In Progress)
+- **Plan:** 3 of 13 completed
+- **Status:** Phase 2 in progress, Plan 01 complete
+- **Last activity:** 2026-01-25 - Completed v2-02-01-PLAN.md (Luxor Pyramid and Paris Eiffel Tower)
 
-**Progress:** ██░░░░░░░░░░░░░░ 15% (2/13 plans across all phases)
+**Progress:** ███░░░░░░░░░░░░░ 23% (3/13 plans across all phases)
 
 ## Recent Progress
 
 ### v2.0 In Progress
+- v2-02-01: Luxor Pyramid and Paris Eiffel Tower landmarks positioned on Strip parking lots
+- mkLuxorPyramid() with black glass pyramid (30 units), sandstone base, sphinx hint
+- mkParisEiffelTower() with 4 angled legs, 2 observation decks, tapered spire (38 units)
+- vegasLandmarks[] array initialized for Phase 3 lighting system
+- Pyramid on west side near south end, Tower on east side in middle of Strip
 - v2-01-02: The Strip road with sidewalks, independent Vegas sunny weather, temperature billboard (PHASE COMPLETE)
 - The Strip (12 units wide, 70 units long) positioned at highway end, running north-south
 - Double yellow center line, white edge lines, wide sidewalks (4 units) with curbs
@@ -90,6 +95,25 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 - Lighting adjusts dynamically based on time of day
 
 ## Session Notes
+
+### 2026-01-25 - Phase v2-02 Plan 01 (Luxor Pyramid and Paris Eiffel Tower)
+- Created mkLuxorPyramid() with ConeGeometry (4 radial segments = true pyramid)
+- Black glass material (0x1a1a1a, metalness 0.9, roughness 0.1) for reflective look
+- Pyramid height 30 units, base width 25 units, rotated 45 degrees for cardinal alignment
+- Sandstone base platform (27 units square, 0xc4a777 color) matching desert theme
+- Sphinx hint using two boxes (body 3x1.5x2, head 1x1.2x1) in sandstone color
+- Positioned west of Strip: centerX - stripWidth/2 - sidewalkWidth - 15
+- Created mkParisEiffelTower() with iron-colored (0x4a4a4a) components
+- Four angled legs converging inward over 12-unit base section
+- First observation deck at 13 units height, second at 25 units
+- Middle tapered section (12 units), spire (10 units), antenna (3 units)
+- Total height approximately 38 units (taller than pyramid for variety)
+- Positioned east of Strip: centerX + stripWidth/2 + sidewalkWidth + 12
+- Added vegasLandmarks[] global array with comment for Phase 3 lighting
+- Both landmarks pushed to array with userData (type, hasBeam/hasLights flags)
+- Both functions called in init() after mkTemperatureBillboard()
+- 3 tasks completed, 1 commit: 27dc086
+- Execution time: 2 minutes 7 seconds
 
 ### 2026-01-25 - Phase v2-01 Plan 02 (Vegas Strip Infrastructure - PHASE COMPLETE)
 - Created mkTheStrip() with 12-unit wide road at end of highway (X=108)
@@ -248,6 +272,10 @@ None currently.
 
 | Date | Decision | Context |
 |------|----------|---------|
+| 2026-01-25 | ConeGeometry with 4 radial segments for pyramid | Creates true pyramid with 4 triangular faces, not a rounded cone |
+| 2026-01-25 | Pyramid rotated 45 degrees | Faces align with cardinal directions for natural viewing angles |
+| 2026-01-25 | Simplified Eiffel with 4 angled legs | Recognizable silhouette without complex lattice geometry |
+| 2026-01-25 | vegasLandmarks[] array for lighting integration | Phase 3 can iterate landmarks without scene graph search |
 | 2026-01-25 | Strip perpendicular to highway (north-south) | Creates natural T-intersection, maximizes casino frontage on both sides |
 | 2026-01-25 | Double yellow center line on Strip | Indicates no-passing zone, matches real Vegas Strip traffic rules |
 | 2026-01-25 | Wide sidewalks (4 units vs city 2 units) | Vegas Strip has very wide sidewalks for tourist crowds |
@@ -313,9 +341,9 @@ None currently.
 ## Session Continuity
 
 - **Last session:** 2026-01-25
-- **Stopped at:** Completed v2-01-02-PLAN.md (Vegas Strip Infrastructure - Phase v2-01 COMPLETE)
+- **Stopped at:** Completed v2-02-01-PLAN.md (Luxor Pyramid and Paris Eiffel Tower)
 - **Resume file:** None
-- **Next:** v2-02-01-PLAN.md (Begin Phase 2: Vegas Landmarks) or continue with Phase 2
+- **Next:** v2-02-02-PLAN.md (Bellagio with Fountains)
 
 ---
 *Last updated: 2026-01-25*
