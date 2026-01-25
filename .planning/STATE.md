@@ -2,23 +2,27 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2025-01-23)
+See: .planning/PROJECT.md (updated 2026-01-25)
 
 **Core value:** The city feels alive and worth watching
-**Current focus:** Phase 5 - Rooftop Features (COMPLETE)
+**Current focus:** v2.0 - Las Vegas Expansion
 
 ## Current Position
 
-- **Milestone:** v1.0 - Visual Engagement Features (COMPLETE)
-- **Phase:** 5 of 5 (Rooftop Life) - COMPLETE
-- **Plan:** 2 of 2 completed
-- **Status:** All phases complete
-- **Last activity:** 2026-01-24 - Completed 05-02-PLAN.md
+- **Milestone:** v2.0 - Las Vegas Expansion
+- **Phase:** 0 of 6 (Not started)
+- **Plan:** 0 of 13 completed
+- **Status:** Planning complete, ready for execution
+- **Last activity:** 2026-01-25 - Initialized v2.0 milestone
 
-**Progress:** ████████████████ 100% (11/11 plans across all phases)
+**Progress:** ░░░░░░░░░░░░░░░░ 0% (0/13 plans across all phases)
 
 ## Recent Progress
 
+- v2.0 milestone initialized: Las Vegas expansion with 6 phases, 24 requirements
+- Route 66 highway, 5 iconic landmarks, Vegas lights, entertainment, tourists, vehicles
+
+### v1.0 Complete
 - 05-02: Rooftop parties with string lights and animated figures (PHASE COMPLETE)
 - Parties spawn every 60 seconds with 40% chance (max 2 simultaneous)
 - Twinkling string lights in perimeter pattern with 12 lights per party
@@ -72,6 +76,16 @@ See: .planning/PROJECT.md (updated 2025-01-23)
 - Lighting adjusts dynamically based on time of day
 
 ## Session Notes
+
+### 2026-01-25 - v2.0 Milestone Initialization
+- Initialized Las Vegas expansion milestone
+- 5 landmarks selected: Luxor Pyramid, Bellagio + Fountains, Paris Eiffel Tower, Caesars Palace, Excalibur Castle
+- 4 activities: Tourists + Photos, Wedding Chapels, Elvis Impersonators, Bellagio Fountain Show
+- 2 vehicle types: Exotic Cars, Open-top Tourist Buses
+- Special features: Route 66 highway marker, Vegas always sunny, temperature billboard, lights only at night
+- Created REQUIREMENTS-v2.md with 24 requirements across 6 categories
+- Created ROADMAP-v2.md with 6 phases, 13 plans total
+- Updated PROJECT.md for v2.0 scope
 
 ### 2026-01-24 - Phase 05 Plan 02 (PHASE COMPLETE, MILESTONE COMPLETE)
 - Created ROOFTOP_CFG with partySpawnInterval (60), partySpawnChance (0.4), partyDuration [90, 180]
@@ -234,9 +248,9 @@ None currently.
 
 ## Session Continuity
 
-- **Last session:** 2026-01-24 04:56 UTC
-- **Stopped at:** Completed 05-02-PLAN.md (MILESTONE COMPLETE)
-- **Resume file:** None
+- **Last session:** 2026-01-25
+- **Stopped at:** Initialized v2.0 milestone, ready for Phase 1
+- **Resume with:** `/gsd:plan-phase 1` or `/gsd:discuss-phase 1`
 
 ---
-*Last updated: 2026-01-24*
+*Last updated: 2026-01-25*
