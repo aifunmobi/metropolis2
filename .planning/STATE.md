@@ -10,15 +10,21 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 ## Current Position
 
 - **Milestone:** v2.0 - Las Vegas Expansion
-- **Phase:** 0 of 6 (Not started)
-- **Plan:** 0 of 13 completed
-- **Status:** Planning complete, ready for execution
-- **Last activity:** 2026-01-25 - Initialized v2.0 milestone
+- **Phase:** 1 of 6 (Vegas Infrastructure - In Progress)
+- **Plan:** 1 of 13 completed
+- **Status:** Phase 1 in progress
+- **Last activity:** 2026-01-25 - Completed v2-01-01-PLAN.md (Vegas Infrastructure Foundation)
 
-**Progress:** ░░░░░░░░░░░░░░░░ 0% (0/13 plans across all phases)
+**Progress:** █░░░░░░░░░░░░░░░ 8% (1/13 plans across all phases)
 
 ## Recent Progress
 
+### v2.0 In Progress
+- v2-01-01: Route 66 highway with iconic marker sign connecting Metropolis to Vegas
+- Highway extends 60 units east from Metropolis edge (X=48 to X=108)
+- Desert terrain (0xc2956e sandy color) distinguishes Vegas zone from city grass
+- Route 66 shield-style sign positioned at highway start with canvas texture
+- VEGAS_CFG configuration provides zone dimensions for future phases
 - v2.0 milestone initialized: Las Vegas expansion with 6 phases, 24 requirements
 - Route 66 highway, 5 iconic landmarks, Vegas lights, entertainment, tourists, vehicles
 
@@ -76,6 +82,20 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 - Lighting adjusts dynamically based on time of day
 
 ## Session Notes
+
+### 2026-01-25 - Phase v2-01 Plan 01 (Vegas Infrastructure Foundation)
+- Created VEGAS_CFG constant with zone dimensions (100x80 units, zone starts at X=68)
+- Implemented mkVegasZoneGround() extending desert terrain east of Metropolis
+- Built mkVegasHighway() with dark asphalt, dashed center line, solid edge lines
+- Highway 10 units wide (wider than city roads at 8 units) for open feel
+- Desert strips (25 units wide) flank highway on both sides
+- Created mkRoute66Sign() with canvas-generated shield texture
+- Sign shows "ROUTE 66 US" text in classic styling, double-sided visibility
+- Positioned at highway start (X=53, Z=-8), offset from road to not obstruct
+- All functions integrated into init sequence after mkCityLayout()
+- 3 tasks completed, 3 commits: 7229cdb, 80a10d6, e5442a5
+- Execution time: 3 minutes 3 seconds
+- Plan 01 complete - Vegas infrastructure foundation established
 
 ### 2026-01-25 - v2.0 Milestone Initialization
 - Initialized Las Vegas expansion milestone
@@ -196,6 +216,11 @@ None currently.
 
 | Date | Decision | Context |
 |------|----------|---------|
+| 2026-01-25 | Vegas zone east of Metropolis (positive X) | Simplifies navigation, clear directional separation (city west, Vegas east) |
+| 2026-01-25 | Highway width 10 units (vs city roads 8 units) | Highway should feel wider and more open than city streets |
+| 2026-01-25 | Separate mkVegasZoneGround() function | Cleaner separation, Vegas zone extensible without touching core city code |
+| 2026-01-25 | Canvas texture for Route 66 sign | No external dependencies, fully customizable, self-contained |
+| 2026-01-25 | Sign positioned at X=halfSize+5, Z=-8 | Close to highway start for discovery, offset to not obstruct road |
 | 2026-01-24 | Parties spawn every 60 seconds with 40% chance | Occasional but not constant, feels like city life |
 | 2026-01-24 | Max 2 simultaneous parties | Prevents performance impact, maintains specialness |
 | 2026-01-24 | Party duration 90-180 seconds | Long enough to observe, short enough for variety |
@@ -249,8 +274,9 @@ None currently.
 ## Session Continuity
 
 - **Last session:** 2026-01-25
-- **Stopped at:** Initialized v2.0 milestone, ready for Phase 1
-- **Resume with:** `/gsd:plan-phase 1` or `/gsd:discuss-phase 1`
+- **Stopped at:** Completed v2-01-01-PLAN.md (Vegas Infrastructure Foundation)
+- **Resume file:** None
+- **Next:** v2-01-02-PLAN.md (Vegas Strip foundation) or continue with Phase 1
 
 ---
 *Last updated: 2026-01-25*
