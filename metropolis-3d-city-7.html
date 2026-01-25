@@ -116,7 +116,7 @@
         };
         
         // Base traffic config (Light traffic)
-        const CFG_BASE = { cars: 10, emergencyVehicles: 2, peds: 40, bikes: 3, flocks: 4 };
+        const CFG_BASE = { cars: 10, emergencyVehicles: 2, peds: 40, bikes: 3, flocks: 4, taxis: 4 };
 
         // Traffic multipliers for different levels
         const TRAFFIC_LEVELS = {
@@ -181,6 +181,7 @@
         let hemiLight = null;     // Hemisphere light reference
         let buildings = [], cars = [], emergencyVehicles = [], peds = [], tlights = [];
         let bicycles = [];
+        let taxis = [];
         let buildingEntrances = [];
         let allWindows = [];
         let billboards = [];
@@ -303,7 +304,8 @@
             mkCars();
             mkEmergencyVehicles();
             mkBuses();
-            
+            mkTaxis();
+
             prog(80, 'Population...');
             mkPeds();
             mkBicycles();
@@ -2612,17 +2614,41 @@
             const innerRoad1 = -halfSize + 1 * GRID.cellSize; // First inner road
             const innerRoad2 = -halfSize + 2 * GRID.cellSize; // Second inner road
             const innerRoad3 = -halfSize + 3 * GRID.cellSize; // Third inner road
-            const sidewalkOffset = GRID.roadWidth / 2 + GRID.sidewalkWidth / 2; // Place on sidewalk
+            const sidewalkOffset = GRID.roadWidth / 2 + GRID.sidewalkWidth / 2; // Place signs on sidewalk
+            const laneOffset = GRID.roadWidth / 4; // Bus drives in the road lane
 
-            // Bus stops on SIDEWALKS (not in road) - forms a square route
+            // Bus stops for passengers (on sidewalk) - these are where people wait
+            // Right-side driving: East=+Z sidewalk, South=-X sidewalk, West=-Z sidewalk, North=+X sidewalk
             omnibusStops = [
-                { x: innerRoad1 + 8, z: innerRoad1 - sidewalkOffset, dir: 'east', axis: 'x' },
-                { x: innerRoad3 + sidewalkOffset, z: innerRoad1 + 8, dir: 'south', axis: 'z' },
-                { x: innerRoad3 - 8, z: innerRoad3 + sidewalkOffset, dir: 'west', axis: 'x' },
-                { x: innerRoad1 - sidewalkOffset, z: innerRoad3 - 8, dir: 'north', axis: 'z' }
+                { x: innerRoad1 + 8, z: innerRoad1 + sidewalkOffset, dir: 'east' },
+                { x: innerRoad3 - sidewalkOffset, z: innerRoad1 + 8, dir: 'south' },
+                { x: innerRoad3 - 8, z: innerRoad3 - sidewalkOffset, dir: 'west' },
+                { x: innerRoad1 + sidewalkOffset, z: innerRoad3 - 8, dir: 'north' }
             ];
-            
-            // Create bus stop signs
+
+            // Route waypoints - bus follows these in order (includes stops and corners)
+            // Route: Stop0 -> SE corner -> Stop1 -> NE corner -> Stop2 -> NW corner -> Stop3 -> SW corner -> loop
+            // Right-side driving: East(+X)=+Z, South(+Z)=-X, West(-X)=-Z, North(-Z)=+X
+            const omnibusRoute = [
+                // Stop 0 - going EAST along innerRoad1, right side = +Z
+                { x: innerRoad1 + 8, z: innerRoad1 + laneOffset, isStop: true, stopIdx: 0 },
+                // SE corner - transition from east lane to south lane
+                { x: innerRoad3 - laneOffset, z: innerRoad1 + laneOffset, isStop: false },
+                // Stop 1 - going SOUTH along innerRoad3 (x-road), right side = -X
+                { x: innerRoad3 - laneOffset, z: innerRoad1 + 8, isStop: true, stopIdx: 1 },
+                // NE corner - transition from south lane to west lane
+                { x: innerRoad3 - laneOffset, z: innerRoad3 - laneOffset, isStop: false },
+                // Stop 2 - going WEST along innerRoad3, right side = -Z
+                { x: innerRoad3 - 8, z: innerRoad3 - laneOffset, isStop: true, stopIdx: 2 },
+                // NW corner - transition from west lane to north lane
+                { x: innerRoad1 + laneOffset, z: innerRoad3 - laneOffset, isStop: false },
+                // Stop 3 - going NORTH along innerRoad1 (x-road), right side = +X
+                { x: innerRoad1 + laneOffset, z: innerRoad3 - 8, isStop: true, stopIdx: 3 },
+                // SW corner - transition from north lane to east lane
+                { x: innerRoad1 + laneOffset, z: innerRoad1 + laneOffset, isStop: false }
+            ];
+
+            // Create bus stop signs (on sidewalk)
             omnibusStops.forEach((stop, i) => {
                 const stopSign = mkBusStop(i + 1);
                 stopSign.position.set(stop.x, 0, stop.z);
@@ -2630,19 +2656,19 @@
                 stop.sign = stopSign;
                 stop.waitingPeds = [];
             });
-            
-            // Create the omnibus
+
+            // Create the omnibus (start at first waypoint)
             omnibus = mkOmnibus();
-            omnibus.position.set(omnibusStops[0].x, 0, omnibusStops[0].z);
-            omnibus.userData.currentStop = 0;
-            omnibus.userData.nextStop = 1;
+            omnibus.route = omnibusRoute;
+            omnibus.position.set(omnibusRoute[0].x, 0, omnibusRoute[0].z);
+            omnibus.userData.currentWaypoint = 0;
             omnibus.userData.state = 'moving'; // 'moving', 'stopping', 'boarding'
             omnibus.userData.stopTimer = 0;
             omnibus.userData.spd = 0.07;
             omnibus.userData.lastPos = { x: omnibus.position.x, z: omnibus.position.z };
             omnibus.userData.stuckTime = 0;
             scene.add(omnibus);
-            
+
             notify('🚌 Omnibus Line 1 now running!', 3000);
         }
         
@@ -2998,6 +3024,20 @@
                         notify('🚛 Wrecker dispatched for stuck vehicle!', 3000);
                     }
                 }
+
+                // Check for stuck omnibus (60+ seconds)
+                if (omnibus && omnibus.userData.stuckTime > 60 && !omnibus.userData.wreckerAssigned) {
+                    omnibus.userData.wreckerAssigned = true;
+                    const newWrecker = mkWrecker();
+                    newWrecker.userData.target = omnibus;
+                    newWrecker.userData.state = 'driving';
+                    newWrecker.userData.spd = 0.18;
+                    const edge = Math.random() > 0.5 ? halfSize + 10 : -halfSize - 10;
+                    newWrecker.position.set(edge, 0, omnibus.position.z);
+                    scene.add(newWrecker);
+                    wreckers.push(newWrecker);
+                    notify('🚛 Wrecker dispatched for stuck omnibus!', 3000);
+                }
             }
 
             // Update police responding to gridlock
@@ -3047,10 +3087,9 @@
 
                     if (wrecker.userData.towTimer > 2.5) {
                         const target = wrecker.userData.target;
-                        if (target === omnibus) {
-                            omnibus.position.set(omnibusStops[0].x, 0, omnibusStops[0].z);
-                            omnibus.userData.currentStop = 0;
-                            omnibus.userData.nextStop = 1;
+                        if (target === omnibus && omnibus.route) {
+                            omnibus.position.set(omnibus.route[0].x, 0, omnibus.route[0].z);
+                            omnibus.userData.currentWaypoint = 0;
                             omnibus.userData.state = 'moving';
                             omnibus.userData.stuckTime = 0;
                             omnibus.userData.wreckerAssigned = false;
@@ -3094,11 +3133,11 @@
         }
 
         function updOmnibus(t) {
-            if (!omnibus) return;
-            
-            const currentStop = omnibusStops[omnibus.userData.currentStop];
-            const nextStop = omnibusStops[omnibus.userData.nextStop];
-            
+            if (!omnibus || !omnibus.route) return;
+
+            const route = omnibus.route;
+            const nextWaypoint = route[(omnibus.userData.currentWaypoint + 1) % route.length];
+
             // Ring bell occasionally
             if (omnibus.userData.bell && Math.random() < 0.002) {
                 omnibus.userData.bell.scale.setScalar(1.3);
@@ -3106,18 +3145,25 @@
                     if (omnibus.userData.bell) omnibus.userData.bell.scale.setScalar(1);
                 }, 100);
             }
-            
+
             if (omnibus.userData.state === 'moving') {
-                // Move toward next stop
-                const dx = nextStop.x - omnibus.position.x;
-                const dz = nextStop.z - omnibus.position.z;
+                // Move toward next waypoint
+                const dx = nextWaypoint.x - omnibus.position.x;
+                const dz = nextWaypoint.z - omnibus.position.z;
                 const dist = Math.sqrt(dx * dx + dz * dz);
-                
-                if (dist < 1) {
-                    // Arrived at stop
-                    omnibus.userData.state = 'stopping';
-                    omnibus.userData.stopTimer = 0;
-                    omnibus.position.set(nextStop.x, 0, nextStop.z);
+
+                if (dist < 0.5) {
+                    // Arrived at waypoint
+                    omnibus.position.set(nextWaypoint.x, 0, nextWaypoint.z);
+                    omnibus.userData.currentWaypoint = (omnibus.userData.currentWaypoint + 1) % route.length;
+
+                    if (nextWaypoint.isStop) {
+                        // This is a bus stop - stop for passengers
+                        omnibus.userData.state = 'stopping';
+                        omnibus.userData.stopTimer = 0;
+                        omnibus.userData.currentStopIdx = nextWaypoint.stopIdx;
+                    }
+                    // If not a stop (just a corner), keep moving to next waypoint
                 } else {
                     // Check for obstacles ahead
                     let omnibusBlocked = false;
@@ -3128,11 +3174,8 @@
                     for (const car of cars) {
                         const cdx = car.position.x - omnibus.position.x;
                         const cdz = car.position.z - omnibus.position.z;
-                        // Forward distance (along bus direction)
                         const forward = cdx * dirX + cdz * dirZ;
-                        // Lateral distance (perpendicular to bus direction)
                         const lateral = Math.abs(cdx * (-dirZ) + cdz * dirX);
-                        // Block if car is ahead (0-8 units) and in our lane (within 2.5 units)
                         if (forward > 0 && forward < 8 && lateral < 2.5) {
                             omnibusBlocked = true;
                             break;
@@ -3166,7 +3209,7 @@
                             }
                         }
                     }
-                    
+
                     // Check garbage truck
                     if (!omnibusBlocked && garbageTruck && garbageTruckActive) {
                         const gdx = garbageTruck.position.x - omnibus.position.x;
@@ -3207,7 +3250,7 @@
                             }
                         }
                     }
-                    
+
                     if (!omnibusBlocked) {
                         // Keep moving
                         const speed = omnibus.userData.spd;
@@ -3227,19 +3270,21 @@
                 }
             } else if (omnibus.userData.state === 'stopping') {
                 omnibus.userData.stopTimer += 0.016;
-                
+
                 if (omnibus.userData.stopTimer > 0.5) {
                     omnibus.userData.state = 'boarding';
                     omnibus.userData.stopTimer = 0;
-                    
+
+                    // Get the actual bus stop for passenger operations
+                    const stop = omnibusStops[omnibus.userData.currentStopIdx];
+
                     // Let passengers off
                     const numOff = Math.min(omnibusPassengers.length, Math.floor(Math.random() * 3));
                     for (let i = 0; i < numOff; i++) {
-                        disembarkPassenger(nextStop);
+                        disembarkPassenger(stop);
                     }
-                    
+
                     // Board waiting passengers - pick up all waiting (up to capacity)
-                    const stop = nextStop;
                     const numBoard = Math.min(
                         stop.waitingPeds.length,
                         OMNIBUS_MAX_PASSENGERS - omnibusPassengers.length
@@ -3247,16 +3292,14 @@
                     for (let i = 0; i < numBoard; i++) {
                         boardPassenger(stop);
                     }
-                    
+
                     updatePassengerDots();
                 }
             } else if (omnibus.userData.state === 'boarding') {
                 omnibus.userData.stopTimer += 0.016;
-                
+
                 if (omnibus.userData.stopTimer > 2) {
-                    // Done boarding, move to next stop
-                    omnibus.userData.currentStop = omnibus.userData.nextStop;
-                    omnibus.userData.nextStop = (omnibus.userData.nextStop + 1) % omnibusStops.length;
+                    // Done boarding, continue route
                     omnibus.userData.state = 'moving';
                 }
             }
@@ -3934,8 +3977,8 @@
                 const dx = nextWaypoint.x - subwayTrain.position.x;
                 const dist = Math.abs(dx);
 
-                if (dist < 1) {
-                    // Arrived at waypoint
+                if (dist < 0.05) {
+                    // Arrived at waypoint (very close - smooth stop)
                     subwayTrain.position.x = nextWaypoint.x;
 
                     // Only stop at real stations, not off-screen waypoints
@@ -3951,8 +3994,16 @@
                     }
                 } else {
                     // Move toward next waypoint (only X movement for straight track)
-                    const speed = subwayTrain.userData.spd;
+                    let speed = subwayTrain.userData.spd;
                     const dir = subwayTrain.userData.direction || 1;
+
+                    // Smooth deceleration when approaching a station (within 8 units)
+                    if (nextWaypoint.isStation && dist < 8) {
+                        // Ease out: speed reduces as we get closer
+                        const slowFactor = Math.max(0.15, dist / 8);
+                        speed *= slowFactor;
+                    }
+
                     subwayTrain.position.x += dir * speed;
 
                     // Train rotation based on direction (0 = facing +X, PI = facing -X)
@@ -4256,7 +4307,17 @@
             }
 
             const direction = Math.random() > 0.5 ? 1 : -1;
-            const startPos = -halfSize + Math.random() * totalSize;
+            let startPos = -halfSize + Math.random() * totalSize;
+
+            // Avoid spawning at intersections (within 6 units of a cross-road)
+            for (let i = 0; i <= GRID.gridCount; i++) {
+                const crossRoad = -halfSize + i * GRID.cellSize;
+                if (Math.abs(startPos - crossRoad) < 6) {
+                    // Move away from intersection
+                    startPos = crossRoad + (startPos > crossRoad ? 8 : -8);
+                    break;
+                }
+            }
             
             // Right-side driving: lane offset depends on direction
             // X-axis: going +X stays on +Z side, going -X stays on -Z side
@@ -4339,18 +4400,144 @@
             return g;
         }
 
+        function mkTaxi() {
+            const g = new THREE.Group();
+
+            // Yellow taxi body
+            const body = new THREE.Mesh(
+                new THREE.BoxGeometry(2.2, 0.55, 1.1),
+                new THREE.MeshStandardMaterial({ color: 0xf7d700, metalness: 0.5, roughness: 0.4 })
+            );
+            body.position.y = 0.38;
+            body.castShadow = true;
+            g.add(body);
+
+            // Cab (windshield area)
+            const cab = new THREE.Mesh(
+                new THREE.BoxGeometry(1.1, 0.45, 1),
+                new THREE.MeshStandardMaterial({ color: 0x333344, metalness: 0.8, roughness: 0.2 })
+            );
+            cab.position.set(-0.2, 0.78, 0);
+            g.add(cab);
+
+            // Taxi sign on roof
+            const signBase = new THREE.Mesh(
+                new THREE.BoxGeometry(0.6, 0.2, 0.35),
+                new THREE.MeshStandardMaterial({ color: 0xf7d700 })
+            );
+            signBase.position.set(-0.2, 1.1, 0);
+            g.add(signBase);
+
+            // Taxi sign light (illuminated part)
+            const signLight = new THREE.Mesh(
+                new THREE.BoxGeometry(0.55, 0.15, 0.3),
+                new THREE.MeshBasicMaterial({ color: 0xffffaa })
+            );
+            signLight.position.set(-0.2, 1.1, 0);
+            g.add(signLight);
+            g.userData.signLight = signLight;
+
+            // Wheels
+            const wMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+            [[0.6, 0.18, 0.5], [0.6, 0.18, -0.5], [-0.6, 0.18, 0.5], [-0.6, 0.18, -0.5]].forEach(p => {
+                const w = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.12, 12), wMat);
+                w.rotation.x = Math.PI / 2;
+                w.position.set(...p);
+                g.add(w);
+            });
+
+            // Headlights
+            const hlMat = new THREE.MeshBasicMaterial({ color: 0x333322 });
+            g.userData.headlights = [];
+            [0.35, -0.35].forEach(z => {
+                const hl = new THREE.Mesh(new THREE.CircleGeometry(0.1), hlMat.clone());
+                hl.position.set(1.11, 0.38, z);
+                hl.rotation.y = Math.PI / 2;
+                g.add(hl);
+                g.userData.headlights.push(hl);
+            });
+
+            // Taillights
+            const tlMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            [0.35, -0.35].forEach(z => {
+                const tl = new THREE.Mesh(new THREE.CircleGeometry(0.1), tlMat);
+                tl.position.set(-1.11, 0.38, z);
+                tl.rotation.y = -Math.PI / 2;
+                g.add(tl);
+            });
+
+            return g;
+        }
+
+        function mkTaxis() {
+            // Spread taxis across different roads to avoid clumping
+            const roads = [];
+            for (let i = 0; i <= GRID.gridCount; i++) {
+                roads.push({ idx: i, axis: 'x' });
+                roads.push({ idx: i, axis: 'z' });
+            }
+            // Shuffle roads for random distribution
+            for (let i = roads.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [roads[i], roads[j]] = [roads[j], roads[i]];
+            }
+
+            for (let i = 0; i < CFG.taxis; i++) {
+                const taxi = mkTaxi();
+
+                // Use pre-shuffled road to spread taxis out
+                const road = roads[i % roads.length];
+                const roadPos = -halfSize + road.idx * GRID.cellSize;
+                const direction = Math.random() > 0.5 ? 1 : -1;
+                const startPos = -halfSize + Math.random() * totalSize;
+
+                // Skip subway road
+                if (road.axis === 'x' && Math.abs(roadPos) < 1) {
+                    placeCarOnRoad(taxi); // Fallback to random
+                } else {
+                    const laneOffset = road.axis === 'x' ? direction * 1.8 : -direction * 1.8;
+                    if (road.axis === 'x') {
+                        taxi.position.set(startPos, 0, roadPos + laneOffset);
+                        taxi.rotation.y = direction > 0 ? 0 : Math.PI;
+                    } else {
+                        taxi.position.set(roadPos + laneOffset, 0, startPos);
+                        taxi.rotation.y = direction > 0 ? -Math.PI / 2 : Math.PI / 2;
+                    }
+                    taxi.userData.roadPos = roadPos;
+                    taxi.userData.axis = road.axis;
+                    taxi.userData.dir = direction;
+                    taxi.userData.laneOffset = laneOffset;
+                    taxi.userData.originalLaneOffset = laneOffset;
+                }
+
+                taxi.userData.isTaxi = true;
+                taxi.userData.taxiState = 'cruising';
+                taxi.userData.passenger = null;
+                taxi.userData.passengerVisible = null; // Visual passenger in taxi
+                taxi.userData.dropoffTarget = null;
+                taxi.userData.pickupTarget = null;
+                taxi.userData.waitTimer = 0;
+                taxi.userData.cruiseTimer = Math.random() * 5; // Stagger initial cruise times
+                taxi.userData.spd = 0.10 + Math.random() * 0.04;
+                taxi.userData.stuckTime = 0;
+                taxis.push(taxi);
+                cars.push(taxi);
+                scene.add(taxi);
+            }
+        }
+
         function mkPeds() {
             const cols = [0xff6b6b, 0x4ecdc4, 0xffe66d, 0x95e1d3, 0xf38181, 0xaa96da, 0x6c5ce7, 0xfdcb6e];
             const innerSize = GRID.cellSize - GRID.roadWidth;
-            
+
             for (let i = 0; i < CFG.peds; i++) {
                 const p = mkPed(cols[Math.floor(Math.random() * cols.length)]);
-                
+
                 const bx = Math.floor(Math.random() * GRID.gridCount);
                 const bz = Math.floor(Math.random() * GRID.gridCount);
                 const blockCenterX = -halfSize + bx * GRID.cellSize + GRID.cellSize / 2;
                 const blockCenterZ = -halfSize + bz * GRID.cellSize + GRID.cellSize / 2;
-                
+
                 const side = Math.floor(Math.random() * 4);
                 const swOffset = GRID.sidewalkWidth / 2;
                 const alongOffset = (Math.random() - 0.5) * (innerSize - 4);
@@ -4547,13 +4734,27 @@
             const ll = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.4, 6), legMat);
             ll.position.set(0.07, 0.2, 0);
             g.add(ll);
-            
+
             const rl = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.4, 6), legMat);
             rl.position.set(-0.07, 0.2, 0);
             g.add(rl);
-            
+
+            // Arms
+            const armMat = new THREE.MeshStandardMaterial({ color: col });
+            const la = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.35, 6), armMat);
+            la.position.set(0.2, 0.55, 0);
+            la.rotation.z = 0.3;
+            g.add(la);
+
+            const ra = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.35, 6), armMat);
+            ra.position.set(-0.2, 0.55, 0);
+            ra.rotation.z = -0.3;
+            g.add(ra);
+
             g.userData.ll = ll;
             g.userData.rl = rl;
+            g.userData.la = la;
+            g.userData.ra = ra;
             return g;
         }
 
@@ -4955,8 +5156,213 @@
             }
         }
 
+        // ============ TAXI SYSTEM ============
+
+        function updTaxis(t) {
+            taxis.forEach(taxi => {
+                const state = taxi.userData.taxiState;
+
+                // Update sign light - bright when available, dim when occupied
+                if (taxi.userData.signLight) {
+                    const available = state === 'cruising';
+                    taxi.userData.signLight.material.color.setHex(available ? 0xffffaa : 0x554400);
+                }
+
+                if (state === 'cruising') {
+                    // Look for pedestrians who might want a taxi
+                    taxi.userData.cruiseTimer += 0.016;
+                    taxi.userData.taxiStopped = false;
+
+                    if (taxi.userData.cruiseTimer > 3) {
+                        taxi.userData.cruiseTimer = 0;
+
+                        // Find a nearby walking pedestrian (not already in taxi interaction)
+                        const nearbyPed = peds.find(p => {
+                            if (!p.visible) return false;
+                            if (p.userData.state !== 'walking') return false;
+                            if (p.userData.hailingTaxi || p.userData.inTaxi) return false;
+                            if (p.userData.waitingForBus) return false;
+                            const dx = p.position.x - taxi.position.x;
+                            const dz = p.position.z - taxi.position.z;
+                            const dist = Math.sqrt(dx * dx + dz * dz);
+                            return dist < 15 && Math.random() < 0.3; // 30% chance to pick up nearby ped
+                        });
+
+                        if (nearbyPed) {
+                            taxi.userData.taxiState = 'goingToPickup';
+                            taxi.userData.pickupTarget = nearbyPed;
+                            nearbyPed.userData.hailingTaxi = taxi;
+                            nearbyPed.userData.prevState = nearbyPed.userData.state;
+                            nearbyPed.userData.state = 'hailingTaxi';
+                        }
+                    }
+                } else if (state === 'goingToPickup') {
+                    const ped = taxi.userData.pickupTarget;
+                    if (!ped || !ped.visible || ped.userData.state !== 'hailingTaxi') {
+                        // Pedestrian gone, resume cruising
+                        taxi.userData.taxiState = 'cruising';
+                        taxi.userData.pickupTarget = null;
+                        taxi.userData.taxiStopped = false;
+                        taxi.userData.pickupTimer = 0;
+                        return;
+                    }
+
+                    // Pedestrian walks toward nearest road while hailing
+                    const roadX = Math.round(ped.position.x / GRID.cellSize) * GRID.cellSize;
+                    const roadZ = Math.round(ped.position.z / GRID.cellSize) * GRID.cellSize;
+                    const distToRoadX = Math.abs(ped.position.x - roadX);
+                    const distToRoadZ = Math.abs(ped.position.z - roadZ);
+
+                    // Walk toward nearer road
+                    if (distToRoadX < distToRoadZ && distToRoadX > 2) {
+                        ped.position.x += (roadX > ped.position.x ? 1 : -1) * 0.03;
+                    } else if (distToRoadZ > 2) {
+                        ped.position.z += (roadZ > ped.position.z ? 1 : -1) * 0.03;
+                    }
+
+                    // Check distance to pedestrian
+                    const dx = ped.position.x - taxi.position.x;
+                    const dz = ped.position.z - taxi.position.z;
+                    const dist = Math.sqrt(dx * dx + dz * dz);
+
+                    // Timeout if taking too long
+                    taxi.userData.pickupTimer = (taxi.userData.pickupTimer || 0) + 0.016;
+                    if (taxi.userData.pickupTimer > 15) {
+                        // Cancel pickup
+                        ped.userData.state = 'walking';
+                        ped.userData.hailingTaxi = null;
+                        if (ped.userData.ra) ped.userData.ra.rotation.z = -0.3;
+                        taxi.userData.taxiState = 'cruising';
+                        taxi.userData.pickupTarget = null;
+                        taxi.userData.pickupTimer = 0;
+                        return;
+                    }
+
+                    if (dist < 5) {
+                        // Close enough - stop and wait for passenger
+                        taxi.userData.taxiState = 'waitingForPassenger';
+                        taxi.userData.taxiStopped = true;
+                        taxi.userData.waitTimer = 0;
+                        taxi.userData.pickupTimer = 0;
+                        // Pedestrian walks to taxi
+                        ped.userData.state = 'walkingToTaxi';
+                        ped.userData.taxiTarget = taxi;
+                        if (ped.userData.ra) ped.userData.ra.rotation.z = -0.3;
+                    }
+                } else if (state === 'waitingForPassenger') {
+                    taxi.userData.taxiStopped = true;
+                    const ped = taxi.userData.pickupTarget;
+
+                    if (!ped || !ped.visible) {
+                        taxi.userData.taxiState = 'cruising';
+                        taxi.userData.pickupTarget = null;
+                        taxi.userData.taxiStopped = false;
+                        return;
+                    }
+
+                    // Move pedestrian toward taxi
+                    const dx = taxi.position.x - ped.position.x;
+                    const dz = taxi.position.z - ped.position.z;
+                    const dist = Math.sqrt(dx * dx + dz * dz);
+
+                    if (dist > 0.8) {
+                        // Walk toward taxi
+                        ped.position.x += (dx / dist) * 0.05;
+                        ped.position.z += (dz / dist) * 0.05;
+                        ped.rotation.y = Math.atan2(dx, dz);
+                    } else {
+                        // Arrived - get in taxi
+                        ped.visible = false;
+                        ped.userData.state = 'inTaxi';
+                        ped.userData.taxi = taxi;
+                        taxi.userData.passenger = ped;
+                        taxi.userData.pickupTarget = null;
+                        taxi.userData.taxiState = 'hasPassenger';
+                        taxi.userData.taxiStopped = false;
+
+                        // Create visual passenger in taxi (head visible through window)
+                        const passengerHead = new THREE.Mesh(
+                            new THREE.SphereGeometry(0.15, 8, 8),
+                            new THREE.MeshStandardMaterial({ color: ped.userData.color || 0xffaa88 })
+                        );
+                        passengerHead.position.set(-0.4, 0.85, 0.25);
+                        taxi.add(passengerHead);
+                        taxi.userData.passengerVisible = passengerHead;
+
+                        // Pick a random dropoff location
+                        const dropX = -halfSize + Math.random() * totalSize;
+                        const dropZ = -halfSize + Math.random() * totalSize;
+                        taxi.userData.dropoffTarget = { x: dropX, z: dropZ };
+                    }
+
+                    taxi.userData.waitTimer += 0.016;
+                    if (taxi.userData.waitTimer > 10) {
+                        // Timeout - passenger took too long
+                        if (ped.userData.state === 'walkingToTaxi') {
+                            ped.userData.state = 'walking';
+                            ped.userData.hailingTaxi = null;
+                        }
+                        taxi.userData.taxiState = 'cruising';
+                        taxi.userData.pickupTarget = null;
+                        taxi.userData.taxiStopped = false;
+                    }
+                } else if (state === 'hasPassenger') {
+                    taxi.userData.taxiStopped = false;
+                    const target = taxi.userData.dropoffTarget;
+
+                    if (target) {
+                        const dx = target.x - taxi.position.x;
+                        const dz = target.z - taxi.position.z;
+                        const dist = Math.sqrt(dx * dx + dz * dz);
+
+                        if (dist < 8) {
+                            // Near dropoff - stop and let passenger out
+                            taxi.userData.taxiState = 'droppingOff';
+                            taxi.userData.taxiStopped = true;
+                            taxi.userData.waitTimer = 0;
+                        }
+                    }
+                } else if (state === 'droppingOff') {
+                    taxi.userData.taxiStopped = true;
+                    taxi.userData.waitTimer += 0.016;
+
+                    if (taxi.userData.waitTimer > 1.5) {
+                        // Passenger gets out
+                        const ped = taxi.userData.passenger;
+                        if (ped) {
+                            // Remove visual passenger
+                            if (taxi.userData.passengerVisible) {
+                                taxi.remove(taxi.userData.passengerVisible);
+                                taxi.userData.passengerVisible = null;
+                            }
+
+                            // Place pedestrian on sidewalk near taxi
+                            const sidewalkOffset = GRID.roadWidth / 2 + 1;
+                            ped.position.set(
+                                taxi.position.x + (Math.random() - 0.5) * 2,
+                                0,
+                                taxi.position.z + sidewalkOffset * (Math.random() > 0.5 ? 1 : -1)
+                            );
+                            ped.visible = true;
+                            ped.userData.state = 'walking';
+                            ped.userData.inTaxi = false;
+                            ped.userData.hailingTaxi = null;
+                            ped.userData.taxi = null;
+
+                            taxi.userData.passenger = null;
+                        }
+
+                        taxi.userData.dropoffTarget = null;
+                        taxi.userData.taxiState = 'cruising';
+                        taxi.userData.taxiStopped = false;
+                        taxi.userData.cruiseTimer = 0;
+                    }
+                }
+            });
+        }
+
         // ============ GARBAGE TRUCK SYSTEM ============
-        
+
         function mkGarbageTruck() {
             const g = new THREE.Group();
             
@@ -6850,14 +7256,22 @@
             });
             
             mmCtx.fillStyle = '#e44';
-            cars.forEach(c => { 
-                if (!c.userData.isEmergency) {
+            cars.forEach(c => {
+                if (!c.userData.isEmergency && !c.userData.isTaxi) {
                     const x = 65 + (c.position.x - cam.position.x) * scale;
                     const y = 65 + (c.position.z - cam.position.z) * scale;
                     if (x > 0 && x < 130 && y > 0 && y < 130) mmCtx.fillRect(x - 2, y - 2, 4, 4);
                 }
             });
-            
+
+            // Taxis in gold
+            mmCtx.fillStyle = '#f7d700';
+            taxis.forEach(t => {
+                const x = 65 + (t.position.x - cam.position.x) * scale;
+                const y = 65 + (t.position.z - cam.position.z) * scale;
+                if (x > 0 && x < 130 && y > 0 && y < 130) mmCtx.fillRect(x - 2, y - 2, 5, 5);
+            });
+
             // Emergency vehicles in blue
             mmCtx.fillStyle = '#00f';
             emergencyVehicles.forEach(c => { 
@@ -6974,6 +7388,7 @@
             CFG.cars = CFG_BASE.cars * multiplier;
             CFG.peds = CFG_BASE.peds * multiplier;
             CFG.bikes = CFG_BASE.bikes * multiplier;
+            CFG.taxis = CFG_BASE.taxis * multiplier;
 
             // Remove existing cars (except emergency vehicles)
             cars.forEach(car => {
@@ -6982,6 +7397,10 @@
                 }
             });
             cars = cars.filter(car => car.userData.isEmergency);
+
+            // Remove existing taxis
+            taxis.forEach(taxi => scene.remove(taxi));
+            taxis = [];
 
             // Remove existing pedestrians
             peds.forEach(ped => scene.remove(ped));
@@ -6993,6 +7412,7 @@
 
             // Respawn with new counts
             mkCars();
+            mkTaxis();
             mkPeds();
             mkBicycles();
 
@@ -7505,6 +7925,7 @@
             updCars(t);
             updPeds(t);
             updBicycles(t);
+            updTaxis(t);
             updOmnibus(t);
             updSubway(t);
             updSpecialEvents(t);
@@ -7531,10 +7952,15 @@
         function updCars(t) {
             const carLength = 2.5;
             const safeDistance = carLength * 5; // 5 car lengths for emergency vehicles
-            
+
             cars.forEach(car => {
                 let shouldStop = false;
-                
+
+                // Taxis stop for pickup/dropoff
+                if (car.userData.isTaxi && car.userData.taxiStopped) {
+                    shouldStop = true;
+                }
+
                 // Check traffic lights (emergency vehicles ignore)
                 if (!car.userData.isEmergency) {
                     tlights.forEach(tl => {
@@ -7544,15 +7970,17 @@
                         // X-axis: GREEN 0-4.5, YELLOW 4.5-5, RED 5-10
                         // Z-axis: RED 0-5, GREEN 5-9.5, YELLOW 9.5-10
                         const isRedForX = phase >= 5;
-                        
+
                         if (car.userData.axis === 'x') {
                             const dist = (ix - car.position.x) * car.userData.dir;
-                            if (dist > 0 && dist < 8 && Math.abs(car.position.z - iz) < 5) {
+                            // Only stop if intersection is 2-8 units ahead (not when already in it)
+                            if (dist > 2 && dist < 8 && Math.abs(car.position.z - iz) < 5) {
                                 if (isRedForX) shouldStop = true;
                             }
                         } else {
                             const dist = (iz - car.position.z) * car.userData.dir;
-                            if (dist > 0 && dist < 8 && Math.abs(car.position.x - ix) < 5) {
+                            // Only stop if intersection is 2-8 units ahead (not when already in it)
+                            if (dist > 2 && dist < 8 && Math.abs(car.position.x - ix) < 5) {
                                 if (!isRedForX) shouldStop = true;
                             }
                         }
@@ -7562,6 +7990,8 @@
                 // Check for pedestrians on the road
                 peds.forEach(ped => {
                     if (!ped.visible) return;
+                    // Skip pedestrians waiting at or walking to bus stops - they're on the sidewalk
+                    if (ped.userData.waitingForBus || ped.userData.state === 'toBusStop') return;
 
                     const dx = ped.position.x - car.position.x;
                     const dz = ped.position.z - car.position.z;
@@ -7911,7 +8341,6 @@
                         if (car.userData.stuckTime > 5) {
                             // Buses should NOT flip direction - they just wait
                             if (car.userData.isBus) {
-                                // Buses just wait, don't change lanes into oncoming traffic
                                 car.userData.stuckTime = 0;
                             } else if (!car.userData.inPassingLane && Math.random() < 0.3) {
                                 // 30% chance to briefly use passing lane (only if not already there)
@@ -8240,13 +8669,38 @@
                 if (p.userData.state === 'onBus') {
                     return;
                 }
-                
+
                 // Handle waiting at bus stop
                 if (p.userData.state === 'waitingForBus') {
                     // Just stand there waiting
                     return;
                 }
-                
+
+                // Handle taxi-related states
+                if (p.userData.state === 'hailingTaxi') {
+                    // Stand and wait for taxi to arrive, raise arm
+                    if (p.userData.ra) {
+                        p.userData.ra.rotation.z = -2.5; // Arm up
+                    }
+                    return;
+                }
+
+                if (p.userData.state === 'walkingToTaxi') {
+                    // Movement handled by updTaxis
+                    // Animate walking
+                    p.userData.walk = (p.userData.walk || 0) + 0.15;
+                    const sw = Math.sin(p.userData.walk) * 0.3;
+                    if (p.userData.ll) p.userData.ll.rotation.x = sw;
+                    if (p.userData.rl) p.userData.rl.rotation.x = -sw;
+                    if (p.userData.ra) p.userData.ra.rotation.z = -0.3; // Arm down
+                    return;
+                }
+
+                if (p.userData.state === 'inTaxi') {
+                    // Invisible, following taxi
+                    return;
+                }
+
                 // Handle walking to bus stop
                 if (p.userData.state === 'toBusStop') {
                     const to = p.userData.target.clone().sub(p.position);
