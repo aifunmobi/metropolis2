@@ -300,6 +300,7 @@
             prog(20, 'City layout...');
             mkCityLayout();
             mkVegasZoneGround();
+            mkVegasHighway();
 
             prog(50, 'Buildings...');
             mkBuildings();
@@ -563,6 +564,82 @@
             scene.add(vegasGround);
 
             return vegasGround;
+        }
+
+        function mkVegasHighway() {
+            const highwayGroup = new THREE.Group();
+
+            // Highway road surface - dark asphalt
+            const roadMat = new THREE.MeshStandardMaterial({
+                color: 0x333333,
+                roughness: 0.9
+            });
+
+            // Main highway extending from Metropolis east edge to Vegas zone
+            // Starts at halfSize (Metropolis edge) and extends to Vegas
+            const startX = halfSize;
+            const endX = VEGAS_CFG.zoneStartX + VEGAS_CFG.highwayLength;
+            const highwayLength = endX - startX;
+
+            const highway = new THREE.Mesh(
+                new THREE.PlaneGeometry(highwayLength, VEGAS_CFG.highwayWidth),
+                roadMat
+            );
+            highway.rotation.x = -Math.PI / 2;
+            highway.position.set(startX + highwayLength / 2, 0.02, 0); // Centered on Z=0
+            highwayGroup.add(highway);
+
+            // Lane markings - white dashed center line
+            const lineMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            const dashLength = 3;
+            const gapLength = 2;
+            for (let x = startX + 2; x < endX - 2; x += dashLength + gapLength) {
+                const dash = new THREE.Mesh(
+                    new THREE.PlaneGeometry(dashLength, 0.3),
+                    lineMat
+                );
+                dash.rotation.x = -Math.PI / 2;
+                dash.position.set(x + dashLength / 2, 0.03, 0);
+                highwayGroup.add(dash);
+            }
+
+            // Edge lines - solid white
+            const edgeY = 0.03;
+            const edgeOffset = VEGAS_CFG.highwayWidth / 2 - 0.5;
+            for (const side of [-1, 1]) {
+                const edge = new THREE.Mesh(
+                    new THREE.PlaneGeometry(highwayLength - 4, 0.25),
+                    lineMat
+                );
+                edge.rotation.x = -Math.PI / 2;
+                edge.position.set(startX + highwayLength / 2, edgeY, side * edgeOffset);
+                highwayGroup.add(edge);
+            }
+
+            // Desert ground alongside highway
+            const desertMat = new THREE.MeshStandardMaterial({
+                color: 0xc2956e, // Sandy desert color
+                roughness: 0.95
+            });
+
+            // Desert strips on both sides of highway
+            const desertWidth = 25;
+            for (const side of [-1, 1]) {
+                const desert = new THREE.Mesh(
+                    new THREE.PlaneGeometry(highwayLength + 20, desertWidth),
+                    desertMat
+                );
+                desert.rotation.x = -Math.PI / 2;
+                desert.position.set(
+                    startX + highwayLength / 2,
+                    0.005,
+                    side * (VEGAS_CFG.highwayWidth / 2 + desertWidth / 2)
+                );
+                highwayGroup.add(desert);
+            }
+
+            scene.add(highwayGroup);
+            return highwayGroup;
         }
 
         function mkStreetlights() {
