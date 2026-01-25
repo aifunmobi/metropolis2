@@ -10,16 +10,23 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 ## Current Position
 
 - **Milestone:** v2.0 - Las Vegas Expansion
-- **Phase:** 2 of 6 (Iconic Landmarks - In Progress)
-- **Plan:** 4 of 13 completed
-- **Status:** Phase 2 in progress, Plan 02 complete
-- **Last activity:** 2026-01-25 - Completed v2-02-02-PLAN.md (Bellagio and Caesars Palace)
+- **Phase:** 2 of 6 (Iconic Landmarks - COMPLETE)
+- **Plan:** 5 of 13 completed
+- **Status:** Phase 2 complete, ready for Phase 3
+- **Last activity:** 2026-01-25 - Completed v2-02-03-PLAN.md (Excalibur Castle)
 
-**Progress:** ████░░░░░░░░░░░░ 31% (4/13 plans across all phases)
+**Progress:** █████░░░░░░░░░░░ 38% (5/13 plans across all phases)
 
 ## Recent Progress
 
 ### v2.0 In Progress
+- v2-02-03: Excalibur Castle completing all 5 Vegas landmarks (PHASE COMPLETE)
+- mkExcaliburCastle() with medieval castle, battlements, entry gate
+- 4 corner turrets in alternating red/blue with conical tops
+- Central white tower with gold spire for distinctive silhouette
+- Moat hint with thin blue strips around foundation
+- Position at 0.35 strip length (between Luxor and Bellagio on west side)
+- vegasLandmarks[] now has 5 entries, all ready for Phase 3 lighting
 - v2-02-02: Bellagio with fountain lake and Caesars Palace landmarks
 - mkBellagio() with curved 3-section facade, tower, and 35x20 fountain lake
 - Cream/beige Italianate styling, lake with transparent water and white border
@@ -102,6 +109,23 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 - Lighting adjusts dynamically based on time of day
 
 ## Session Notes
+
+### 2026-01-25 - Phase v2-02 Plan 03 (Excalibur Castle - PHASE COMPLETE)
+- Created mkExcaliburCastle() with medieval castle structure
+- Main body 35x18x15 with white/cream stone (0xf5f5f0)
+- Foundation 40x2x22 in gray stone with moat hint (thin blue strips)
+- Battlements on front and back edges (10 crenellations each)
+- Dark wood entry gate (6x8) on front face
+- 4 corner turrets (radius 2.5, height 12) with conical tops (radius 3.5, height 5)
+- Alternating colors: front-left red, front-right blue, back-left blue, back-right red
+- Central white tower (radius 3, height 20) with gold spire (radius 4, height 6)
+- Flag hints on corner turrets (thin boxes in matching colors)
+- Positioned west of Strip at 0.35 strip length (between Luxor and Bellagio)
+- Rotated to face Strip (entrance east toward road)
+- vegasLandmarks[] now has 5 entries, completing Phase 2
+- 3 tasks completed, 1 commit: eadd8c4
+- Execution time: 1 minute 28 seconds
+- Phase v2-02 COMPLETE - all 5 Vegas landmarks ready for Phase 3 lighting
 
 ### 2026-01-25 - Phase v2-02 Plan 02 (Bellagio and Caesars Palace)
 - Created mkBellagio() with 3-section curved facade (center + two angled wings)
@@ -298,6 +322,11 @@ None currently.
 
 | Date | Decision | Context |
 |------|----------|---------|
+| 2026-01-25 | Excalibur alternating red/blue corner turrets | Signature colorful look, visual balance front-left red, front-right blue |
+| 2026-01-25 | Gold spire on Excalibur central tower | Distinctive silhouette element, Vegas glamour on white tower |
+| 2026-01-25 | Excalibur at 0.35 strip length | Good spacing between Luxor (south) and Bellagio (north) on west side |
+| 2026-01-25 | Moat hint with thin blue strips | Medieval theming without complex water geometry |
+| 2026-01-25 | 3 landmarks west, 2 east of Strip | Visual balance along Strip, varied spacing |
 | 2026-01-25 | Bellagio curved facade with 3 angled sections | Simpler than actual curve geometry, angled wings suggest curved facade |
 | 2026-01-25 | Caesars columns with capitals and bases | Classical authenticity without excessive geometry |
 | 2026-01-25 | Triangular pediment on Caesars entrance | Greek/Roman temple aesthetic, recognizable classical element |
@@ -373,9 +402,9 @@ None currently.
 ## Session Continuity
 
 - **Last session:** 2026-01-25
-- **Stopped at:** Completed v2-02-02-PLAN.md (Bellagio and Caesars Palace)
+- **Stopped at:** Completed v2-02-03-PLAN.md (Excalibur Castle)
 - **Resume file:** None
-- **Next:** v2-02-03-PLAN.md (Excalibur Castle) or Phase 3 (Night Lighting)
+- **Next:** v2-03-PLAN.md (Vegas Night Lighting) - Phase 3
 
 ---
 *Last updated: 2026-01-25*
