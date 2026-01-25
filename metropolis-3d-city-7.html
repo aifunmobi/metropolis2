@@ -197,6 +197,9 @@
 
         // Vegas landmarks for lighting system (Phase 3)
         let vegasLandmarks = [];
+
+        // Global reference for Phase 4 Bellagio fountain show
+        let bellagioFountainLake = null;
         
         // Weather system
         let weatherState = 'sunny'; // 'sunny', 'cloudy', 'rain', 'storm'
@@ -318,6 +321,8 @@
             temperatureBillboard = mkTemperatureBillboard();
             mkLuxorPyramid();
             mkParisEiffelTower();
+            mkBellagio();
+            mkCaesarsPalace();
 
             prog(50, 'Buildings...');
             mkBuildings();
@@ -1224,6 +1229,349 @@
 
             scene.add(tower);
             return tower;
+        }
+
+        function mkBellagio() {
+            const bellagio = new THREE.Group();
+
+            const creamColor = 0xf5f0e6;
+            const accentColor = 0xc4a777;
+            const buildingMat = new THREE.MeshStandardMaterial({
+                color: creamColor,
+                roughness: 0.6,
+                metalness: 0.1
+            });
+            const accentMat = new THREE.MeshStandardMaterial({
+                color: accentColor,
+                roughness: 0.5,
+                metalness: 0.1
+            });
+
+            // Main building - curved facade created with 3 angled sections
+            // Center section
+            const centerSection = new THREE.Mesh(
+                new THREE.BoxGeometry(12, 25, 15),
+                buildingMat
+            );
+            centerSection.position.set(0, 12.5, 0);
+            centerSection.castShadow = true;
+            centerSection.receiveShadow = true;
+            bellagio.add(centerSection);
+
+            // Left wing (angled outward slightly)
+            const leftWing = new THREE.Mesh(
+                new THREE.BoxGeometry(10, 25, 15),
+                buildingMat
+            );
+            leftWing.position.set(-10, 12.5, 1);
+            leftWing.rotation.y = 0.15; // Angle outward
+            leftWing.castShadow = true;
+            leftWing.receiveShadow = true;
+            bellagio.add(leftWing);
+
+            // Right wing (angled outward slightly)
+            const rightWing = new THREE.Mesh(
+                new THREE.BoxGeometry(10, 25, 15),
+                buildingMat
+            );
+            rightWing.position.set(10, 12.5, 1);
+            rightWing.rotation.y = -0.15; // Angle outward
+            rightWing.castShadow = true;
+            rightWing.receiveShadow = true;
+            bellagio.add(rightWing);
+
+            // Accent band at roof level
+            const accentBand = new THREE.Mesh(
+                new THREE.BoxGeometry(32, 1.5, 16),
+                accentMat
+            );
+            accentBand.position.set(0, 24.5, 0);
+            bellagio.add(accentBand);
+
+            // Tower section behind main building
+            const tower = new THREE.Mesh(
+                new THREE.BoxGeometry(8, 35, 10),
+                buildingMat
+            );
+            tower.position.set(0, 17.5, -10);
+            tower.castShadow = true;
+            tower.receiveShadow = true;
+            bellagio.add(tower);
+
+            // Tower accent band
+            const towerAccent = new THREE.Mesh(
+                new THREE.BoxGeometry(9, 1, 11),
+                accentMat
+            );
+            towerAccent.position.set(0, 34.5, -10);
+            bellagio.add(towerAccent);
+
+            // Fountain lake (CRITICAL for Phase 4)
+            const lakeWidth = 35;
+            const lakeDepth = 20;
+            const lakeMat = new THREE.MeshStandardMaterial({
+                color: 0x4fc3f7,
+                opacity: 0.8,
+                transparent: true,
+                metalness: 0.3,
+                roughness: 0.1
+            });
+            const lake = new THREE.Mesh(
+                new THREE.PlaneGeometry(lakeWidth, lakeDepth),
+                lakeMat
+            );
+            lake.rotation.x = -Math.PI / 2;
+            lake.position.set(0, 0.1, 18); // In front of building facing Strip
+            lake.receiveShadow = true;
+            bellagio.add(lake);
+
+            // Store global reference for Phase 4 fountain show
+            bellagioFountainLake = lake;
+
+            // Lake border - rectangular rim around lake
+            const borderMat = new THREE.MeshStandardMaterial({
+                color: 0xeeeeee,
+                roughness: 0.4
+            });
+            const borderThickness = 0.5;
+            const borderHeight = 0.3;
+
+            // North border (closest to building)
+            const northBorder = new THREE.Mesh(
+                new THREE.BoxGeometry(lakeWidth + borderThickness * 2, borderHeight, borderThickness),
+                borderMat
+            );
+            northBorder.position.set(0, borderHeight / 2, 18 - lakeDepth / 2 - borderThickness / 2);
+            bellagio.add(northBorder);
+
+            // South border (facing Strip)
+            const southBorder = new THREE.Mesh(
+                new THREE.BoxGeometry(lakeWidth + borderThickness * 2, borderHeight, borderThickness),
+                borderMat
+            );
+            southBorder.position.set(0, borderHeight / 2, 18 + lakeDepth / 2 + borderThickness / 2);
+            bellagio.add(southBorder);
+
+            // East border
+            const eastBorder = new THREE.Mesh(
+                new THREE.BoxGeometry(borderThickness, borderHeight, lakeDepth),
+                borderMat
+            );
+            eastBorder.position.set(lakeWidth / 2 + borderThickness / 2, borderHeight / 2, 18);
+            bellagio.add(eastBorder);
+
+            // West border
+            const westBorder = new THREE.Mesh(
+                new THREE.BoxGeometry(borderThickness, borderHeight, lakeDepth),
+                borderMat
+            );
+            westBorder.position.set(-lakeWidth / 2 - borderThickness / 2, borderHeight / 2, 18);
+            bellagio.add(westBorder);
+
+            // Position on west side of Strip, north of Luxor
+            const stripCenterX = theStrip.userData.centerX;
+            const stripStartZ = theStrip.userData.startZ;
+            const stripLength = theStrip.userData.endZ - stripStartZ;
+            const sidewalkWidth = theStrip.userData.sidewalkWidth;
+            const stripWidth = theStrip.userData.width;
+
+            bellagio.position.set(
+                stripCenterX - stripWidth / 2 - sidewalkWidth - 20, // West side parking lot
+                0,
+                stripStartZ + stripLength * 0.65 // North-middle area
+            );
+
+            // Rotate to face Strip (building entrance faces east/Strip)
+            bellagio.rotation.y = Math.PI / 2;
+
+            // Store userData for Phase 3 lighting
+            bellagio.userData = {
+                type: 'bellagio',
+                hasFountain: true,
+                fountainLake: lake
+            };
+
+            // Add to landmarks array
+            vegasLandmarks.push(bellagio);
+
+            scene.add(bellagio);
+            return bellagio;
+        }
+
+        function mkCaesarsPalace() {
+            const caesars = new THREE.Group();
+
+            const marbleColor = 0xf8f8f0;
+            const columnColor = 0xf0f0f0;
+            const porticoColor = 0xe8e8e0;
+            const goldColor = 0xd4af37;
+
+            const marbleMat = new THREE.MeshStandardMaterial({
+                color: marbleColor,
+                roughness: 0.4,
+                metalness: 0.1
+            });
+            const columnMat = new THREE.MeshStandardMaterial({
+                color: columnColor,
+                roughness: 0.3,
+                metalness: 0.1
+            });
+            const porticoMat = new THREE.MeshStandardMaterial({
+                color: porticoColor,
+                roughness: 0.5,
+                metalness: 0.1
+            });
+            const goldMat = new THREE.MeshStandardMaterial({
+                color: goldColor,
+                metalness: 0.7,
+                roughness: 0.3
+            });
+
+            // Main building
+            const mainBuilding = new THREE.Mesh(
+                new THREE.BoxGeometry(40, 22, 20),
+                marbleMat
+            );
+            mainBuilding.position.set(0, 11, 0);
+            mainBuilding.castShadow = true;
+            mainBuilding.receiveShadow = true;
+            caesars.add(mainBuilding);
+
+            // Roman columns (8 columns across front entrance)
+            const numColumns = 8;
+            const columnSpacing = 3;
+            const columnStartX = -(numColumns - 1) * columnSpacing / 2;
+            const columnHeight = 10;
+            const columnRadius = 0.5;
+
+            for (let i = 0; i < numColumns; i++) {
+                // Column shaft
+                const column = new THREE.Mesh(
+                    new THREE.CylinderGeometry(columnRadius, columnRadius, columnHeight, 12),
+                    columnMat
+                );
+                column.position.set(
+                    columnStartX + i * columnSpacing,
+                    columnHeight / 2,
+                    11 // Front of building
+                );
+                column.castShadow = true;
+                caesars.add(column);
+
+                // Column capital (wider top)
+                const capital = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.7, 0.5, 0.5, 12),
+                    columnMat
+                );
+                capital.position.set(
+                    columnStartX + i * columnSpacing,
+                    columnHeight + 0.25,
+                    11
+                );
+                caesars.add(capital);
+
+                // Column base (wider bottom)
+                const base = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.7, 0.8, 0.4, 12),
+                    columnMat
+                );
+                base.position.set(
+                    columnStartX + i * columnSpacing,
+                    0.2,
+                    11
+                );
+                caesars.add(base);
+            }
+
+            // Entrance portico (roof above columns)
+            const portico = new THREE.Mesh(
+                new THREE.BoxGeometry(25, 2, 8),
+                porticoMat
+            );
+            portico.position.set(0, columnHeight + 1.5, 11);
+            portico.castShadow = true;
+            portico.receiveShadow = true;
+            caesars.add(portico);
+
+            // Portico triangular pediment (classical Greek/Roman style)
+            const pedimentGeo = new THREE.BufferGeometry();
+            const pedimentVertices = new Float32Array([
+                -12.5, 0, 0,    // Left
+                12.5, 0, 0,     // Right
+                0, 4, 0         // Top
+            ]);
+            pedimentGeo.setAttribute('position', new THREE.BufferAttribute(pedimentVertices, 3));
+            pedimentGeo.computeVertexNormals();
+            const pediment = new THREE.Mesh(pedimentGeo, porticoMat);
+            pediment.position.set(0, columnHeight + 2.5, 15);
+            caesars.add(pediment);
+
+            // Central dome on roof
+            const domeGeo = new THREE.SphereGeometry(4, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+            const dome = new THREE.Mesh(domeGeo, goldMat);
+            dome.position.set(0, 22, 0);
+            dome.castShadow = true;
+            caesars.add(dome);
+
+            // Dome base ring
+            const domeBase = new THREE.Mesh(
+                new THREE.CylinderGeometry(4.2, 4.2, 0.5, 24),
+                marbleMat
+            );
+            domeBase.position.set(0, 22, 0);
+            caesars.add(domeBase);
+
+            // Grand staircase (3 steps)
+            const stairMat = new THREE.MeshStandardMaterial({
+                color: columnColor,
+                roughness: 0.5
+            });
+            for (let i = 0; i < 3; i++) {
+                const step = new THREE.Mesh(
+                    new THREE.BoxGeometry(20 - i * 2, 0.5, 3),
+                    stairMat
+                );
+                step.position.set(0, 0.25 + i * 0.5, 14 + i * 3);
+                step.receiveShadow = true;
+                caesars.add(step);
+            }
+
+            // Foundation platform
+            const foundation = new THREE.Mesh(
+                new THREE.BoxGeometry(42, 0.3, 30),
+                marbleMat
+            );
+            foundation.position.set(0, 0.15, 5);
+            foundation.receiveShadow = true;
+            caesars.add(foundation);
+
+            // Position on east side of Strip, south of Eiffel Tower
+            const stripCenterX = theStrip.userData.centerX;
+            const stripStartZ = theStrip.userData.startZ;
+            const stripLength = theStrip.userData.endZ - stripStartZ;
+            const sidewalkWidth = theStrip.userData.sidewalkWidth;
+            const stripWidth = theStrip.userData.width;
+
+            caesars.position.set(
+                stripCenterX + stripWidth / 2 + sidewalkWidth + 25, // East side parking lot
+                0,
+                stripStartZ + stripLength * 0.3 // South-middle area
+            );
+
+            // Rotate to face Strip (entrance faces west/Strip)
+            caesars.rotation.y = -Math.PI / 2;
+
+            // Store userData for Phase 3 lighting
+            caesars.userData = {
+                type: 'caesars',
+                hasColumns: true
+            };
+
+            // Add to landmarks array
+            vegasLandmarks.push(caesars);
+
+            scene.add(caesars);
+            return caesars;
         }
 
         function mkStreetlights() {
