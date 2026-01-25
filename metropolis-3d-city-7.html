@@ -312,6 +312,7 @@
 
             prog(54, 'The Strip...');
             theStrip = mkTheStrip();
+            temperatureBillboard = mkTemperatureBillboard();
 
             prog(50, 'Buildings...');
             mkBuildings();
@@ -855,6 +856,157 @@
             };
 
             return strip;
+        }
+
+        function mkTemperatureBillboard() {
+            const billboard = new THREE.Group();
+
+            // Billboard structure - Vegas-style with support poles
+            const poleMat = new THREE.MeshStandardMaterial({
+                color: 0x666666,
+                metalness: 0.7
+            });
+
+            // Two support poles
+            const poleHeight = 8;
+            for (const offset of [-2, 2]) {
+                const pole = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.2, 0.25, poleHeight, 8),
+                    poleMat
+                );
+                pole.position.set(offset, poleHeight / 2, 0);
+                billboard.add(pole);
+            }
+
+            // Sign backing - dark for contrast
+            const backingMat = new THREE.MeshStandardMaterial({
+                color: 0x111111,
+                roughness: 0.3
+            });
+            const backing = new THREE.Mesh(
+                new THREE.BoxGeometry(6, 3, 0.3),
+                backingMat
+            );
+            backing.position.set(0, poleHeight + 1.5, 0);
+            billboard.add(backing);
+
+            // Create canvas for temperature display
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+
+            // Store canvas and texture for updates
+            billboard.userData.canvas = canvas;
+            billboard.userData.ctx = ctx;
+
+            // Initial temperature
+            billboard.userData.temperature = 95 + Math.floor(Math.random() * 20);
+            billboard.userData.lastTempUpdate = 0;
+
+            // Draw initial temperature
+            drawTemperature(billboard);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            billboard.userData.texture = texture;
+
+            const display = new THREE.Mesh(
+                new THREE.PlaneGeometry(5.5, 2.75),
+                new THREE.MeshBasicMaterial({ map: texture })
+            );
+            display.position.set(0, poleHeight + 1.5, 0.2);
+            billboard.add(display);
+
+            // Back side
+            const displayBack = display.clone();
+            displayBack.rotation.y = Math.PI;
+            displayBack.position.z = -0.2;
+            billboard.add(displayBack);
+
+            // Red LED-style border lights
+            const ledMat = new THREE.MeshBasicMaterial({ color: 0xff3333 });
+            for (let i = 0; i < 20; i++) {
+                const led = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.08),
+                    ledMat.clone()
+                );
+                // Position around border
+                const t = i / 20;
+                if (t < 0.25) {
+                    led.position.set(-2.7 + (t * 4) * 5.4, poleHeight + 3, 0.2);
+                } else if (t < 0.5) {
+                    led.position.set(2.7, poleHeight + 3 - ((t - 0.25) * 4) * 2.8, 0.2);
+                } else if (t < 0.75) {
+                    led.position.set(2.7 - ((t - 0.5) * 4) * 5.4, poleHeight + 0.2, 0.2);
+                } else {
+                    led.position.set(-2.7, poleHeight + 0.2 + ((t - 0.75) * 4) * 2.8, 0.2);
+                }
+                led.userData.ledIndex = i;
+                billboard.add(led);
+            }
+
+            // Position billboard at The Strip entrance
+            const stripX = VEGAS_CFG.zoneStartX + VEGAS_CFG.highwayLength;
+            billboard.position.set(
+                stripX + VEGAS_CFG.stripWidth / 2 + 6, // East side of Strip
+                0,
+                -VEGAS_CFG.stripLength / 2 + 10 // Near south end
+            );
+
+            scene.add(billboard);
+
+            // Store reference for updates
+            return billboard;
+        }
+
+        function drawTemperature(billboard) {
+            const ctx = billboard.userData.ctx;
+            const canvas = billboard.userData.canvas;
+            const temp = billboard.userData.temperature;
+
+            // Clear canvas
+            ctx.fillStyle = '#111111';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // "TEMPERATURE" header
+            ctx.fillStyle = '#ffcc00';
+            ctx.font = 'bold 32px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('TEMPERATURE', canvas.width / 2, 50);
+
+            // Large temperature number with LED-style appearance
+            ctx.fillStyle = '#ff3333';
+            ctx.font = 'bold 100px Arial';
+            ctx.fillText(temp + '°F', canvas.width / 2, 160);
+
+            // "LAS VEGAS" footer
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '24px Arial';
+            ctx.fillText('LAS VEGAS', canvas.width / 2, 220);
+        }
+
+        function updTemperatureBillboard(billboard, time) {
+            // Update temperature every 30 seconds with small fluctuation
+            if (time - billboard.userData.lastTempUpdate > 30) {
+                billboard.userData.lastTempUpdate = time;
+
+                // Temperature fluctuates between 95-115°F
+                const currentTemp = billboard.userData.temperature;
+                const change = Math.floor(Math.random() * 5) - 2; // -2 to +2
+                billboard.userData.temperature = Math.max(95, Math.min(115, currentTemp + change));
+
+                drawTemperature(billboard);
+                billboard.userData.texture.needsUpdate = true;
+            }
+
+            // Animate LED border lights (chase pattern)
+            billboard.children.forEach(child => {
+                if (child.userData.ledIndex !== undefined) {
+                    const phase = (time * 2 + child.userData.ledIndex * 0.5) % (Math.PI * 2);
+                    const intensity = 0.5 + 0.5 * Math.sin(phase);
+                    child.material.color.setRGB(intensity, intensity * 0.2, intensity * 0.2);
+                }
+            });
         }
 
         function mkStreetlights() {
@@ -8298,6 +8450,7 @@
             updEmergencyLights(t);
             updGridlock(t);
             updWeather(t);
+            if (temperatureBillboard) updTemperatureBillboard(temperatureBillboard, t);
             chkDiscoveries();
             if (raining) updRain();
             updMM();
