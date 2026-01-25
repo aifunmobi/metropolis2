@@ -11,15 +11,22 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 
 - **Milestone:** v2.0 - Las Vegas Expansion
 - **Phase:** 2 of 6 (Iconic Landmarks - In Progress)
-- **Plan:** 3 of 13 completed
-- **Status:** Phase 2 in progress, Plan 01 complete
-- **Last activity:** 2026-01-25 - Completed v2-02-01-PLAN.md (Luxor Pyramid and Paris Eiffel Tower)
+- **Plan:** 4 of 13 completed
+- **Status:** Phase 2 in progress, Plan 02 complete
+- **Last activity:** 2026-01-25 - Completed v2-02-02-PLAN.md (Bellagio and Caesars Palace)
 
-**Progress:** ███░░░░░░░░░░░░░ 23% (3/13 plans across all phases)
+**Progress:** ████░░░░░░░░░░░░ 31% (4/13 plans across all phases)
 
 ## Recent Progress
 
 ### v2.0 In Progress
+- v2-02-02: Bellagio with fountain lake and Caesars Palace landmarks
+- mkBellagio() with curved 3-section facade, tower, and 35x20 fountain lake
+- Cream/beige Italianate styling, lake with transparent water and white border
+- bellagioFountainLake global reference for Phase 4 fountain show
+- mkCaesarsPalace() with 8 Roman columns, capitals/bases, triangular pediment
+- Gold dome on roof, 3-step grand staircase, white marble finish
+- 4 landmarks now in vegasLandmarks[] (Luxor, Paris, Bellagio, Caesars)
 - v2-02-01: Luxor Pyramid and Paris Eiffel Tower landmarks positioned on Strip parking lots
 - mkLuxorPyramid() with black glass pyramid (30 units), sandstone base, sphinx hint
 - mkParisEiffelTower() with 4 angled legs, 2 observation decks, tapered spire (38 units)
@@ -95,6 +102,25 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 - Lighting adjusts dynamically based on time of day
 
 ## Session Notes
+
+### 2026-01-25 - Phase v2-02 Plan 02 (Bellagio and Caesars Palace)
+- Created mkBellagio() with 3-section curved facade (center + two angled wings)
+- Cream/beige color (0xf5f0e6) with darker accent band (0xc4a777) at roof level
+- Tower section (8x35x10) behind main building for hotel tower silhouette
+- Fountain lake (35x20) with transparent blue water material (0x4fc3f7, opacity 0.8)
+- Lake border with white rim around perimeter
+- bellagioFountainLake global reference stored for Phase 4 fountain animation
+- Positioned west of Strip at 0.65 Strip length (north-middle area)
+- Created mkCaesarsPalace() with white marble appearance (0xf8f8f0)
+- 8 Roman columns (radius 0.5, height 10) with capitals and bases
+- Entrance portico with triangular pediment (BufferGeometry triangle)
+- Gold dome (SphereGeometry half-sphere, 0xd4af37, metalness 0.7) on roof center
+- 3-step grand staircase leading to entrance
+- Positioned east of Strip at 0.3 Strip length (south-middle area)
+- Both landmarks rotated to face Strip (columns/fountain visible from road)
+- vegasLandmarks array now has 4 entries for Phase 3 lighting
+- 3 tasks completed, 1 commit: 3a26c4f
+- Execution time: 2 minutes 13 seconds
 
 ### 2026-01-25 - Phase v2-02 Plan 01 (Luxor Pyramid and Paris Eiffel Tower)
 - Created mkLuxorPyramid() with ConeGeometry (4 radial segments = true pyramid)
@@ -272,6 +298,12 @@ None currently.
 
 | Date | Decision | Context |
 |------|----------|---------|
+| 2026-01-25 | Bellagio curved facade with 3 angled sections | Simpler than actual curve geometry, angled wings suggest curved facade |
+| 2026-01-25 | Caesars columns with capitals and bases | Classical authenticity without excessive geometry |
+| 2026-01-25 | Triangular pediment on Caesars entrance | Greek/Roman temple aesthetic, recognizable classical element |
+| 2026-01-25 | Gold dome on Caesars roof | Vegas signature element, adds visual variety to white building |
+| 2026-01-25 | Bellagio at 0.65 Strip length, Caesars at 0.3 | Good spacing between landmarks on opposite sides of Strip |
+| 2026-01-25 | bellagioFountainLake global reference | Phase 4 can access fountain directly for animation |
 | 2026-01-25 | ConeGeometry with 4 radial segments for pyramid | Creates true pyramid with 4 triangular faces, not a rounded cone |
 | 2026-01-25 | Pyramid rotated 45 degrees | Faces align with cardinal directions for natural viewing angles |
 | 2026-01-25 | Simplified Eiffel with 4 angled legs | Recognizable silhouette without complex lattice geometry |
@@ -341,9 +373,9 @@ None currently.
 ## Session Continuity
 
 - **Last session:** 2026-01-25
-- **Stopped at:** Completed v2-02-01-PLAN.md (Luxor Pyramid and Paris Eiffel Tower)
+- **Stopped at:** Completed v2-02-02-PLAN.md (Bellagio and Caesars Palace)
 - **Resume file:** None
-- **Next:** v2-02-02-PLAN.md (Bellagio with Fountains)
+- **Next:** v2-02-03-PLAN.md (Excalibur Castle) or Phase 3 (Night Lighting)
 
 ---
 *Last updated: 2026-01-25*
