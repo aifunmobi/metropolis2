@@ -80,6 +80,7 @@
         <div><span class="label">ALT</span> <span id="alt">0</span>m</div>
         <div><span class="label">SPD</span> <span id="spd">0</span>km/h</div>
         <div><span class="label">POS</span> <span id="pos">0,0</span></div>
+        <div><span class="label">TIME</span> <span id="time">12:00</span></div>
     </div>
     
     <div id="traffic-menu">
@@ -184,6 +185,7 @@
         let allWindows = [];
         let billboards = [];
         let streetlights = [];
+        let warningLights = [];  // Red pulsating lights on antenna poles
         let activeRooftops = [];  // Buildings with rooftop features (gardens/pools) for figure placement
         let vel = null, baseSpd = 0.5, boost = false;
         let raining = false, rain = null;
@@ -246,9 +248,8 @@
         let suctionActive = false;
 
         // Wrecker/Tow truck system
-        let wrecker = null;
-        let wreckerTarget = null;
-        let wreckerState = 'idle'; // 'idle', 'driving', 'towing'
+        let wreckers = []; // Array of active wreckers
+        let intersectionGridlock = null; // Track active intersection gridlock response
 
         let crosswalks = [];
         let signalizedIntersections = []; // Intersections with crosswalks and signals
@@ -1019,6 +1020,15 @@
                 );
                 antenna.position.y = h + 4;
                 g.add(antenna);
+
+                // Red warning light at top of antenna
+                const warningLight = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.4, 12, 12),
+                    new THREE.MeshBasicMaterial({ color: 0xff0000 })
+                );
+                warningLight.position.y = h + 8.2;
+                g.add(warningLight);
+                warningLights.push(warningLight);
             }
 
             // Add rooftop features to some buildings
@@ -2903,106 +2913,184 @@
         }
 
         function updWrecker(t) {
-            // Check for stuck vehicles (not moving for 2 minutes = 120 seconds)
-            if (!wrecker && wreckerState === 'idle') {
-                // Find a vehicle stuck for more than 120 seconds
-                let stuckVehicle = null;
+            // Detect intersection gridlock (3+ cars stuck within 15 units of each other)
+            if (!intersectionGridlock && wreckers.length === 0) {
+                const stuckCars = cars.filter(c =>
+                    c.userData.stuckTime > 20 &&
+                    !c.userData.isEmergency &&
+                    !c.userData.wreckerAssigned
+                );
 
-                // Check cars
-                for (const car of cars) {
-                    if (car.userData.stuckTime > 120) {
-                        stuckVehicle = car;
-                        break;
-                    }
-                }
+                // Check if multiple cars stuck near each other (intersection gridlock)
+                if (stuckCars.length >= 3) {
+                    // Find cluster of stuck cars
+                    for (const car of stuckCars) {
+                        const nearbyStuck = stuckCars.filter(other => {
+                            if (other === car) return false;
+                            const dx = other.position.x - car.position.x;
+                            const dz = other.position.z - car.position.z;
+                            return Math.sqrt(dx * dx + dz * dz) < 15;
+                        });
 
-                // Check omnibus
-                if (!stuckVehicle && omnibus && omnibus.userData.stuckTime > 120) {
-                    stuckVehicle = omnibus;
-                }
+                        if (nearbyStuck.length >= 2) {
+                            // Found intersection gridlock!
+                            const gridlockCars = [car, ...nearbyStuck];
+                            const centerX = gridlockCars.reduce((sum, c) => sum + c.position.x, 0) / gridlockCars.length;
+                            const centerZ = gridlockCars.reduce((sum, c) => sum + c.position.z, 0) / gridlockCars.length;
 
-                if (stuckVehicle) {
-                    // Spawn wrecker
-                    wrecker = mkWrecker();
-                    wreckerTarget = stuckVehicle;
-                    wreckerState = 'driving';
+                            intersectionGridlock = { x: centerX, z: centerZ, cars: gridlockCars };
 
-                    // Position wrecker at edge of map
-                    const edge = Math.random() > 0.5 ? halfSize : -halfSize;
-                    wrecker.position.set(edge, 0, stuckVehicle.position.z);
-                    wrecker.userData.spd = 0.15;
-                    scene.add(wrecker);
+                            // Dispatch police car
+                            const policeCar = emergencyVehicles.find(ev => ev.userData.emergencyType === 'police');
+                            if (policeCar && !policeChaseTarget && !policeCar.userData.respondingToGridlock) {
+                                policeCar.userData.respondingToGridlock = true;
+                                policeCar.userData.gridlockCenter = { x: centerX, z: centerZ };
+                            }
 
-                    notify('🚛 Wrecker dispatched for stuck vehicle!', 3000);
-                }
-            }
+                            // Dispatch wreckers for each stuck car (max 4)
+                            const toTow = gridlockCars.slice(0, 4);
+                            notify(`🚨 Intersection gridlock! Dispatching police + ${toTow.length} wreckers!`, 4000);
 
-            if (!wrecker) return;
+                            toTow.forEach((stuckCar, i) => {
+                                stuckCar.userData.wreckerAssigned = true;
+                                setTimeout(() => {
+                                    const newWrecker = mkWrecker();
+                                    newWrecker.userData.target = stuckCar;
+                                    newWrecker.userData.state = 'driving';
+                                    newWrecker.userData.spd = 0.18;
 
-            if (wreckerState === 'driving') {
-                // Drive toward stuck vehicle
-                const dx = wreckerTarget.position.x - wrecker.position.x;
-                const dz = wreckerTarget.position.z - wrecker.position.z;
-                const dist = Math.sqrt(dx * dx + dz * dz);
+                                    // Spawn from different edges
+                                    const edges = [
+                                        { x: -halfSize - 10, z: stuckCar.position.z },
+                                        { x: halfSize + 10, z: stuckCar.position.z },
+                                        { x: stuckCar.position.x, z: -halfSize - 10 },
+                                        { x: stuckCar.position.x, z: halfSize + 10 }
+                                    ];
+                                    const edge = edges[i % edges.length];
+                                    newWrecker.position.set(edge.x, 0, edge.z);
 
-                if (dist < 4) {
-                    // Arrived - start towing
-                    wreckerState = 'towing';
-                    wrecker.userData.towTimer = 0;
-                    notify('🚛 Wrecker towing vehicle...', 2000);
-                } else {
-                    // Move toward target
-                    wrecker.position.x += (dx / dist) * wrecker.userData.spd;
-                    wrecker.position.z += (dz / dist) * wrecker.userData.spd;
-                    wrecker.rotation.y = Math.atan2(dx, dz) - Math.PI / 2;
-                }
-            } else if (wreckerState === 'towing') {
-                wrecker.userData.towTimer += 0.016;
-
-                // After 3 seconds, remove the stuck vehicle and leave
-                if (wrecker.userData.towTimer > 3) {
-                    // Remove the stuck vehicle
-                    if (wreckerTarget === omnibus) {
-                        // Reset omnibus position to first stop
-                        omnibus.position.set(omnibusStops[0].x, 0, omnibusStops[0].z);
-                        omnibus.userData.currentStop = 0;
-                        omnibus.userData.nextStop = 1;
-                        omnibus.userData.state = 'moving';
-                        omnibus.userData.stuckTime = 0;
-                        notify('🚌 Omnibus reset to first stop!', 2000);
-                    } else {
-                        // Remove car and respawn later
-                        const idx = cars.indexOf(wreckerTarget);
-                        if (idx >= 0) {
-                            scene.remove(wreckerTarget);
-                            cars.splice(idx, 1);
-                            // Respawn a new car
-                            setTimeout(() => {
-                                const newCar = mkCar(0x000000 + Math.floor(Math.random() * 0xffffff));
-                                placeCarOnRoad(newCar);
-                                cars.push(newCar);
-                                scene.add(newCar);
-                            }, 5000);
+                                    scene.add(newWrecker);
+                                    wreckers.push(newWrecker);
+                                }, i * 500); // Stagger spawns
+                            });
+                            break;
                         }
                     }
-
-                    // Wrecker leaves
-                    wreckerState = 'leaving';
-                    wrecker.userData.leaveDir = wrecker.position.x > 0 ? 1 : -1;
                 }
-            } else if (wreckerState === 'leaving') {
-                // Drive off map
-                wrecker.position.x += wrecker.userData.leaveDir * wrecker.userData.spd;
-                wrecker.rotation.y = wrecker.userData.leaveDir > 0 ? -Math.PI / 2 : Math.PI / 2;
 
-                if (Math.abs(wrecker.position.x) > halfSize + 20) {
-                    // Remove wrecker
-                    scene.remove(wrecker);
-                    wrecker = null;
-                    wreckerTarget = null;
-                    wreckerState = 'idle';
+                // Also check for single stuck vehicle (120+ seconds)
+                if (!intersectionGridlock) {
+                    const longStuck = cars.find(c =>
+                        c.userData.stuckTime > 120 &&
+                        !c.userData.isEmergency &&
+                        !c.userData.wreckerAssigned
+                    );
+                    if (longStuck) {
+                        longStuck.userData.wreckerAssigned = true;
+                        const newWrecker = mkWrecker();
+                        newWrecker.userData.target = longStuck;
+                        newWrecker.userData.state = 'driving';
+                        newWrecker.userData.spd = 0.15;
+                        const edge = Math.random() > 0.5 ? halfSize + 10 : -halfSize - 10;
+                        newWrecker.position.set(edge, 0, longStuck.position.z);
+                        scene.add(newWrecker);
+                        wreckers.push(newWrecker);
+                        notify('🚛 Wrecker dispatched for stuck vehicle!', 3000);
+                    }
                 }
             }
+
+            // Update police responding to gridlock
+            const policeCar = emergencyVehicles.find(ev => ev.userData.emergencyType === 'police');
+            if (policeCar && policeCar.userData.respondingToGridlock && policeCar.userData.gridlockCenter) {
+                const target = policeCar.userData.gridlockCenter;
+                const dx = target.x - policeCar.position.x;
+                const dz = target.z - policeCar.position.z;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+
+                if (dist < 8) {
+                    // Arrived - stay at scene until wreckers done
+                    policeCar.rotation.y = Math.atan2(dx, dz);
+                } else {
+                    const speed = 0.25;
+                    policeCar.position.x += (dx / dist) * speed;
+                    policeCar.position.z += (dz / dist) * speed;
+                    policeCar.rotation.y = Math.atan2(dx, dz);
+                }
+            }
+
+            // Update all active wreckers
+            wreckers.forEach((wrecker, idx) => {
+                if (wrecker.userData.state === 'driving') {
+                    const target = wrecker.userData.target;
+                    if (!target || !target.parent) {
+                        // Target already removed
+                        wrecker.userData.state = 'leaving';
+                        wrecker.userData.leaveDir = wrecker.position.x > 0 ? 1 : -1;
+                        return;
+                    }
+
+                    const dx = target.position.x - wrecker.position.x;
+                    const dz = target.position.z - wrecker.position.z;
+                    const dist = Math.sqrt(dx * dx + dz * dz);
+
+                    if (dist < 4) {
+                        wrecker.userData.state = 'towing';
+                        wrecker.userData.towTimer = 0;
+                    } else {
+                        wrecker.position.x += (dx / dist) * wrecker.userData.spd;
+                        wrecker.position.z += (dz / dist) * wrecker.userData.spd;
+                        wrecker.rotation.y = Math.atan2(dx, dz) - Math.PI / 2;
+                    }
+                } else if (wrecker.userData.state === 'towing') {
+                    wrecker.userData.towTimer += 0.016;
+
+                    if (wrecker.userData.towTimer > 2.5) {
+                        const target = wrecker.userData.target;
+                        if (target === omnibus) {
+                            omnibus.position.set(omnibusStops[0].x, 0, omnibusStops[0].z);
+                            omnibus.userData.currentStop = 0;
+                            omnibus.userData.nextStop = 1;
+                            omnibus.userData.state = 'moving';
+                            omnibus.userData.stuckTime = 0;
+                            omnibus.userData.wreckerAssigned = false;
+                        } else if (target) {
+                            const carIdx = cars.indexOf(target);
+                            if (carIdx >= 0) {
+                                scene.remove(target);
+                                cars.splice(carIdx, 1);
+                                setTimeout(() => {
+                                    const newCar = mkCar(0x000000 + Math.floor(Math.random() * 0xffffff));
+                                    placeCarOnRoad(newCar);
+                                    cars.push(newCar);
+                                    scene.add(newCar);
+                                }, 3000);
+                            }
+                        }
+                        wrecker.userData.state = 'leaving';
+                        wrecker.userData.leaveDir = wrecker.position.x > 0 ? 1 : -1;
+                    }
+                } else if (wrecker.userData.state === 'leaving') {
+                    wrecker.position.x += wrecker.userData.leaveDir * wrecker.userData.spd * 1.5;
+                    wrecker.rotation.y = wrecker.userData.leaveDir > 0 ? -Math.PI / 2 : Math.PI / 2;
+
+                    if (Math.abs(wrecker.position.x) > halfSize + 25) {
+                        scene.remove(wrecker);
+                        wreckers.splice(idx, 1);
+
+                        // Check if all wreckers done
+                        if (wreckers.length === 0 && intersectionGridlock) {
+                            intersectionGridlock = null;
+                            if (policeCar && policeCar.userData.respondingToGridlock) {
+                                policeCar.userData.respondingToGridlock = false;
+                                policeCar.userData.gridlockCenter = null;
+                                policeCar.userData.returningToRoad = true;
+                                notify('✅ Intersection cleared!', 2500);
+                            }
+                        }
+                    }
+                }
+            });
         }
 
         function updOmnibus(t) {
@@ -3090,14 +3178,17 @@
                         }
                     }
 
-                    // Check wrecker
-                    if (!omnibusBlocked && wrecker) {
-                        const wdx = wrecker.position.x - omnibus.position.x;
-                        const wdz = wrecker.position.z - omnibus.position.z;
-                        const forward = wdx * dirX + wdz * dirZ;
-                        const lateral = Math.abs(wdx * (-dirZ) + wdz * dirX);
-                        if (forward > 0 && forward < 10 && lateral < 3) {
-                            omnibusBlocked = true;
+                    // Check wreckers
+                    if (!omnibusBlocked) {
+                        for (const wrecker of wreckers) {
+                            const wdx = wrecker.position.x - omnibus.position.x;
+                            const wdz = wrecker.position.z - omnibus.position.z;
+                            const forward = wdx * dirX + wdz * dirZ;
+                            const lateral = Math.abs(wdx * (-dirZ) + wdz * dirX);
+                            if (forward > 0 && forward < 10 && lateral < 3) {
+                                omnibusBlocked = true;
+                                break;
+                            }
                         }
                     }
 
@@ -3673,15 +3764,25 @@
                 g.add(wheel);
             });
 
-            // Headlights
-            const headlightMat = new THREE.MeshBasicMaterial({ color: 0xffffcc });
-            [-0.6, 0.6].forEach(z => {
+            // Front headlights (bright white/yellow)
+            const headlightMat = new THREE.MeshBasicMaterial({ color: 0xffff88 });
+            [-0.5, 0.5].forEach(z => {
                 const light = new THREE.Mesh(
-                    new THREE.CircleGeometry(0.15, 12),
+                    new THREE.SphereGeometry(0.2, 12, 12),
                     headlightMat
                 );
-                light.position.set(3.12, 0.5, z);
-                light.rotation.y = Math.PI / 2;
+                light.position.set(3.25, 0.6, z);
+                g.add(light);
+            });
+
+            // Rear lights (bright red)
+            const rearLightMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            [-0.5, 0.5].forEach(z => {
+                const light = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.2, 12, 12),
+                    rearLightMat
+                );
+                light.position.set(-3.25, 0.6, z);
                 g.add(light);
             });
 
@@ -4106,22 +4207,32 @@
         }
 
         function addEmergencyLights(car, color1, color2) {
-            const light1 = new THREE.Mesh(
-                new THREE.BoxGeometry(0.3, 0.2, 0.3),
-                new THREE.MeshBasicMaterial({ color: color1 })
+            // Light bar base
+            const lightBar = new THREE.Mesh(
+                new THREE.BoxGeometry(0.8, 0.15, 0.4),
+                new THREE.MeshStandardMaterial({ color: 0x222222 })
             );
-            light1.position.set(0.3, 1.1, 0);
+            lightBar.position.set(0, 1.0, 0);
+            car.add(lightBar);
+
+            const light1 = new THREE.Mesh(
+                new THREE.BoxGeometry(0.3, 0.2, 0.35),
+                new THREE.MeshBasicMaterial({ color: color1, depthWrite: true })
+            );
+            light1.position.set(0.25, 1.15, 0);
             light1.userData.emergencyLight = true;
             light1.userData.lightColor = color1;
+            light1.renderOrder = 1;
             car.add(light1);
-            
+
             const light2 = new THREE.Mesh(
-                new THREE.BoxGeometry(0.3, 0.2, 0.3),
-                new THREE.MeshBasicMaterial({ color: color2 })
+                new THREE.BoxGeometry(0.3, 0.2, 0.35),
+                new THREE.MeshBasicMaterial({ color: color2, depthWrite: true })
             );
-            light2.position.set(-0.3, 1.1, 0);
+            light2.position.set(-0.25, 1.15, 0);
             light2.userData.emergencyLight = true;
             light2.userData.lightColor = color2;
+            light2.renderOrder = 1;
             car.add(light2);
         }
 
@@ -4777,13 +4888,27 @@
                 const dx = bike.position.x - policecar.position.x;
                 const dz = bike.position.z - policecar.position.z;
                 const dist = Math.sqrt(dx * dx + dz * dz);
-                
+
                 if (dist > 1) {
-                    // Move police toward bike
+                    // Check for other cars in the way before moving
+                    let blocked = false;
                     const speed = 0.22;
-                    policecar.position.x += (dx / dist) * speed;
-                    policecar.position.z += (dz / dist) * speed;
-                    policecar.rotation.y = Math.atan2(dx, dz);
+                    const nextX = policecar.position.x + (dx / dist) * speed;
+                    const nextZ = policecar.position.z + (dz / dist) * speed;
+
+                    cars.forEach(other => {
+                        if (other === policecar) return;
+                        const odx = other.position.x - nextX;
+                        const odz = other.position.z - nextZ;
+                        const odist = Math.sqrt(odx * odx + odz * odz);
+                        if (odist < 3) blocked = true;
+                    });
+
+                    if (!blocked) {
+                        policecar.position.x = nextX;
+                        policecar.position.z = nextZ;
+                        policecar.rotation.y = Math.atan2(dx, dz);
+                    }
                 }
             }
             
@@ -6108,6 +6233,42 @@
             return g;
         }
 
+        const BALLOON_ADS = ['SEE VEGAS', 'RECYCLE', 'OBEY', 'WORK'];
+        let balloonAdIndex = 0;
+        let balloonAdCanvas, balloonAdCtx, balloonAdTexture;
+
+        function createBalloonAdTexture(text) {
+            if (!balloonAdCanvas) {
+                balloonAdCanvas = document.createElement('canvas');
+                balloonAdCanvas.width = 512;
+                balloonAdCanvas.height = 256;
+                balloonAdCtx = balloonAdCanvas.getContext('2d');
+                balloonAdTexture = new THREE.CanvasTexture(balloonAdCanvas);
+            }
+            // Black background with glowing effect
+            balloonAdCtx.fillStyle = '#000000';
+            balloonAdCtx.fillRect(0, 0, 512, 256);
+            // Neon border
+            balloonAdCtx.strokeStyle = '#ff0000';
+            balloonAdCtx.lineWidth = 8;
+            balloonAdCtx.strokeRect(10, 10, 492, 236);
+            // Glowing text
+            balloonAdCtx.font = 'bold 64px Arial';
+            balloonAdCtx.textAlign = 'center';
+            balloonAdCtx.textBaseline = 'middle';
+            // Glow effect
+            balloonAdCtx.shadowColor = '#ff0000';
+            balloonAdCtx.shadowBlur = 20;
+            balloonAdCtx.fillStyle = '#ff3333';
+            balloonAdCtx.fillText(text, 256, 128);
+            // Brighter center text
+            balloonAdCtx.shadowBlur = 0;
+            balloonAdCtx.fillStyle = '#ffffff';
+            balloonAdCtx.fillText(text, 256, 128);
+            balloonAdTexture.needsUpdate = true;
+            return balloonAdTexture;
+        }
+
         function mkBalloon() {
             const g = new THREE.Group();
             const balloon = new THREE.Mesh(
@@ -6116,20 +6277,25 @@
             );
             balloon.scale.y = 1.3;
             g.add(balloon);
-            
-            const basket = new THREE.Mesh(
-                new THREE.BoxGeometry(2.5, 1.5, 2.5),
-                new THREE.MeshStandardMaterial({ color: 0x8b4513 })
+
+            // Illuminated ad panel attached directly below balloon
+            const adTexture = createBalloonAdTexture(BALLOON_ADS[0]);
+            const adPanel = new THREE.Mesh(
+                new THREE.PlaneGeometry(12, 4),
+                new THREE.MeshBasicMaterial({ map: adTexture, side: THREE.DoubleSide })
             );
-            basket.position.y = -9;
-            g.add(basket);
-            
-            const ropeMat = new THREE.MeshBasicMaterial({ color: 0x8b4513 });
-            [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([x, z]) => {
-                const rope = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 6), ropeMat);
-                rope.position.set(x, -5.5, z);
-                g.add(rope);
+            adPanel.position.y = -8;
+            g.add(adPanel);
+            g.userData.adPanel = adPanel;
+
+            // Short cables from balloon to sign
+            const cableMat = new THREE.MeshBasicMaterial({ color: 0x333333 });
+            [[-4, 0], [4, 0]].forEach(([x, z]) => {
+                const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3), cableMat);
+                cable.position.set(x, -6.5, z);
+                g.add(cable);
             });
+
             return g;
         }
 
@@ -6137,11 +6303,20 @@
             const g = new THREE.Group();
             const body = new THREE.Mesh(
                 new THREE.CylinderGeometry(1.2, 1.5, 4, 8),
-                new THREE.MeshStandardMaterial({ color: 0xff3333 })
+                new THREE.MeshStandardMaterial({ color: 0x3366ff })
             );
             body.rotation.z = Math.PI / 2;
             g.add(body);
-            
+
+            // Tail boom
+            const tail = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.3, 0.5, 3, 8),
+                new THREE.MeshStandardMaterial({ color: 0x3366ff })
+            );
+            tail.rotation.z = Math.PI / 2;
+            tail.position.x = -3;
+            g.add(tail);
+
             const rotor = new THREE.Group();
             for (let i = 0; i < 4; i++) {
                 const blade = new THREE.Mesh(
@@ -6154,7 +6329,35 @@
             rotor.position.y = 1.5;
             g.add(rotor);
             g.userData.mainRotor = rotor;
-            
+
+            // Tail rotor
+            const tailRotor = new THREE.Group();
+            for (let i = 0; i < 2; i++) {
+                const blade = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.5, 0.05, 0.2),
+                    new THREE.MeshStandardMaterial({ color: 0x444444 })
+                );
+                blade.rotation.y = (i / 2) * Math.PI;
+                tailRotor.add(blade);
+            }
+            tailRotor.position.set(-4.2, 0.3, 0);
+            tailRotor.rotation.x = Math.PI / 2;
+            g.add(tailRotor);
+            g.userData.tailRotor = tailRotor;
+
+            // Flight path waypoints around the city
+            g.userData.waypoints = [
+                new THREE.Vector3(-40, 60, -40),
+                new THREE.Vector3(40, 55, -30),
+                new THREE.Vector3(50, 65, 40),
+                new THREE.Vector3(-30, 58, 50),
+                new THREE.Vector3(0, 62, 0),
+                new THREE.Vector3(-50, 55, 20),
+                new THREE.Vector3(30, 68, -50)
+            ];
+            g.userData.waypointIndex = 0;
+            g.userData.heliSpeed = 0.15;
+
             return g;
         }
 
@@ -6813,31 +7016,42 @@
             timeOfDay = (timeOfDay + dayNightSpeed * dt) % 1.0;
 
             // Determine if night for other systems
-            isNight = timeOfDay < 0.2 || timeOfDay > 0.8;
+            // Night: 8pm (0.833) to 5am (0.208)
+            isNight = timeOfDay < 0.208 || timeOfDay > 0.833;
 
             // Calculate sky color based on time
-            // Time segments: midnight(0), dawn(0.2-0.3), day(0.3-0.7), dusk(0.7-0.8), night(0.8-1)
+            // Time segments (24hr clock):
+            // 00:00-05:00 (0-0.208): midnight (dark)
+            // 05:00-06:00 (0.208-0.25): dawn transition
+            // 06:00-07:00 (0.25-0.292): dawn to day
+            // 07:00-18:00 (0.292-0.75): full day
+            // 18:00-19:00 (0.75-0.792): day to dusk
+            // 19:00-20:00 (0.792-0.833): dusk to night
+            // 20:00-00:00 (0.833-1.0): night (dark)
             let skyColor;
             const t = timeOfDay;
 
-            if (t < 0.2) {
-                // Night to dawn transition
-                skyColor = lerpColor(SKY_COLORS.midnight, SKY_COLORS.dawn, t / 0.2);
-            } else if (t < 0.3) {
-                // Dawn to day
-                skyColor = lerpColor(SKY_COLORS.dawn, SKY_COLORS.day, (t - 0.2) / 0.1);
-            } else if (t < 0.7) {
-                // Full day
+            if (t < 0.208) {
+                // Midnight - stay dark (00:00-05:00)
+                skyColor = SKY_COLORS.midnight;
+            } else if (t < 0.25) {
+                // Dawn transition (05:00-06:00)
+                skyColor = lerpColor(SKY_COLORS.midnight, SKY_COLORS.dawn, (t - 0.208) / 0.042);
+            } else if (t < 0.292) {
+                // Dawn to day (06:00-07:00)
+                skyColor = lerpColor(SKY_COLORS.dawn, SKY_COLORS.day, (t - 0.25) / 0.042);
+            } else if (t < 0.75) {
+                // Full day (07:00-18:00)
                 skyColor = SKY_COLORS.day;
-            } else if (t < 0.8) {
-                // Day to dusk
-                skyColor = lerpColor(SKY_COLORS.day, SKY_COLORS.dusk, (t - 0.7) / 0.1);
-            } else if (t < 0.9) {
-                // Dusk to night
-                skyColor = lerpColor(SKY_COLORS.dusk, SKY_COLORS.night, (t - 0.8) / 0.1);
+            } else if (t < 0.792) {
+                // Day to dusk (18:00-19:00)
+                skyColor = lerpColor(SKY_COLORS.day, SKY_COLORS.dusk, (t - 0.75) / 0.042);
+            } else if (t < 0.833) {
+                // Dusk to night (19:00-20:00)
+                skyColor = lerpColor(SKY_COLORS.dusk, SKY_COLORS.night, (t - 0.792) / 0.041);
             } else {
-                // Deep night
-                skyColor = lerpColor(SKY_COLORS.night, SKY_COLORS.midnight, (t - 0.9) / 0.1);
+                // Night - stay dark (20:00-00:00)
+                skyColor = SKY_COLORS.midnight;
             }
 
             // Apply sky color (only if not overridden by weather)
@@ -6966,6 +7180,16 @@
                 if (bulb) {
                     bulb.material.color.setHex(targetColor);
                 }
+            });
+        }
+
+        function updWarningLights(t) {
+            // Slow pulsating effect for aviation warning lights
+            const pulse = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(t * 1.5));
+            const r = Math.floor(255 * pulse);
+            warningLights.forEach(light => {
+                light.material.color.setRGB(r / 255, 0, 0);
+                light.material.emissive && light.material.emissive.setRGB(r / 255, 0, 0);
             });
         }
 
@@ -7268,9 +7492,15 @@
             $('alt').textContent = Math.round(cam.position.y);
             $('spd').textContent = Math.round(vel.length() * 100);
             $('pos').textContent = `${Math.round(cam.position.x)},${Math.round(cam.position.z)}`;
+            // Convert timeOfDay (0-1) to 24-hour clock
+            const totalMins = Math.floor(timeOfDay * 24 * 60);
+            const hrs = Math.floor(totalMins / 60);
+            const mins = totalMins % 60;
+            $('time').textContent = `${hrs.toString().padStart(2,'0')}:${mins.toString().padStart(2,'0')}`;
 
             updDayNight(dt);
             updStreetlights();
+            updWarningLights(t);
 
             updCars(t);
             updPeds(t);
@@ -7493,10 +7723,13 @@
 
                     // If in passing lane, check if we can return to original lane
                     if (car.userData.inPassingLane && car.userData.originalLaneOffset !== undefined) {
+                        // Track time in passing lane
+                        car.userData.passingLaneTime = (car.userData.passingLaneTime || 0) + 0.016;
+
                         const origOffset = car.userData.originalLaneOffset;
                         let originalLaneClear = true;
 
-                        // Check if original lane is clear ahead
+                        // Check if original lane is clear ahead (only 5 units)
                         cars.forEach(other => {
                             if (other === car) return;
                             if (other.userData.axis !== car.userData.axis) return;
@@ -7505,11 +7738,10 @@
                             const dz = other.position.z - car.position.z;
                             const dist = Math.sqrt(dx * dx + dz * dz);
 
-                            if (dist < 8) {
+                            if (dist < 5) {
                                 // Check if other car is in our original lane
                                 if (car.userData.axis === 'x') {
                                     if (Math.abs(other.position.z - (car.userData.roadPos + origOffset)) < 1.5) {
-                                        // Check if it's ahead of us
                                         if (dx * car.userData.dir > 0) {
                                             originalLaneClear = false;
                                         }
@@ -7524,7 +7756,7 @@
                             }
                         });
 
-                        // Also check for oncoming traffic before merging back
+                        // Check for oncoming traffic only in our original lane
                         cars.forEach(other => {
                             if (other === car) return;
                             if (other.userData.axis !== car.userData.axis) return;
@@ -7534,15 +7766,30 @@
                             const dz = other.position.z - car.position.z;
                             const dist = Math.sqrt(dx * dx + dz * dz);
 
-                            if (dist < 12) {
-                                originalLaneClear = false;
+                            // Only block if oncoming car is actually in our target lane
+                            if (dist < 8) {
+                                if (car.userData.axis === 'x') {
+                                    if (Math.abs(other.position.z - (car.userData.roadPos + origOffset)) < 2) {
+                                        originalLaneClear = false;
+                                    }
+                                } else {
+                                    if (Math.abs(other.position.x - (car.userData.roadPos + origOffset)) < 2) {
+                                        originalLaneClear = false;
+                                    }
+                                }
                             }
                         });
+
+                        // Force return after 2 seconds in passing lane (desperate merge)
+                        if (car.userData.passingLaneTime > 2) {
+                            originalLaneClear = true;
+                        }
 
                         if (originalLaneClear) {
                             // Return to original lane
                             car.userData.laneOffset = origOffset;
                             car.userData.inPassingLane = false;
+                            car.userData.passingLaneTime = 0;
                         }
                     }
 
@@ -7619,52 +7866,60 @@
                                 if (dist < 10) pedCrossing = true;
                             }
                         });
-                        
+
                         if (pedCrossing) return; // Don't move if pedestrian crossing nearby
-                        
+
                         const speed = car.userData.spd * 1.2;
                         const emergencyOppositeOffset = -car.userData.laneOffset;
-                        
-                        // Check if opposite lane is clear of cars
-                        let emergencyOppositeClear = true;
+
+                        // Calculate next position
+                        let nextX = car.position.x;
+                        let nextZ = car.position.z;
+                        if (car.userData.axis === 'x') {
+                            nextX += speed * car.userData.dir;
+                            nextZ = car.userData.roadPos + emergencyOppositeOffset;
+                        } else {
+                            nextZ += speed * car.userData.dir;
+                            nextX = car.userData.roadPos + emergencyOppositeOffset;
+                        }
+
+                        // Check if path is clear (both at next position and along the way)
+                        let pathClear = true;
                         cars.forEach(other => {
                             if (other === car) return;
-                            const dx = other.position.x - car.position.x;
-                            const dz = other.position.z - car.position.z;
+                            const dx = other.position.x - nextX;
+                            const dz = other.position.z - nextZ;
                             const dist = Math.sqrt(dx * dx + dz * dz);
-                            if (dist < 6) {
-                                if (car.userData.axis === 'x' && Math.abs(other.position.z - (car.userData.roadPos + emergencyOppositeOffset)) < 1.5) {
-                                    emergencyOppositeClear = false;
-                                } else if (car.userData.axis === 'z' && Math.abs(other.position.x - (car.userData.roadPos + emergencyOppositeOffset)) < 1.5) {
-                                    emergencyOppositeClear = false;
-                                }
-                            }
+                            if (dist < 3.5) pathClear = false;
                         });
-                        
-                        if (emergencyOppositeClear) {
+
+                        if (pathClear) {
+                            car.position.x = nextX;
+                            car.position.z = nextZ;
+                            car.userData.laneOffset = emergencyOppositeOffset;
                             if (car.userData.axis === 'x') {
-                                car.position.x += speed * car.userData.dir;
-                                car.position.z = car.userData.roadPos + emergencyOppositeOffset;
                                 if (car.position.x > halfSize + 15) car.position.x = -halfSize - 15;
                                 if (car.position.x < -halfSize - 15) car.position.x = halfSize + 15;
                             } else {
-                                car.position.z += speed * car.userData.dir;
-                                car.position.x = car.userData.roadPos + emergencyOppositeOffset;
                                 if (car.position.z > halfSize + 15) car.position.z = -halfSize - 15;
                                 if (car.position.z < -halfSize - 15) car.position.z = halfSize + 15;
                             }
                             car.userData.stuckTime = 0;
                         }
                     } else {
-                        // Regular car stuck - try to self-unstick after 3 seconds
-                        if (car.userData.stuckTime > 3) {
-                            // Buses should NOT flip direction - they just wait or change lanes
+                        // Regular car stuck - try to self-unstick after 5 seconds
+                        if (car.userData.stuckTime > 5) {
+                            // Buses should NOT flip direction - they just wait
                             if (car.userData.isBus) {
-                                // Buses only change lanes, never reverse
+                                // Buses just wait, don't change lanes into oncoming traffic
+                                car.userData.stuckTime = 0;
+                            } else if (!car.userData.inPassingLane && Math.random() < 0.3) {
+                                // 30% chance to briefly use passing lane (only if not already there)
                                 car.userData.laneOffset = -car.userData.laneOffset;
                                 car.userData.inPassingLane = true;
-                            } else if (Math.random() < 0.2) {
-                                // Regular cars rarely reverse (20% chance, down from 50%)
+                                car.userData.passingLaneTime = 0;
+                            } else if (Math.random() < 0.1) {
+                                // 10% chance to reverse and go the other way
                                 car.userData.dir *= -1;
                                 // Update lane for new direction (right-side driving)
                                 if (car.userData.axis === 'x') {
@@ -7677,11 +7932,8 @@
                                     car.rotation.y = car.userData.dir > 0 ? -Math.PI / 2 : Math.PI / 2;
                                 }
                                 car.userData.inPassingLane = false;
-                            } else {
-                                // Temporarily use opposite lane to pass obstacle (80% chance)
-                                car.userData.laneOffset = -car.userData.laneOffset;
-                                car.userData.inPassingLane = true;
                             }
+                            // Otherwise just wait
                             car.userData.stuckTime = 0;
                         }
                     }
@@ -8459,13 +8711,41 @@
                     s.rotation.y += 0.01; 
                     s.traverse(c => { if (c.userData.ufoL) c.material.color.setHex(Math.sin(t * 5 + c.userData.ph) > 0 ? 0x00ff00 : 0x004400); }); 
                 }
-                if (s.userData.type === 'balloon') { 
-                    s.position.y = 50 + Math.sin(t * 0.2) * 6; 
-                    s.position.x = 5 + Math.sin(t * 0.1) * 10; 
-                    s.rotation.y += 0.003; 
+                if (s.userData.type === 'balloon') {
+                    s.position.y = 50 + Math.sin(t * 0.2) * 6;
+                    s.position.x = 5 + Math.sin(t * 0.1) * 10;
+                    s.rotation.y += 0.003;
+                    // Cycle ads every 5 seconds
+                    const newAdIndex = Math.floor(t / 5) % BALLOON_ADS.length;
+                    if (newAdIndex !== balloonAdIndex) {
+                        balloonAdIndex = newAdIndex;
+                        createBalloonAdTexture(BALLOON_ADS[balloonAdIndex]);
+                    }
                 }
-                if (s.userData.type === 'heli') { 
+                if (s.userData.type === 'heli') {
                     if (s.userData.mainRotor) s.userData.mainRotor.rotation.y += 0.3;
+                    if (s.userData.tailRotor) s.userData.tailRotor.rotation.z += 0.5;
+
+                    // Fly between waypoints
+                    if (s.userData.waypoints) {
+                        const target = s.userData.waypoints[s.userData.waypointIndex];
+                        const dir = new THREE.Vector3().subVectors(target, s.position);
+                        const dist = dir.length();
+
+                        if (dist < 5) {
+                            // Reached waypoint, go to next
+                            s.userData.waypointIndex = (s.userData.waypointIndex + 1) % s.userData.waypoints.length;
+                        } else {
+                            // Move toward waypoint
+                            dir.normalize().multiplyScalar(s.userData.heliSpeed);
+                            s.position.add(dir);
+
+                            // Face direction of travel
+                            s.rotation.y = Math.atan2(dir.x, dir.z);
+                            // Slight tilt when moving
+                            s.rotation.z = -dir.x * 0.1;
+                        }
+                    }
                 }
             });
         }
