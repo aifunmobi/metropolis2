@@ -7287,6 +7287,19 @@
             }
         }
 
+        function isInVegasZone(x, z) {
+            // Vegas zone starts at VEGAS_CFG.zoneStartX and extends east
+            return x > VEGAS_CFG.zoneStartX - 10; // 10 unit buffer for smooth transition
+        }
+
+        function getLocalWeatherState(x, z) {
+            // Return appropriate weather based on position
+            if (isInVegasZone(x, z)) {
+                return vegasWeatherState; // Always 'sunny' in Vegas
+            }
+            return weatherState; // Metropolis weather (varies)
+        }
+
         function updRain() {
             if (!rain) return;
             const p = rain.geometry.attributes.position.array, v = rain.geometry.attributes.velocity.array;
@@ -7295,10 +7308,14 @@
                 // Add wind effect
                 p[i * 3] += windDirection.x * windStrength * 0.1;
                 p[i * 3 + 2] += windDirection.z * windStrength * 0.1;
-                if (p[i * 3 + 1] < 0) { 
-                    p[i * 3 + 1] = 100; 
-                    p[i * 3] = cam.position.x + (Math.random() - 0.5) * 200; 
-                    p[i * 3 + 2] = cam.position.z + (Math.random() - 0.5) * 200; 
+                if (p[i * 3 + 1] < 0) {
+                    p[i * 3 + 1] = 100;
+                    p[i * 3] = cam.position.x + (Math.random() - 0.5) * 200;
+                    // Constrain X to Metropolis area (not Vegas)
+                    if (p[i * 3] > halfSize + 10) {
+                        p[i * 3] = (Math.random() - 0.5) * totalSize;
+                    }
+                    p[i * 3 + 2] = cam.position.z + (Math.random() - 0.5) * 200;
                 }
             }
             rain.geometry.attributes.position.needsUpdate = true;
@@ -7552,8 +7569,15 @@
         function updateWeatherUI() {
             const weatherEl = $('weather');
             if (weatherEl) {
-                const icons = { 'sunny': '☀️', 'cloudy': '☁️', 'rain': '🌧️', 'storm': '⛈️' };
-                weatherEl.textContent = icons[weatherState] || '☀️';
+                const inVegas = isInVegasZone(cam.position.x, cam.position.z);
+                if (inVegas) {
+                    // Vegas always shows sunny and hot
+                    weatherEl.textContent = '☀️ Sunny ' + Math.floor(95 + Math.random() * 20) + '°F';
+                } else {
+                    // Metropolis shows current weather
+                    const icons = { 'sunny': '☀️ Sunny', 'cloudy': '☁️ Cloudy', 'rain': '🌧️ Rain', 'storm': '⛈️ Storm' };
+                    weatherEl.textContent = (icons[weatherState] || '☀️') + ' 24°C';
+                }
             }
         }
 
