@@ -35,9 +35,11 @@
 4. Temperature billboard displays 95-115°F range
 5. Camera can fly smoothly between Metropolis and Vegas
 
-**Plans:**
-- 01-01: Highway connection and Route 66 marker
-- 01-02: Strip layout, weather zone, temperature billboard
+**Plans:** 2 plans in 2 waves
+
+Plans:
+- [ ] v2-01-01-PLAN.md — Highway connection, Route 66 marker, Vegas ground extension (Wave 1)
+- [ ] v2-01-02-PLAN.md — Strip layout, weather zone, temperature billboard (Wave 2)
 
 ---
 
