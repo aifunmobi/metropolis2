@@ -317,7 +317,7 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 ## Open Issues
 
 ### User Feedback (2026-01-25)
-1. **Vegas too close to Metropolis** - Vegas zone needs to be moved further east, currently feels like just an intersection away
+1. ~~**Vegas too close to Metropolis**~~ - ✓ Fixed: Moved Vegas 160 units from Metropolis (was 60)
 2. **Extend subway to Vegas** - Subway should extend from Metropolis to Las Vegas for better connection
 3. **Jitney stuck on crosswalk** - Jitney stopped endlessly on crosswalk with pedestrians waiting (pre-existing v1 bug)
 4. **Cars stopping in intersections** - Cars should not stop in intersections unless accident or obstacle (pre-existing v1 bug)
