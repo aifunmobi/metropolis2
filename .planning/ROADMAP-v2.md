@@ -10,7 +10,7 @@
 | # | Phase | Goal | Requirements | Plans | Status |
 |---|-------|------|--------------|-------|--------|
 | 1 | Vegas Infrastructure | Highway connection and Strip layout | INFRA-01, INFRA-02, INFRA-03, INFRA-04 | 2 | ✓ Complete |
-| 2 | Iconic Landmarks | 5 recognizable casino buildings | LAND-01, LAND-02, LAND-03, LAND-04, LAND-05 | 3 | Pending |
+| 2 | Iconic Landmarks | 5 recognizable casino buildings | LAND-01, LAND-02, LAND-03, LAND-04, LAND-05 | 3 | ✓ Complete |
 | 3 | Vegas Lights | Dramatic night lighting | LITE-01, LITE-02, LITE-03, LITE-04 | 2 | Pending |
 | 4 | Entertainment | Fountain show, chapels, Elvis | ENTR-01, ENTR-02, ENTR-03, ENTR-04 | 2 | Pending |
 | 5 | Tourists | Photo-taking visitors | PED-01, PED-02, PED-03, PED-04 | 2 | Pending |
@@ -61,12 +61,12 @@ Plans:
 4. Bellagio has visible fountain lake (water surface)
 5. Scale feels appropriate relative to each other
 
-**Plans:** 3 plans in 3 waves
+**Plans:** 3 plans in 3 waves ✓ Complete
 
 Plans:
-- [ ] v2-02-01-PLAN.md — Luxor Pyramid and Paris Eiffel Tower (Wave 1)
-- [ ] v2-02-02-PLAN.md — Bellagio with fountain lake and Caesars Palace (Wave 2)
-- [ ] v2-02-03-PLAN.md — Excalibur Castle (Wave 3)
+- [x] v2-02-01-PLAN.md — Luxor Pyramid and Paris Eiffel Tower (Wave 1)
+- [x] v2-02-02-PLAN.md — Bellagio with fountain lake and Caesars Palace (Wave 2)
+- [x] v2-02-03-PLAN.md — Excalibur Castle (Wave 3)
 
 ---
 
@@ -201,15 +201,15 @@ When v2.0 is complete:
 
 ```
 Phase 1: ██████████ 100% ✓
-Phase 2: ░░░░░░░░░░ 0%
+Phase 2: ██████████ 100% ✓
 Phase 3: ░░░░░░░░░░ 0%
 Phase 4: ░░░░░░░░░░ 0%
 Phase 5: ░░░░░░░░░░ 0%
 Phase 6: ░░░░░░░░░░ 0%
 ─────────────────────
-Overall: █░░░░░░░░░ 17% (1/6 phases)
+Overall: ███░░░░░░░ 33% (2/6 phases)
 ```
 
 ---
 *Roadmap created: 2026-01-25*
-*Last updated: 2026-01-25 after Phase 2 planned*
+*Last updated: 2026-01-25 after Phase 2 complete*

@@ -16,11 +16,11 @@ Requirements for Las Vegas expansion. Each maps to roadmap phases.
 
 ### Landmarks
 
-- [ ] **LAND-01**: Luxor Pyramid with black glass exterior and sky beam at night
-- [ ] **LAND-02**: Bellagio with elegant facade and fountain lake in front
-- [ ] **LAND-03**: Paris Eiffel Tower replica at recognizable scale
-- [ ] **LAND-04**: Caesars Palace with Roman columns and grand entrance
-- [ ] **LAND-05**: Excalibur Castle with medieval turrets and colorful towers
+- [x] **LAND-01**: Luxor Pyramid with black glass exterior and sky beam at night
+- [x] **LAND-02**: Bellagio with elegant facade and fountain lake in front
+- [x] **LAND-03**: Paris Eiffel Tower replica at recognizable scale
+- [x] **LAND-04**: Caesars Palace with Roman columns and grand entrance
+- [x] **LAND-05**: Excalibur Castle with medieval turrets and colorful towers
 
 ### Lighting
 
@@ -70,11 +70,11 @@ Requirements for Las Vegas expansion. Each maps to roadmap phases.
 | INFRA-02 | Phase 1 | Complete |
 | INFRA-03 | Phase 1 | Complete |
 | INFRA-04 | Phase 1 | Complete |
-| LAND-01 | Phase 2 | Pending |
-| LAND-02 | Phase 2 | Pending |
-| LAND-03 | Phase 2 | Pending |
-| LAND-04 | Phase 2 | Pending |
-| LAND-05 | Phase 2 | Pending |
+| LAND-01 | Phase 2 | Complete |
+| LAND-02 | Phase 2 | Complete |
+| LAND-03 | Phase 2 | Complete |
+| LAND-04 | Phase 2 | Complete |
+| LAND-05 | Phase 2 | Complete |
 | LITE-01 | Phase 3 | Pending |
 | LITE-02 | Phase 3 | Pending |
 | LITE-03 | Phase 3 | Pending |
@@ -99,4 +99,4 @@ Requirements for Las Vegas expansion. Each maps to roadmap phases.
 
 ---
 *Requirements defined: 2026-01-25*
-*Last updated: 2026-01-25 after initial definition*
+*Last updated: 2026-01-25 after Phase 2 complete*
