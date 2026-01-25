@@ -190,6 +190,10 @@
         let activeRooftops = [];  // Buildings with rooftop features (gardens/pools) for figure placement
         let vel = null, baseSpd = 0.5, boost = false;
         let raining = false, rain = null;
+
+        // Vegas infrastructure
+        let theStrip = null;
+        let temperatureBillboard = null;
         
         // Weather system
         let weatherState = 'sunny'; // 'sunny', 'cloudy', 'rain', 'storm'
@@ -200,6 +204,9 @@
         let lastLightning = 0;
         let windDirection = { x: 0, z: 0 };
         let windStrength = 0;
+
+        // Vegas weather - always sunny, independent of Metropolis
+        let vegasWeatherState = 'sunny'; // Vegas never changes from sunny
 
         // Day/night cycle system
         let timeOfDay = 0.25; // 0-1 where 0=midnight, 0.25=dawn, 0.5=noon, 0.75=dusk
@@ -302,6 +309,9 @@
             mkVegasZoneGround();
             mkVegasHighway();
             mkRoute66Sign();
+
+            prog(54, 'The Strip...');
+            theStrip = mkTheStrip();
 
             prog(50, 'Buildings...');
             mkBuildings();
@@ -717,6 +727,134 @@
 
             scene.add(sign);
             return sign;
+        }
+
+        function mkTheStrip() {
+            const strip = new THREE.Group();
+
+            // Calculate Strip position - at end of highway, running perpendicular (along Z axis)
+            const stripStartX = VEGAS_CFG.zoneStartX + VEGAS_CFG.highwayLength;
+            const stripCenterZ = 0;
+
+            // Main road surface - wider than normal roads, dark asphalt
+            const roadMat = new THREE.MeshStandardMaterial({
+                color: 0x2a2a2a,
+                roughness: 0.85
+            });
+
+            const stripRoad = new THREE.Mesh(
+                new THREE.PlaneGeometry(VEGAS_CFG.stripWidth, VEGAS_CFG.stripLength),
+                roadMat
+            );
+            stripRoad.rotation.x = -Math.PI / 2;
+            stripRoad.position.set(stripStartX, 0.02, stripCenterZ);
+            strip.add(stripRoad);
+
+            // Lane markings - double yellow center line (no passing)
+            const yellowMat = new THREE.MeshStandardMaterial({ color: 0xffcc00 });
+            for (const offset of [-0.2, 0.2]) {
+                const centerLine = new THREE.Mesh(
+                    new THREE.PlaneGeometry(0.15, VEGAS_CFG.stripLength - 4),
+                    yellowMat
+                );
+                centerLine.rotation.x = -Math.PI / 2;
+                centerLine.position.set(stripStartX + offset, 0.025, stripCenterZ);
+                strip.add(centerLine);
+            }
+
+            // White edge lines
+            const whiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            const edgeOffset = VEGAS_CFG.stripWidth / 2 - 0.5;
+            for (const side of [-1, 1]) {
+                const edgeLine = new THREE.Mesh(
+                    new THREE.PlaneGeometry(0.2, VEGAS_CFG.stripLength - 4),
+                    whiteMat
+                );
+                edgeLine.rotation.x = -Math.PI / 2;
+                edgeLine.position.set(stripStartX + side * edgeOffset, 0.025, stripCenterZ);
+                strip.add(edgeLine);
+            }
+
+            // Sidewalks on both sides of The Strip
+            const sidewalkMat = new THREE.MeshStandardMaterial({
+                color: 0xccccbb, // Light concrete
+                roughness: 0.8
+            });
+            const sidewalkWidth = 4; // Wide Vegas sidewalks for tourists
+
+            for (const side of [-1, 1]) {
+                const sidewalk = new THREE.Mesh(
+                    new THREE.PlaneGeometry(sidewalkWidth, VEGAS_CFG.stripLength),
+                    sidewalkMat
+                );
+                sidewalk.rotation.x = -Math.PI / 2;
+                sidewalk.position.set(
+                    stripStartX + side * (VEGAS_CFG.stripWidth / 2 + sidewalkWidth / 2),
+                    0.015,
+                    stripCenterZ
+                );
+                strip.add(sidewalk);
+
+                // Curb between road and sidewalk
+                const curbMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
+                const curb = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.3, 0.15, VEGAS_CFG.stripLength),
+                    curbMat
+                );
+                curb.position.set(
+                    stripStartX + side * (VEGAS_CFG.stripWidth / 2 + 0.15),
+                    0.075,
+                    stripCenterZ
+                );
+                strip.add(curb);
+            }
+
+            // Vegas ground/lot areas beside sidewalks (where casinos will go)
+            const lotMat = new THREE.MeshStandardMaterial({
+                color: 0xd4c4a8, // Sandy/tan parking lot color
+                roughness: 0.9
+            });
+            const lotWidth = 30; // Space for future casino buildings
+
+            for (const side of [-1, 1]) {
+                const lot = new THREE.Mesh(
+                    new THREE.PlaneGeometry(lotWidth, VEGAS_CFG.stripLength + 20),
+                    lotMat
+                );
+                lot.rotation.x = -Math.PI / 2;
+                lot.position.set(
+                    stripStartX + side * (VEGAS_CFG.stripWidth / 2 + sidewalkWidth + lotWidth / 2),
+                    0.005,
+                    stripCenterZ
+                );
+                strip.add(lot);
+            }
+
+            // T-intersection where highway meets The Strip
+            const intersectionMat = new THREE.MeshStandardMaterial({
+                color: 0x2a2a2a,
+                roughness: 0.85
+            });
+            const intersection = new THREE.Mesh(
+                new THREE.PlaneGeometry(VEGAS_CFG.stripWidth, VEGAS_CFG.highwayWidth + 2),
+                intersectionMat
+            );
+            intersection.rotation.x = -Math.PI / 2;
+            intersection.position.set(stripStartX, 0.018, 0);
+            strip.add(intersection);
+
+            scene.add(strip);
+
+            // Store Strip boundaries for future use (tourist spawning, traffic)
+            strip.userData = {
+                centerX: stripStartX,
+                startZ: stripCenterZ - VEGAS_CFG.stripLength / 2,
+                endZ: stripCenterZ + VEGAS_CFG.stripLength / 2,
+                width: VEGAS_CFG.stripWidth,
+                sidewalkWidth: sidewalkWidth
+            };
+
+            return strip;
         }
 
         function mkStreetlights() {
