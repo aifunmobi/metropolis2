@@ -194,6 +194,9 @@
         // Vegas infrastructure
         let theStrip = null;
         let temperatureBillboard = null;
+
+        // Vegas landmarks for lighting system (Phase 3)
+        let vegasLandmarks = [];
         
         // Weather system
         let weatherState = 'sunny'; // 'sunny', 'cloudy', 'rain', 'storm'
@@ -313,6 +316,8 @@
             prog(54, 'The Strip...');
             theStrip = mkTheStrip();
             temperatureBillboard = mkTemperatureBillboard();
+            mkLuxorPyramid();
+            mkParisEiffelTower();
 
             prog(50, 'Buildings...');
             mkBuildings();
@@ -1007,6 +1012,218 @@
                     child.material.color.setRGB(intensity, intensity * 0.2, intensity * 0.2);
                 }
             });
+        }
+
+        function mkLuxorPyramid() {
+            const pyramid = new THREE.Group();
+
+            // Pyramid structure using ConeGeometry with 4 radial segments = pyramid shape
+            const pyramidHeight = 30;
+            const pyramidBaseWidth = 25;
+            // ConeGeometry: radius is from center to corner, so divide by sqrt(2) for edge-to-edge
+            const pyramidRadius = pyramidBaseWidth / Math.sqrt(2);
+            const pyramidMat = new THREE.MeshStandardMaterial({
+                color: 0x1a1a1a,
+                metalness: 0.9,
+                roughness: 0.1
+            });
+            const pyramidMesh = new THREE.Mesh(
+                new THREE.ConeGeometry(pyramidRadius, pyramidHeight, 4),
+                pyramidMat
+            );
+            pyramidMesh.position.y = pyramidHeight / 2 + 1; // Sits on base platform
+            pyramidMesh.rotation.y = Math.PI / 4; // Rotate 45 degrees so faces align with axes
+            pyramidMesh.castShadow = true;
+            pyramidMesh.receiveShadow = true;
+            pyramid.add(pyramidMesh);
+
+            // Base platform - slightly larger, sandstone color
+            const baseMat = new THREE.MeshStandardMaterial({
+                color: 0xc4a777,
+                roughness: 0.8
+            });
+            const base = new THREE.Mesh(
+                new THREE.BoxGeometry(27, 1, 27),
+                baseMat
+            );
+            base.position.y = 0.5;
+            base.receiveShadow = true;
+            pyramid.add(base);
+
+            // Sphinx hint - simple box suggesting sphinx shape
+            const sphinxBody = new THREE.Mesh(
+                new THREE.BoxGeometry(3, 1.5, 2),
+                baseMat
+            );
+            sphinxBody.position.set(0, 0.75, 16); // In front of pyramid
+            sphinxBody.receiveShadow = true;
+            pyramid.add(sphinxBody);
+
+            // Sphinx head (slightly smaller box on top)
+            const sphinxHead = new THREE.Mesh(
+                new THREE.BoxGeometry(1, 1.2, 1),
+                baseMat
+            );
+            sphinxHead.position.set(0, 1.8, 17);
+            pyramid.add(sphinxHead);
+
+            // Position on west side of Strip, near south end
+            const stripCenterX = theStrip.userData.centerX;
+            const stripStartZ = theStrip.userData.startZ;
+            const sidewalkWidth = theStrip.userData.sidewalkWidth;
+            const stripWidth = theStrip.userData.width;
+
+            pyramid.position.set(
+                stripCenterX - stripWidth / 2 - sidewalkWidth - 15, // West side parking lot
+                0,
+                stripStartZ + 15 // Near south end
+            );
+
+            // Store userData for Phase 3 lighting
+            pyramid.userData = {
+                type: 'luxor',
+                hasBeam: true
+            };
+
+            // Add to landmarks array
+            vegasLandmarks.push(pyramid);
+
+            scene.add(pyramid);
+            return pyramid;
+        }
+
+        function mkParisEiffelTower() {
+            const tower = new THREE.Group();
+
+            const ironColor = 0x4a4a4a;
+            const ironMat = new THREE.MeshStandardMaterial({
+                color: ironColor,
+                metalness: 0.7,
+                roughness: 0.4
+            });
+            const platformMat = new THREE.MeshStandardMaterial({
+                color: 0x5a5a5a,
+                metalness: 0.6,
+                roughness: 0.5
+            });
+
+            // Base/foundation - square platform
+            const foundation = new THREE.Mesh(
+                new THREE.BoxGeometry(15, 1, 15),
+                new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.9 })
+            );
+            foundation.position.y = 0.5;
+            foundation.receiveShadow = true;
+            tower.add(foundation);
+
+            // Four angled legs (base section)
+            const legHeight = 12;
+            const legRadius = 0.5;
+            const legSpread = 5; // Distance from center at base
+            const legTopSpread = 2; // Distance from center at top
+
+            for (let i = 0; i < 4; i++) {
+                const angle = (i * Math.PI / 2) + Math.PI / 4; // 45, 135, 225, 315 degrees
+                const leg = new THREE.Mesh(
+                    new THREE.CylinderGeometry(legRadius * 0.7, legRadius, legHeight, 8),
+                    ironMat
+                );
+
+                // Calculate positions
+                const baseX = Math.cos(angle) * legSpread;
+                const baseZ = Math.sin(angle) * legSpread;
+                const topX = Math.cos(angle) * legTopSpread;
+                const topZ = Math.sin(angle) * legTopSpread;
+
+                // Position at midpoint
+                leg.position.set(
+                    (baseX + topX) / 2,
+                    legHeight / 2 + 1,
+                    (baseZ + topZ) / 2
+                );
+
+                // Angle the leg inward
+                const dx = topX - baseX;
+                const dz = topZ - baseZ;
+                const angleX = Math.atan2(dx, legHeight);
+                const angleZ = Math.atan2(dz, legHeight);
+                leg.rotation.z = angleX;
+                leg.rotation.x = -angleZ;
+
+                leg.castShadow = true;
+                tower.add(leg);
+            }
+
+            // First observation deck (at top of legs)
+            const deck1 = new THREE.Mesh(
+                new THREE.CylinderGeometry(4, 4, 0.4, 8),
+                platformMat
+            );
+            deck1.position.y = legHeight + 1;
+            deck1.castShadow = true;
+            tower.add(deck1);
+
+            // Middle section - tapered cylinder
+            const middleHeight = 12;
+            const middleSection = new THREE.Mesh(
+                new THREE.CylinderGeometry(1.2, 2.2, middleHeight, 8),
+                ironMat
+            );
+            middleSection.position.y = legHeight + 1 + middleHeight / 2;
+            middleSection.castShadow = true;
+            tower.add(middleSection);
+
+            // Second observation deck (at top of middle section)
+            const deck2 = new THREE.Mesh(
+                new THREE.CylinderGeometry(3, 3, 0.3, 8),
+                platformMat
+            );
+            deck2.position.y = legHeight + 1 + middleHeight;
+            deck2.castShadow = true;
+            tower.add(deck2);
+
+            // Top spire section
+            const spireHeight = 10;
+            const spire = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.2, 0.6, spireHeight, 8),
+                ironMat
+            );
+            spire.position.y = legHeight + 1 + middleHeight + spireHeight / 2;
+            spire.castShadow = true;
+            tower.add(spire);
+
+            // Antenna at very top
+            const antenna = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.05, 0.1, 3, 6),
+                ironMat
+            );
+            antenna.position.y = legHeight + 1 + middleHeight + spireHeight + 1.5;
+            tower.add(antenna);
+
+            // Position on east side of Strip, middle
+            const stripCenterX = theStrip.userData.centerX;
+            const stripStartZ = theStrip.userData.startZ;
+            const stripEndZ = theStrip.userData.endZ;
+            const sidewalkWidth = theStrip.userData.sidewalkWidth;
+            const stripWidth = theStrip.userData.width;
+
+            tower.position.set(
+                stripCenterX + stripWidth / 2 + sidewalkWidth + 12, // East side parking lot
+                0,
+                (stripStartZ + stripEndZ) / 2 // Middle of Strip
+            );
+
+            // Store userData for Phase 3 lighting
+            tower.userData = {
+                type: 'paris',
+                hasLights: true
+            };
+
+            // Add to landmarks array
+            vegasLandmarks.push(tower);
+
+            scene.add(tower);
+            return tower;
         }
 
         function mkStreetlights() {
