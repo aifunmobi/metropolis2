@@ -2310,8 +2310,8 @@
                 windowFront.position.set(0, storeHeight / 2 + 0.3, storeDepth / 2 + 0.05);
                 store.add(windowFront);
 
-                // Awning over entrance
-                const awningMat = new THREE.MeshStandardMaterial({ color: 0xcc0000 });
+                // Awning over entrance (striped)
+                const awningMat = new THREE.MeshStandardMaterial({ color: storeType.roofColor });
                 const awning = new THREE.Mesh(
                     new THREE.BoxGeometry(storeWidth + 1, 0.15, 2),
                     awningMat
@@ -2319,14 +2319,42 @@
                 awning.position.set(0, storeHeight - 0.5, storeDepth / 2 + 1);
                 store.add(awning);
 
-                // Sign with store name
-                const signMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+                // Canvas-based sign with readable store name
+                const signCanvas = document.createElement('canvas');
+                signCanvas.width = 256;
+                signCanvas.height = 64;
+                const signCtx = signCanvas.getContext('2d');
+
+                // Sign background
+                signCtx.fillStyle = '#111111';
+                signCtx.fillRect(0, 0, 256, 64);
+
+                // Border
+                signCtx.strokeStyle = '#ffcc00';
+                signCtx.lineWidth = 4;
+                signCtx.strokeRect(2, 2, 252, 60);
+
+                // Store name text
+                signCtx.fillStyle = '#ffcc00';
+                signCtx.font = 'bold 32px Arial';
+                signCtx.textAlign = 'center';
+                signCtx.textBaseline = 'middle';
+                signCtx.fillText(storeType.name, 128, 32);
+
+                const signTexture = new THREE.CanvasTexture(signCanvas);
+                const signMat = new THREE.MeshBasicMaterial({ map: signTexture });
                 const sign = new THREE.Mesh(
-                    new THREE.BoxGeometry(storeWidth - 0.5, 0.8, 0.1),
+                    new THREE.PlaneGeometry(storeWidth, 1.5),
                     signMat
                 );
-                sign.position.set(0, storeHeight + 0.6, storeDepth / 2 + 0.1);
+                sign.position.set(0, storeHeight + 1, storeDepth / 2 + 0.1);
                 store.add(sign);
+
+                // Back of sign (so it's visible from both sides)
+                const signBack = sign.clone();
+                signBack.rotation.y = Math.PI;
+                signBack.position.z = -storeDepth / 2 - 0.1;
+                store.add(signBack);
 
                 // Position store along Strip
                 const xPos = stripStartX + 25 + idx * storeSpacing;
@@ -2382,68 +2410,80 @@
         }
 
         // Add illuminated windows to all 4 faces of Vegas hotel buildings
+        // Uses same style as Metropolis buildings for consistency
         function addHotelWindowsAllSides(building, width, height, depth, color = 0xffffcc) {
-            const windowMat = new THREE.MeshStandardMaterial({
-                color: color,
-                emissive: color,
-                emissiveIntensity: 0.5 // Brighter for Vegas
-            });
+            // Match Metropolis building window style exactly
+            const rows = Math.floor(height / 3.5);
+            const colsW = Math.max(1, Math.floor(width / 2.2));
+            const colsD = Math.max(1, Math.floor(depth / 2.2));
 
-            const windowSize = 2.0; // Large windows like Metropolis
-            const windowSpacing = 3.5; // Spacing for visible grid pattern
-
-            // BoxGeometry is centered, so offset y by -height/2 to start from bottom
-            const yOffset = -height / 2;
+            // BoxGeometry is centered, so y positions need offset
+            const yBase = -height / 2 + 3; // Start 3 units from bottom
 
             // Front and back faces (Z axis)
-            for (const zSide of [1, -1]) {
-                const cols = Math.floor(width / windowSpacing) - 2;
-                const rows = Math.floor(height / windowSpacing) - 2;
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < colsW; c++) {
+                    const xPos = colsW > 1 ? -width/2 + 1.1 + c * ((width - 2.2) / (colsW - 1)) : 0;
 
-                for (let c = 0; c < cols; c++) {
-                    for (let r = 0; r < rows; r++) {
-                        if (Math.random() > 0.25) { // 75% windows lit
-                            const win = new THREE.Mesh(
-                                new THREE.PlaneGeometry(windowSize, windowSize),
-                                windowMat.clone()
-                            );
-                            win.position.set(
-                                -width/2 + windowSpacing * 1.5 + c * windowSpacing,
-                                yOffset + windowSpacing * 1.5 + r * windowSpacing,
-                                zSide * depth/2 + zSide * 0.1
-                            );
-                            if (zSide < 0) win.rotation.y = Math.PI;
-                            win.userData.isVegasWindow = true;
-                            building.add(win);
-                            vegasWindows.push(win);
-                        }
-                    }
+                    // Front face
+                    const isLit1 = Math.random() > 0.3;
+                    const wf = new THREE.Mesh(
+                        new THREE.PlaneGeometry(0.9, 1.4),
+                        new THREE.MeshBasicMaterial({ color: isLit1 ? 0xffeeaa : 0x334455 })
+                    );
+                    wf.position.set(xPos, yBase + r * 3.5, depth/2 + 0.1);
+                    wf.userData.isLit = isLit1;
+                    wf.userData.isVegasWindow = true;
+                    building.add(wf);
+                    vegasWindows.push(wf);
+                    allWindows.push(wf);
+
+                    // Back face
+                    const isLit2 = Math.random() > 0.3;
+                    const wb = new THREE.Mesh(
+                        new THREE.PlaneGeometry(0.9, 1.4),
+                        new THREE.MeshBasicMaterial({ color: isLit2 ? 0xffeeaa : 0x334455 })
+                    );
+                    wb.position.set(xPos, yBase + r * 3.5, -depth/2 - 0.1);
+                    wb.rotation.y = Math.PI;
+                    wb.userData.isLit = isLit2;
+                    wb.userData.isVegasWindow = true;
+                    building.add(wb);
+                    vegasWindows.push(wb);
+                    allWindows.push(wb);
                 }
-            }
 
-            // Left and right faces (X axis)
-            for (const xSide of [1, -1]) {
-                const cols = Math.floor(depth / windowSpacing) - 2;
-                const rows = Math.floor(height / windowSpacing) - 2;
+                // Left and right faces (X axis)
+                for (let c = 0; c < colsD; c++) {
+                    const zPos = colsD > 1 ? -depth/2 + 1.1 + c * ((depth - 2.2) / (colsD - 1)) : 0;
 
-                for (let c = 0; c < cols; c++) {
-                    for (let r = 0; r < rows; r++) {
-                        if (Math.random() > 0.25) { // 75% windows lit
-                            const win = new THREE.Mesh(
-                                new THREE.PlaneGeometry(windowSize, windowSize),
-                                windowMat.clone()
-                            );
-                            win.position.set(
-                                xSide * width/2 + xSide * 0.1,
-                                yOffset + windowSpacing * 1.5 + r * windowSpacing,
-                                -depth/2 + windowSpacing * 1.5 + c * windowSpacing
-                            );
-                            win.rotation.y = xSide > 0 ? Math.PI / 2 : -Math.PI / 2;
-                            win.userData.isVegasWindow = true;
-                            building.add(win);
-                            vegasWindows.push(win);
-                        }
-                    }
+                    // Right face
+                    const isLit3 = Math.random() > 0.3;
+                    const wr = new THREE.Mesh(
+                        new THREE.PlaneGeometry(0.9, 1.4),
+                        new THREE.MeshBasicMaterial({ color: isLit3 ? 0xffeeaa : 0x334455 })
+                    );
+                    wr.position.set(width/2 + 0.1, yBase + r * 3.5, zPos);
+                    wr.rotation.y = Math.PI / 2;
+                    wr.userData.isLit = isLit3;
+                    wr.userData.isVegasWindow = true;
+                    building.add(wr);
+                    vegasWindows.push(wr);
+                    allWindows.push(wr);
+
+                    // Left face
+                    const isLit4 = Math.random() > 0.3;
+                    const wl = new THREE.Mesh(
+                        new THREE.PlaneGeometry(0.9, 1.4),
+                        new THREE.MeshBasicMaterial({ color: isLit4 ? 0xffeeaa : 0x334455 })
+                    );
+                    wl.position.set(-width/2 - 0.1, yBase + r * 3.5, zPos);
+                    wl.rotation.y = -Math.PI / 2;
+                    wl.userData.isLit = isLit4;
+                    wl.userData.isVegasWindow = true;
+                    building.add(wl);
+                    vegasWindows.push(wl);
+                    allWindows.push(wl);
                 }
             }
         }
