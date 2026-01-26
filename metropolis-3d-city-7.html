@@ -1561,9 +1561,11 @@
             // ConeGeometry: radius is from center to corner, so divide by sqrt(2) for edge-to-edge
             const pyramidRadius = pyramidBaseWidth / Math.sqrt(2);
             const pyramidMat = new THREE.MeshStandardMaterial({
-                color: 0x1a1a1a,
-                metalness: 0.9,
-                roughness: 0.1
+                color: 0x2a2a35,  // Dark blue-black glass
+                metalness: 0.8,
+                roughness: 0.2,
+                emissive: 0x111122,
+                emissiveIntensity: 0.3
             });
             const pyramidMesh = new THREE.Mesh(
                 new THREE.ConeGeometry(pyramidRadius, pyramidHeight, 4),
@@ -1605,10 +1607,9 @@
             sphinxHead.position.set(0, 3.6, 40);
             pyramid.add(sphinxHead);
 
-            // Big neon sign on top
+            // Big neon sign on top - facing north toward road (hotel is rotated Math.PI)
             const luxorSign = mkHotelNeonSign('LUXOR', 0xffdd00, 35, 10);
-            luxorSign.position.set(0, 80, 0); // Above pyramid peak
-            luxorSign.rotation.y = Math.PI; // Face the road
+            luxorSign.position.set(0, 85, 35); // In front of pyramid, facing road
             pyramid.add(luxorSign);
 
             // Position on south side of Strip (positive Z), near west end
@@ -1747,9 +1748,10 @@
             antenna.position.y = legHeight + 2 + middleHeight + spireHeight + 2.25;
             tower.add(antenna);
 
-            // Big neon sign near top
+            // Big neon sign near top - facing south toward road (hotel faces south)
             const parisSign = mkHotelNeonSign('PARIS', 0xff66cc, 30, 8);
-            parisSign.position.set(0, legHeight + middleHeight + 5, 0);
+            parisSign.position.set(0, legHeight + middleHeight + 5, 20); // In front toward road
+            parisSign.rotation.y = Math.PI; // Face south toward road
             tower.add(parisSign);
 
             // Position on north side of Strip (negative Z), middle
@@ -1928,10 +1930,9 @@
             westBorder.position.set(-lakeWidth / 2 - borderThickness / 2, borderHeight / 2, 45);
             bellagio.add(westBorder);
 
-            // Big neon sign on top of tower
+            // Big neon sign on top of tower - facing north toward road (hotel is rotated Math.PI)
             const bellagioSign = mkHotelNeonSign('BELLAGIO', 0x00ffff, 45, 10);
-            bellagioSign.position.set(0, 75, -20); // Top of main tower
-            bellagioSign.rotation.y = Math.PI; // Face the road
+            bellagioSign.position.set(0, 75, 50); // In front toward road
             bellagio.add(bellagioSign);
 
             // Position on south side of Strip (positive Z), east of Luxor
@@ -2116,9 +2117,10 @@
             foundation.receiveShadow = true;
             caesars.add(foundation);
 
-            // Big neon sign on top
+            // Big neon sign on top - facing south toward road (hotel faces south)
             const caesarsSign = mkHotelNeonSign('CAESARS PALACE', 0xffd700, 55, 10);
-            caesarsSign.position.set(0, 55, 0); // Top of main building
+            caesarsSign.position.set(0, 55, 40); // In front toward road
+            caesarsSign.rotation.y = Math.PI; // Face south toward road
             caesars.add(caesarsSign);
 
             // Position on north side of Strip (negative Z), west of Eiffel Tower
@@ -2342,10 +2344,9 @@
             spire.castShadow = true;
             castle.add(spire);
 
-            // Big neon sign on front of castle
+            // Big neon sign on front of castle - facing north toward road (hotel is rotated Math.PI)
             const excaliburSign = mkHotelNeonSign('EXCALIBUR', 0xff00ff, 40, 10);
-            excaliburSign.position.set(0, 50, 25); // Above main entrance
-            excaliburSign.rotation.y = Math.PI; // Face the road
+            excaliburSign.position.set(0, 55, 30); // In front toward road
             castle.add(excaliburSign);
 
             // Position on south side of Strip (positive Z), between Luxor and Bellagio
