@@ -182,6 +182,7 @@
         let buildings = [], cars = [], emergencyVehicles = [], peds = [], tlights = [];
         let bicycles = [];
         let taxis = [];
+        let highwayCars = []; // Cars traveling on highway between Metropolis and Vegas
         let buildingEntrances = [];
         let allWindows = [];
         let billboards = [];
@@ -318,6 +319,7 @@
             mkCityLayout();
             mkVegasZoneGround();
             mkVegasHighway();
+            mkHighwayCars();
             mkRoute66Sign();
 
             prog(54, 'The Strip...');
@@ -668,6 +670,64 @@
 
             scene.add(highwayGroup);
             return highwayGroup;
+        }
+
+        function mkHighwayCars() {
+            // Spawn 6-8 highway cars traveling between Metropolis and Vegas
+            const numCars = 6 + Math.floor(Math.random() * 3); // 6-8 cars
+            const colors = [0xff3333, 0x3366ff, 0x33cc33, 0xffcc00, 0xcc33ff, 0x33cccc, 0xff6600, 0x999999];
+
+            // Highway bounds
+            const highwayStartX = halfSize - 10; // Slightly before Metropolis edge
+            const highwayEndX = VEGAS_CFG.zoneStartX + VEGAS_CFG.highwayLength + VEGAS_CFG.stripLength + 50; // Past Vegas
+            const laneOffsetNorth = -2.5; // Eastbound lane (toward Vegas)
+            const laneOffsetSouth = 2.5;  // Westbound lane (toward Metropolis)
+
+            for (let i = 0; i < numCars; i++) {
+                const col = colors[Math.floor(Math.random() * colors.length)];
+                const car = mkCar(col);
+
+                // 50% chance eastbound, 50% westbound
+                const dir = Math.random() < 0.5 ? 1 : -1;
+                const laneZ = dir === 1 ? laneOffsetNorth : laneOffsetSouth;
+
+                // Spread cars along highway length
+                const xPos = highwayStartX + Math.random() * (highwayEndX - highwayStartX);
+
+                car.position.set(xPos, 0, laneZ);
+
+                // Rotation: dir=1 (eastbound) faces east (rotation.y = -PI/2), dir=-1 faces west (rotation.y = PI/2)
+                car.rotation.y = dir === 1 ? -Math.PI / 2 : Math.PI / 2;
+
+                // Highway car properties
+                car.userData.isHighwayCar = true;
+                car.userData.highwayDir = dir;
+                car.userData.highwaySpeed = 0.3 + Math.random() * 0.1; // 0.3-0.4 (faster than city)
+                car.userData.highwayStartX = highwayStartX;
+                car.userData.highwayEndX = highwayEndX;
+
+                highwayCars.push(car);
+                scene.add(car);
+            }
+        }
+
+        function updHighwayCars() {
+            highwayCars.forEach(car => {
+                // Move car along highway
+                car.position.x += car.userData.highwayDir * car.userData.highwaySpeed;
+
+                const startX = car.userData.highwayStartX;
+                const endX = car.userData.highwayEndX;
+
+                // Wrap around at highway ends
+                if (car.userData.highwayDir === 1 && car.position.x > endX) {
+                    // Eastbound reached end, reset to start
+                    car.position.x = startX;
+                } else if (car.userData.highwayDir === -1 && car.position.x < startX) {
+                    // Westbound reached start, reset to end
+                    car.position.x = endX;
+                }
+            });
         }
 
         function mkRoute66Sign() {
@@ -9497,6 +9557,7 @@
             updWarningLights(t);
 
             updCars(t);
+            updHighwayCars();
             updPeds(t);
             updBicycles(t);
             updTaxis(t);
