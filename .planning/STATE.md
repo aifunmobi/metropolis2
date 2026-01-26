@@ -13,7 +13,7 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 - **Phase:** 2 of 6 (Iconic Landmarks - COMPLETE)
 - **Plan:** 5 of 13 completed
 - **Status:** Phase 2 complete, ready for Phase 3
-- **Last activity:** 2026-01-25 - Completed v2-02-03-PLAN.md (Excalibur Castle)
+- **Last activity:** 2026-01-26 - Completed quick task 001: Fix Vegas zone (Strip layout, hotel windows, HUD flicker)
 
 **Progress:** █████░░░░░░░░░░░ 38% (5/13 plans across all phases)
 
@@ -321,6 +321,12 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 - Created PROJECT.md with 5 visual engagement features
 - Defined requirements for day/night cycle, birds, performers, subway, rooftops
 - Created roadmap mapping all requirements to phases
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 001 | Fix Vegas zone - Strip layout, hotel windows, HUD flicker | 2026-01-26 | e9b6110 | [001-fix-vegas-zone-strip-layout-hotels-windo](./quick/001-fix-vegas-zone-strip-layout-hotels-windo/) |
 
 ## Open Issues
 
