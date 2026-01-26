@@ -1748,10 +1748,9 @@
             antenna.position.y = legHeight + 2 + middleHeight + spireHeight + 2.25;
             tower.add(antenna);
 
-            // Big neon sign near top - facing south toward road (hotel faces south)
+            // Big neon sign near top - facing south toward road
             const parisSign = mkHotelNeonSign('PARIS', 0xff66cc, 30, 8);
-            parisSign.position.set(0, legHeight + middleHeight + 5, 20); // In front toward road
-            parisSign.rotation.y = Math.PI; // Face south toward road
+            parisSign.position.set(0, legHeight + middleHeight + 5, 25); // In front toward road
             tower.add(parisSign);
 
             // Position on north side of Strip (negative Z), middle
@@ -2117,10 +2116,9 @@
             foundation.receiveShadow = true;
             caesars.add(foundation);
 
-            // Big neon sign on top - facing south toward road (hotel faces south)
+            // Big neon sign on top - facing south toward road
             const caesarsSign = mkHotelNeonSign('CAESARS PALACE', 0xffd700, 55, 10);
-            caesarsSign.position.set(0, 55, 40); // In front toward road
-            caesarsSign.rotation.y = Math.PI; // Face south toward road
+            caesarsSign.position.set(0, 55, 45); // In front toward road
             caesars.add(caesarsSign);
 
             // Position on north side of Strip (negative Z), west of Eiffel Tower
