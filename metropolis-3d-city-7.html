@@ -8977,18 +8977,57 @@
             g.add(tailRotor);
             g.userData.tailRotor = tailRotor;
 
-            // Flight path waypoints around the city
-            g.userData.waypoints = [
+            // Flight path: loops around Metropolis, flies to Vegas, loops there, returns
+            // Metropolis loops (centered at 0,0)
+            const metropolisWaypoints = [
                 new THREE.Vector3(-40, 60, -40),
                 new THREE.Vector3(40, 55, -30),
                 new THREE.Vector3(50, 65, 40),
                 new THREE.Vector3(-30, 58, 50),
-                new THREE.Vector3(0, 62, 0),
+                new THREE.Vector3(0, 70, 0),    // Center high pass
                 new THREE.Vector3(-50, 55, 20),
-                new THREE.Vector3(30, 68, -50)
+                new THREE.Vector3(30, 68, -50),
+                new THREE.Vector3(-35, 62, -35), // Second loop
+                new THREE.Vector3(35, 58, 35),
+                new THREE.Vector3(45, 65, -45),
+            ];
+
+            // Vegas Strip center is around X = zoneStartX + highwayLength + stripLength/2
+            // Approximately X = 110 + 100 + 175 = 385
+            const vegasCenterX = 300;
+            const vegasWaypoints = [
+                new THREE.Vector3(vegasCenterX - 60, 70, -50),  // Approach Vegas
+                new THREE.Vector3(vegasCenterX, 75, 0),         // Over the strip
+                new THREE.Vector3(vegasCenterX + 40, 65, 40),   // Loop south
+                new THREE.Vector3(vegasCenterX + 60, 70, -30),  // Loop north
+                new THREE.Vector3(vegasCenterX, 80, 0),         // High pass center
+                new THREE.Vector3(vegasCenterX - 40, 68, 50),   // Second loop
+                new THREE.Vector3(vegasCenterX + 30, 72, -40),
+                new THREE.Vector3(vegasCenterX - 20, 65, 20),
+            ];
+
+            // Transit waypoints (Metropolis to Vegas highway)
+            const transitToVegas = [
+                new THREE.Vector3(70, 65, 0),    // Leave Metropolis
+                new THREE.Vector3(150, 70, 0),   // Over highway
+                new THREE.Vector3(220, 68, 0),   // Approaching Vegas
+            ];
+
+            const transitToMetropolis = [
+                new THREE.Vector3(220, 70, 0),   // Leave Vegas
+                new THREE.Vector3(150, 65, 0),   // Over highway
+                new THREE.Vector3(70, 68, 0),    // Approaching Metropolis
+            ];
+
+            // Full route: Metropolis loops -> transit -> Vegas loops -> transit back
+            g.userData.waypoints = [
+                ...metropolisWaypoints,
+                ...transitToVegas,
+                ...vegasWaypoints,
+                ...transitToMetropolis
             ];
             g.userData.waypointIndex = 0;
-            g.userData.heliSpeed = 0.15;
+            g.userData.heliSpeed = 0.25; // Faster to cover the distance
 
             return g;
         }
