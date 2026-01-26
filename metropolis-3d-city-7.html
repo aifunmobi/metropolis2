@@ -335,6 +335,7 @@
             mkBellagio();
             mkCaesarsPalace();
             mkExcaliburCastle();
+            mkHotelGrounds();  // Green landscaped areas under hotels
             mkVegasTouristStores();
 
             prog(50, 'Buildings...');
@@ -2509,6 +2510,43 @@
 
                 scene.add(store);
             }
+        }
+
+        // Create green landscaped grounds under each Vegas hotel
+        function mkHotelGrounds() {
+            const stripStartX = theStrip.userData.startX;
+            const stripEndX = theStrip.userData.endX;
+            const stripCenterZ = theStrip.userData.centerZ;
+            const sidewalkWidth = theStrip.userData.sidewalkWidth;
+            const stripWidth = theStrip.userData.width;
+            const stripLength = stripEndX - stripStartX;
+
+            const grassMat = new THREE.MeshStandardMaterial({
+                color: 0x2d5a27,  // Dark green grass
+                roughness: 0.9
+            });
+
+            // Hotel positions and sizes (matching their actual positions)
+            const hotelGrounds = [
+                // South side hotels (positive Z)
+                { x: stripStartX + stripLength * 0.10, z: stripCenterZ + stripWidth / 2 + sidewalkWidth + 80, w: 120, d: 120, name: 'Luxor' },
+                { x: stripStartX + stripLength * 0.30, z: stripCenterZ + stripWidth / 2 + sidewalkWidth + 90, w: 130, d: 100, name: 'Excalibur' },
+                { x: stripStartX + stripLength * 0.50, z: stripCenterZ + stripWidth / 2 + sidewalkWidth + 90, w: 140, d: 120, name: 'Bellagio' },
+                // North side hotels (negative Z)
+                { x: stripStartX + stripLength * 0.25, z: stripCenterZ - stripWidth / 2 - sidewalkWidth - 70, w: 100, d: 100, name: 'Paris' },
+                { x: stripStartX + stripLength * 0.75, z: stripCenterZ - stripWidth / 2 - sidewalkWidth - 100, w: 140, d: 120, name: 'Caesars' },
+            ];
+
+            hotelGrounds.forEach(hotel => {
+                const ground = new THREE.Mesh(
+                    new THREE.PlaneGeometry(hotel.w, hotel.d),
+                    grassMat
+                );
+                ground.rotation.x = -Math.PI / 2;
+                ground.position.set(hotel.x, 0.03, hotel.z);  // Slightly above desert to prevent z-fighting
+                ground.receiveShadow = true;
+                scene.add(ground);
+            });
         }
 
         // Create tourists walking around Vegas Strip
