@@ -2038,18 +2038,22 @@
         function mkExcaliburCastle() {
             const castle = new THREE.Group();
 
-            // Colors
-            const stoneColor = 0xf5f5f0; // White/cream stone
+            // Colors - Excalibur's signature red and green
+            const redColor = 0xcc2222; // Bold red
+            const greenColor = 0x228833; // Forest green
             const gateColor = 0x4a3728; // Dark wood for gate
             const foundationColor = 0x888888; // Gray stone foundation
             const moatColor = 0x4080c0; // Blue for moat hint
-            const redTurret = 0xcc3333;
-            const blueTurret = 0x3333cc;
             const goldSpire = 0xffd700;
 
-            const stoneMat = new THREE.MeshStandardMaterial({
-                color: stoneColor,
-                roughness: 0.8,
+            const redMat = new THREE.MeshStandardMaterial({
+                color: redColor,
+                roughness: 0.7,
+                metalness: 0.1
+            });
+            const greenMat = new THREE.MeshStandardMaterial({
+                color: greenColor,
+                roughness: 0.7,
                 metalness: 0.1
             });
 
@@ -2103,25 +2107,32 @@
             moatRight.position.set(52.5, 0.25, 0);
             castle.add(moatRight);
 
-            // 2. Main castle body (scaled up 2.5x)
+            // 2. Main castle body - red with green trim (scaled up 2.5x)
             const mainBody = new THREE.Mesh(
                 new THREE.BoxGeometry(90, 40, 45),
-                stoneMat
+                redMat
             );
             mainBody.position.set(0, 4 + 20, 0);
             mainBody.castShadow = true;
             mainBody.receiveShadow = true;
             castle.add(mainBody);
 
+            // Green accent band at top of main body
+            const accentBand = new THREE.Mesh(
+                new THREE.BoxGeometry(91, 4, 46),
+                greenMat
+            );
+            accentBand.position.set(0, 4 + 40 - 2, 0);
+            castle.add(accentBand);
+
             // Add illuminated windows to main castle body (all 4 faces)
             addHotelWindowsAllSides(mainBody, 90, 40, 45, 0xffffaa);
 
-            // 3. Battlements (crenellated top) - scaled up
-            const battlementMat = stoneMat.clone();
+            // 3. Battlements (crenellated top) - alternating red and green
             for (let i = 0; i < 15; i++) {
                 const battlement = new THREE.Mesh(
                     new THREE.BoxGeometry(2.5, 5, 2.5),
-                    battlementMat
+                    i % 2 === 0 ? redMat : greenMat
                 );
                 battlement.position.set(-40 + i * 5.5, 4 + 40 + 2.5, 23); // Front edge
                 battlement.castShadow = true;
@@ -2131,7 +2142,7 @@
             for (let i = 0; i < 15; i++) {
                 const battlement = new THREE.Mesh(
                     new THREE.BoxGeometry(2.5, 5, 2.5),
-                    battlementMat
+                    i % 2 === 0 ? greenMat : redMat
                 );
                 battlement.position.set(-40 + i * 5.5, 4 + 40 + 2.5, -23);
                 battlement.castShadow = true;
@@ -2148,10 +2159,10 @@
 
             // 5. Corner turrets (4 total) with conical tops (scaled up 2.5x)
             const turretPositions = [
-                { x: -45, z: 22.5, color: redTurret },   // Front-left: red
-                { x: 45, z: 22.5, color: blueTurret },   // Front-right: blue
-                { x: -45, z: -22.5, color: blueTurret }, // Back-left: blue
-                { x: 45, z: -22.5, color: redTurret }    // Back-right: red
+                { x: -45, z: 22.5, color: redColor },    // Front-left: red
+                { x: 45, z: 22.5, color: greenColor },   // Front-right: green
+                { x: -45, z: -22.5, color: greenColor }, // Back-left: green
+                { x: 45, z: -22.5, color: redColor }     // Back-right: red
             ];
 
             turretPositions.forEach(tp => {
