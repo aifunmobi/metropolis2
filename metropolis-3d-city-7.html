@@ -197,6 +197,7 @@
 
         // Vegas landmarks for lighting system (Phase 3)
         let vegasLandmarks = [];
+        let vegasWindows = []; // Windows on Vegas hotels for flickering animation
 
         // Global reference for Phase 4 Bellagio fountain show
         let bellagioFountainLake = null;
@@ -1261,6 +1262,9 @@
             centerSection.receiveShadow = true;
             bellagio.add(centerSection);
 
+            // Add illuminated windows to center section
+            addHotelWindows(centerSection, 10, 22, 13, 0xffffcc);
+
             // Left wing (angled outward slightly)
             const leftWing = new THREE.Mesh(
                 new THREE.BoxGeometry(10, 25, 15),
@@ -1300,6 +1304,9 @@
             tower.castShadow = true;
             tower.receiveShadow = true;
             bellagio.add(tower);
+
+            // Add illuminated windows to tower
+            addHotelWindows(tower, 6, 30, 8, 0xffffcc);
 
             // Tower accent band
             const towerAccent = new THREE.Mesh(
@@ -1658,6 +1665,9 @@
             mainBody.receiveShadow = true;
             castle.add(mainBody);
 
+            // Add illuminated windows to main castle body (warm yellow color)
+            addHotelWindows(mainBody, 30, 12, 16, 0xffffaa);
+
             // 3. Battlements (crenellated top)
             const battlementMat = stoneMat.clone();
             for (let i = 0; i < 10; i++) {
@@ -1781,6 +1791,55 @@
 
             scene.add(castle);
             return castle;
+        }
+
+        // Add illuminated windows to Vegas hotel buildings
+        function addHotelWindows(building, width, height, depth, color = 0xffffcc) {
+            const windowMat = new THREE.MeshStandardMaterial({
+                color: color,
+                emissive: color,
+                emissiveIntensity: 0.3
+            });
+
+            const windowSize = 0.8;
+            const windowSpacing = 2;
+
+            // Front and back faces
+            for (const zSide of [1, -1]) {
+                const cols = Math.floor(width / windowSpacing) - 1;
+                const rows = Math.floor(height / windowSpacing) - 1;
+
+                for (let c = 0; c < cols; c++) {
+                    for (let r = 0; r < rows; r++) {
+                        if (Math.random() > 0.3) { // 70% windows lit
+                            const win = new THREE.Mesh(
+                                new THREE.PlaneGeometry(windowSize, windowSize),
+                                windowMat.clone()
+                            );
+                            win.position.set(
+                                -width/2 + windowSpacing + c * windowSpacing,
+                                windowSpacing + r * windowSpacing,
+                                zSide * depth/2 + zSide * 0.05
+                            );
+                            if (zSide < 0) win.rotation.y = Math.PI;
+                            win.userData.isVegasWindow = true;
+                            building.add(win);
+                            vegasWindows.push(win);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Update Vegas hotel windows with occasional flickering
+        function updVegasWindows() {
+            vegasWindows.forEach(win => {
+                if (Math.random() < 0.001) { // Occasional flicker
+                    const mat = win.material;
+                    const lit = Math.random() > 0.3;
+                    mat.emissiveIntensity = lit ? 0.3 + Math.random() * 0.2 : 0;
+                }
+            });
         }
 
         function mkStreetlights() {
@@ -9228,6 +9287,7 @@
             updRooftopFigures(t);
             updRooftopAmenities(t);
             updWindowLights(t);
+            updVegasWindows();
             updEmergencyLights(t);
             updGridlock(t);
             updWeather(t);
