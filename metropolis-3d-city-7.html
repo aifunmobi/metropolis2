@@ -855,6 +855,9 @@
             // Position sign near highway start
             sign.position.set(VEGAS_CFG.zoneStartX - 5, 0, -VEGAS_CFG.highwayWidth / 2 - 3);
 
+            // Rotate to face incoming traffic from Metropolis
+            sign.rotation.y = -Math.PI / 2;
+
             scene.add(sign);
             return sign;
         }
