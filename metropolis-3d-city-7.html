@@ -1699,7 +1699,7 @@
             bellagio.add(centerSection);
 
             // Add illuminated windows to center section (all 4 faces)
-            addHotelWindowsAllSides(centerSection, 28, 60, 33, 0xffffcc);
+            addHotelWindowsAllSides(centerSection, 30, 65, 35, 0xffffcc);
 
             // Left wing (angled outward slightly) - scaled up
             const leftWing = new THREE.Mesh(
@@ -1713,7 +1713,7 @@
             bellagio.add(leftWing);
 
             // Add windows to left wing
-            addHotelWindowsAllSides(leftWing, 23, 60, 33, 0xffffcc);
+            addHotelWindowsAllSides(leftWing, 25, 65, 35, 0xffffcc);
 
             // Right wing (angled outward slightly) - scaled up
             const rightWing = new THREE.Mesh(
@@ -1727,7 +1727,7 @@
             bellagio.add(rightWing);
 
             // Add windows to right wing
-            addHotelWindowsAllSides(rightWing, 23, 60, 33, 0xffffcc);
+            addHotelWindowsAllSides(rightWing, 25, 65, 35, 0xffffcc);
 
             // Accent band at roof level (scaled up)
             const accentBand = new THREE.Mesh(
@@ -1748,7 +1748,7 @@
             bellagio.add(tower);
 
             // Add illuminated windows to tower (all 4 faces)
-            addHotelWindowsAllSides(tower, 18, 85, 23, 0xffffcc);
+            addHotelWindowsAllSides(tower, 20, 90, 25, 0xffffcc);
 
             // Tower accent band (scaled up)
             const towerAccent = new THREE.Mesh(
@@ -1891,7 +1891,8 @@
             caesars.add(mainBuilding);
 
             // Add illuminated windows to main building (all 4 faces)
-            addHotelWindowsAllSides(mainBuilding, 95, 45, 70, 0xffffcc);
+            // Use actual geometry dimensions so windows are ON the surface
+            addHotelWindowsAllSides(mainBuilding, 100, 50, 75, 0xffffcc);
 
             // Roman columns (8 columns across front entrance) - scaled up
             const numColumns = 8;
@@ -2113,7 +2114,7 @@
             castle.add(mainBody);
 
             // Add illuminated windows to main castle body (all 4 faces)
-            addHotelWindowsAllSides(mainBody, 85, 35, 40, 0xffffaa);
+            addHotelWindowsAllSides(mainBody, 90, 40, 45, 0xffffaa);
 
             // 3. Battlements (crenellated top) - scaled up
             const battlementMat = stoneMat.clone();
