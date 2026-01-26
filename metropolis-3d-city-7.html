@@ -282,9 +282,10 @@
             zoneWidth: 120,                   // Vegas zone width (expanded for landmarks)
             zoneDepth: 100,                   // Vegas zone depth (Z axis)
             stripWidth: 12,                   // The Strip is wider than regular roads
-            stripLength: 70,                  // Length of The Strip
+            stripLength: 140,                 // Length of The Strip (doubled for real Vegas spacing)
             highwayWidth: 10,                 // Highway wider than city roads
-            highwayLength: 100                // Length of connecting highway (longer journey)
+            highwayLength: 100,               // Length of connecting highway (longer journey)
+            highwayExtension: 80              // Highway continues past Vegas into distance
         };
 
         function prog(p, t) {
@@ -569,17 +570,19 @@
         }
 
         function mkVegasZoneGround() {
-            // Create desert ground extending from Metropolis edge to Vegas zone
+            // Create desert ground extending from Metropolis edge past Vegas (includes highway extension)
             const desertMat = new THREE.MeshStandardMaterial({
                 color: 0xc2956e, // Sandy desert color
                 roughness: 0.95
             });
 
-            // Calculate Vegas ground dimensions
-            const vegasGroundWidth = VEGAS_CFG.zoneStartX + VEGAS_CFG.zoneWidth - halfSize;
+            // Calculate Vegas ground dimensions (include Strip length + highway extension)
+            const stripEndX = VEGAS_CFG.zoneStartX + VEGAS_CFG.highwayLength + VEGAS_CFG.stripLength;
+            const extensionEndX = stripEndX + VEGAS_CFG.highwayExtension;
+            const vegasGroundWidth = extensionEndX - halfSize;
             const vegasGroundDepth = VEGAS_CFG.zoneDepth;
 
-            // Vegas ground plane positioned to extend from Metropolis edge eastward
+            // Vegas ground plane positioned to extend from Metropolis edge to past Vegas
             const vegasGround = new THREE.Mesh(
                 new THREE.PlaneGeometry(vegasGroundWidth, vegasGroundDepth),
                 desertMat
@@ -668,6 +671,56 @@
                 highwayGroup.add(desert);
             }
 
+            // Highway extension past Vegas Strip into distance
+            const stripEndX = VEGAS_CFG.zoneStartX + VEGAS_CFG.highwayLength + VEGAS_CFG.stripLength;
+            const extLength = VEGAS_CFG.highwayExtension;
+
+            // Extension road surface
+            const extRoad = new THREE.Mesh(
+                new THREE.PlaneGeometry(extLength, VEGAS_CFG.highwayWidth),
+                roadMat
+            );
+            extRoad.rotation.x = -Math.PI / 2;
+            extRoad.position.set(stripEndX + extLength / 2, 0.02, 0);
+            highwayGroup.add(extRoad);
+
+            // Extension dashed center line
+            for (let x = stripEndX + 2; x < stripEndX + extLength - 2; x += dashLength + gapLength) {
+                const dash = new THREE.Mesh(
+                    new THREE.PlaneGeometry(dashLength, 0.3),
+                    lineMat
+                );
+                dash.rotation.x = -Math.PI / 2;
+                dash.position.set(x + dashLength / 2, 0.03, 0);
+                highwayGroup.add(dash);
+            }
+
+            // Extension edge lines
+            for (const side of [-1, 1]) {
+                const extEdge = new THREE.Mesh(
+                    new THREE.PlaneGeometry(extLength - 4, 0.25),
+                    lineMat
+                );
+                extEdge.rotation.x = -Math.PI / 2;
+                extEdge.position.set(stripEndX + extLength / 2, edgeY, side * edgeOffset);
+                highwayGroup.add(extEdge);
+            }
+
+            // Extension desert strips
+            for (const side of [-1, 1]) {
+                const extDesert = new THREE.Mesh(
+                    new THREE.PlaneGeometry(extLength + 10, desertWidth),
+                    desertMat
+                );
+                extDesert.rotation.x = -Math.PI / 2;
+                extDesert.position.set(
+                    stripEndX + extLength / 2,
+                    0.005,
+                    side * (VEGAS_CFG.highwayWidth / 2 + desertWidth / 2)
+                );
+                highwayGroup.add(extDesert);
+            }
+
             scene.add(highwayGroup);
             return highwayGroup;
         }
@@ -677,9 +730,9 @@
             const numCars = 6 + Math.floor(Math.random() * 3); // 6-8 cars
             const colors = [0xff3333, 0x3366ff, 0x33cc33, 0xffcc00, 0xcc33ff, 0x33cccc, 0xff6600, 0x999999];
 
-            // Highway bounds
+            // Highway bounds (includes extension past Vegas)
             const highwayStartX = halfSize - 10; // Slightly before Metropolis edge
-            const highwayEndX = VEGAS_CFG.zoneStartX + VEGAS_CFG.highwayLength + VEGAS_CFG.stripLength + 50; // Past Vegas
+            const highwayEndX = VEGAS_CFG.zoneStartX + VEGAS_CFG.highwayLength + VEGAS_CFG.stripLength + VEGAS_CFG.highwayExtension; // End of extension
             const laneOffsetNorth = -2.5; // Eastbound lane (toward Vegas)
             const laneOffsetSouth = 2.5;  // Westbound lane (toward Metropolis)
 
