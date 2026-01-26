@@ -332,6 +332,7 @@
             mkBellagio();
             mkCaesarsPalace();
             mkExcaliburCastle();
+            mkVegasTouristStores();
 
             prog(50, 'Buildings...');
             mkBuildings();
@@ -866,8 +867,9 @@
             // Highway bounds (includes extension past Vegas)
             const highwayStartX = halfSize - 10;
             const highwayEndX = VEGAS_CFG.zoneStartX + VEGAS_CFG.highwayLength + VEGAS_CFG.stripLength + VEGAS_CFG.highwayExtension;
-            const laneOffsetNorth = -2.5; // Eastbound lane (toward Vegas)
-            const laneOffsetSouth = 2.5;  // Westbound lane (toward Metropolis)
+            // US right-hand traffic: eastbound on right (south/+Z), westbound on left (north/-Z)
+            const laneEastbound = 2.5;   // South side (toward Vegas)
+            const laneWestbound = -2.5;  // North side (toward Metropolis)
 
             for (let i = 0; i < numVehicles; i++) {
                 let vehicle;
@@ -894,7 +896,7 @@
 
                 // 50% chance eastbound, 50% westbound
                 const dir = Math.random() < 0.5 ? 1 : -1;
-                const laneZ = dir === 1 ? laneOffsetNorth : laneOffsetSouth;
+                const laneZ = dir === 1 ? laneEastbound : laneWestbound;
 
                 // Spread vehicles along highway length
                 const xPos = highwayStartX + Math.random() * (highwayEndX - highwayStartX);
@@ -1116,7 +1118,7 @@
                 lot.rotation.x = -Math.PI / 2;
                 lot.position.set(
                     stripStartX + VEGAS_CFG.stripLength / 2,
-                    0.005,
+                    0.02, // Higher to avoid z-fighting with desert ground
                     side * (VEGAS_CFG.stripWidth / 2 + sidewalkWidth + lotWidth / 2)
                 );
                 strip.add(lot);
@@ -2237,6 +2239,110 @@
             return castle;
         }
 
+        // Create tourist stores along the Vegas Strip
+        function mkVegasTouristStores() {
+            const stripStartX = theStrip.userData.startX;
+            const stripEndX = theStrip.userData.endX;
+            const stripCenterZ = theStrip.userData.centerZ;
+            const sidewalkWidth = theStrip.userData.sidewalkWidth;
+            const stripWidth = theStrip.userData.width;
+
+            const storeTypes = [
+                { name: 'SOUVENIRS', color: 0xff6600, roofColor: 0xcc4400 },
+                { name: 'GIFTS', color: 0x33cc99, roofColor: 0x228866 },
+                { name: 'T-SHIRTS', color: 0xff3366, roofColor: 0xcc2244 },
+                { name: 'PHOTOS', color: 0x6666ff, roofColor: 0x4444cc },
+                { name: 'SNACKS', color: 0xffcc00, roofColor: 0xcc9900 },
+                { name: 'DRINKS', color: 0x00ccff, roofColor: 0x0099cc },
+                { name: 'CASINO', color: 0xcc0000, roofColor: 0x990000 },
+                { name: 'SLOTS', color: 0x9933ff, roofColor: 0x6622cc }
+            ];
+
+            // Place stores along both sides of the Strip (on the sidewalk area)
+            const numStores = 16; // 8 per side
+            const storeSpacing = (stripEndX - stripStartX - 40) / (numStores / 2);
+
+            for (let i = 0; i < numStores; i++) {
+                const side = i < numStores / 2 ? 1 : -1; // South then North
+                const idx = i % (numStores / 2);
+                const storeType = storeTypes[i % storeTypes.length];
+
+                const store = new THREE.Group();
+
+                // Store building (small box)
+                const storeWidth = 6 + Math.random() * 2;
+                const storeDepth = 5 + Math.random() * 2;
+                const storeHeight = 4 + Math.random() * 2;
+
+                const buildingMat = new THREE.MeshStandardMaterial({
+                    color: storeType.color,
+                    roughness: 0.7
+                });
+                const building = new THREE.Mesh(
+                    new THREE.BoxGeometry(storeWidth, storeHeight, storeDepth),
+                    buildingMat
+                );
+                building.position.y = storeHeight / 2;
+                building.castShadow = true;
+                store.add(building);
+
+                // Roof (slightly larger, flat)
+                const roofMat = new THREE.MeshStandardMaterial({ color: storeType.roofColor });
+                const roof = new THREE.Mesh(
+                    new THREE.BoxGeometry(storeWidth + 0.5, 0.3, storeDepth + 0.5),
+                    roofMat
+                );
+                roof.position.y = storeHeight + 0.15;
+                store.add(roof);
+
+                // Store front windows (large glass)
+                const glassMat = new THREE.MeshStandardMaterial({
+                    color: 0x88ccff,
+                    metalness: 0.9,
+                    roughness: 0.1,
+                    transparent: true,
+                    opacity: 0.7
+                });
+                const windowFront = new THREE.Mesh(
+                    new THREE.PlaneGeometry(storeWidth - 1, storeHeight - 1.5),
+                    glassMat
+                );
+                windowFront.position.set(0, storeHeight / 2 + 0.3, storeDepth / 2 + 0.05);
+                store.add(windowFront);
+
+                // Awning over entrance
+                const awningMat = new THREE.MeshStandardMaterial({ color: 0xcc0000 });
+                const awning = new THREE.Mesh(
+                    new THREE.BoxGeometry(storeWidth + 1, 0.15, 2),
+                    awningMat
+                );
+                awning.position.set(0, storeHeight - 0.5, storeDepth / 2 + 1);
+                store.add(awning);
+
+                // Sign with store name
+                const signMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+                const sign = new THREE.Mesh(
+                    new THREE.BoxGeometry(storeWidth - 0.5, 0.8, 0.1),
+                    signMat
+                );
+                sign.position.set(0, storeHeight + 0.6, storeDepth / 2 + 0.1);
+                store.add(sign);
+
+                // Position store along Strip
+                const xPos = stripStartX + 25 + idx * storeSpacing;
+                const zOffset = stripWidth / 2 + sidewalkWidth - 1; // On sidewalk edge
+                store.position.set(xPos, 0, side * zOffset);
+
+                // Rotate to face the road
+                if (side === 1) {
+                    store.rotation.y = Math.PI; // South side faces north (toward road)
+                }
+                // North side already faces south (toward road)
+
+                scene.add(store);
+            }
+        }
+
         // Add illuminated windows to Vegas hotel buildings (front and back faces only)
         function addHotelWindows(building, width, height, depth, color = 0xffffcc) {
             const windowMat = new THREE.MeshStandardMaterial({
@@ -2280,11 +2386,11 @@
             const windowMat = new THREE.MeshStandardMaterial({
                 color: color,
                 emissive: color,
-                emissiveIntensity: 0.3
+                emissiveIntensity: 0.5 // Brighter for Vegas
             });
 
-            const windowSize = 1.2;
-            const windowSpacing = 2.5; // Reasonable spacing for large buildings
+            const windowSize = 2.0; // Large windows like Metropolis
+            const windowSpacing = 3.5; // Spacing for visible grid pattern
 
             // BoxGeometry is centered, so offset y by -height/2 to start from bottom
             const yOffset = -height / 2;
