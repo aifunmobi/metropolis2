@@ -747,126 +747,116 @@
         function mkTheStrip() {
             const strip = new THREE.Group();
 
-            // Calculate Strip position - at end of highway, running perpendicular (along Z axis)
+            // Strip continues straight from highway (along X axis) - no T-intersection
             const stripStartX = VEGAS_CFG.zoneStartX + VEGAS_CFG.highwayLength;
             const stripCenterZ = 0;
+            const sidewalkWidth = 4; // Wide Vegas sidewalks for tourists
+            const lotWidth = 30; // Space for casino buildings
 
-            // Main road surface - wider than normal roads, dark asphalt
+            // Main road surface - runs along X axis (east-west)
             const roadMat = new THREE.MeshStandardMaterial({
                 color: 0x2a2a2a,
                 roughness: 0.85
             });
 
             const stripRoad = new THREE.Mesh(
-                new THREE.PlaneGeometry(VEGAS_CFG.stripWidth, VEGAS_CFG.stripLength),
+                new THREE.PlaneGeometry(VEGAS_CFG.stripLength, VEGAS_CFG.stripWidth),
                 roadMat
             );
             stripRoad.rotation.x = -Math.PI / 2;
-            stripRoad.position.set(stripStartX, 0.02, stripCenterZ);
+            stripRoad.position.set(stripStartX + VEGAS_CFG.stripLength / 2, 0.02, stripCenterZ);
             strip.add(stripRoad);
 
-            // Lane markings - double yellow center line (no passing)
+            // Lane markings - double yellow center line (runs along X)
             const yellowMat = new THREE.MeshStandardMaterial({ color: 0xffcc00 });
             for (const offset of [-0.2, 0.2]) {
                 const centerLine = new THREE.Mesh(
-                    new THREE.PlaneGeometry(0.15, VEGAS_CFG.stripLength - 4),
+                    new THREE.PlaneGeometry(VEGAS_CFG.stripLength - 4, 0.15),
                     yellowMat
                 );
                 centerLine.rotation.x = -Math.PI / 2;
-                centerLine.position.set(stripStartX + offset, 0.025, stripCenterZ);
+                centerLine.position.set(stripStartX + VEGAS_CFG.stripLength / 2, 0.025, offset);
                 strip.add(centerLine);
             }
 
-            // White edge lines
+            // White edge lines (along X axis)
             const whiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
             const edgeOffset = VEGAS_CFG.stripWidth / 2 - 0.5;
             for (const side of [-1, 1]) {
                 const edgeLine = new THREE.Mesh(
-                    new THREE.PlaneGeometry(0.2, VEGAS_CFG.stripLength - 4),
+                    new THREE.PlaneGeometry(VEGAS_CFG.stripLength - 4, 0.2),
                     whiteMat
                 );
                 edgeLine.rotation.x = -Math.PI / 2;
-                edgeLine.position.set(stripStartX + side * edgeOffset, 0.025, stripCenterZ);
+                edgeLine.position.set(stripStartX + VEGAS_CFG.stripLength / 2, 0.025, side * edgeOffset);
                 strip.add(edgeLine);
             }
 
-            // Sidewalks on both sides of The Strip
+            // Sidewalks on north and south sides of The Strip
             const sidewalkMat = new THREE.MeshStandardMaterial({
-                color: 0xccccbb, // Light concrete
+                color: 0xccccbb,
                 roughness: 0.8
             });
-            const sidewalkWidth = 4; // Wide Vegas sidewalks for tourists
 
             for (const side of [-1, 1]) {
                 const sidewalk = new THREE.Mesh(
-                    new THREE.PlaneGeometry(sidewalkWidth, VEGAS_CFG.stripLength),
+                    new THREE.PlaneGeometry(VEGAS_CFG.stripLength, sidewalkWidth),
                     sidewalkMat
                 );
                 sidewalk.rotation.x = -Math.PI / 2;
                 sidewalk.position.set(
-                    stripStartX + side * (VEGAS_CFG.stripWidth / 2 + sidewalkWidth / 2),
+                    stripStartX + VEGAS_CFG.stripLength / 2,
                     0.015,
-                    stripCenterZ
+                    side * (VEGAS_CFG.stripWidth / 2 + sidewalkWidth / 2)
                 );
                 strip.add(sidewalk);
 
-                // Curb between road and sidewalk
+                // Curb between road and sidewalk (runs along X)
                 const curbMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
                 const curb = new THREE.Mesh(
-                    new THREE.BoxGeometry(0.3, 0.15, VEGAS_CFG.stripLength),
+                    new THREE.BoxGeometry(VEGAS_CFG.stripLength, 0.15, 0.3),
                     curbMat
                 );
                 curb.position.set(
-                    stripStartX + side * (VEGAS_CFG.stripWidth / 2 + 0.15),
+                    stripStartX + VEGAS_CFG.stripLength / 2,
                     0.075,
-                    stripCenterZ
+                    side * (VEGAS_CFG.stripWidth / 2 + 0.15)
                 );
                 strip.add(curb);
             }
 
-            // Vegas ground/lot areas beside sidewalks (where casinos will go)
+            // Vegas ground/lot areas on north and south sides (where casinos go)
             const lotMat = new THREE.MeshStandardMaterial({
-                color: 0xd4c4a8, // Sandy/tan parking lot color
+                color: 0xd4c4a8,
                 roughness: 0.9
             });
-            const lotWidth = 30; // Space for future casino buildings
 
             for (const side of [-1, 1]) {
                 const lot = new THREE.Mesh(
-                    new THREE.PlaneGeometry(lotWidth, VEGAS_CFG.stripLength + 20),
+                    new THREE.PlaneGeometry(VEGAS_CFG.stripLength + 20, lotWidth),
                     lotMat
                 );
                 lot.rotation.x = -Math.PI / 2;
                 lot.position.set(
-                    stripStartX + side * (VEGAS_CFG.stripWidth / 2 + sidewalkWidth + lotWidth / 2),
+                    stripStartX + VEGAS_CFG.stripLength / 2,
                     0.005,
-                    stripCenterZ
+                    side * (VEGAS_CFG.stripWidth / 2 + sidewalkWidth + lotWidth / 2)
                 );
                 strip.add(lot);
             }
 
-            // T-intersection where highway meets The Strip
-            const intersectionMat = new THREE.MeshStandardMaterial({
-                color: 0x2a2a2a,
-                roughness: 0.85
-            });
-            const intersection = new THREE.Mesh(
-                new THREE.PlaneGeometry(VEGAS_CFG.stripWidth, VEGAS_CFG.highwayWidth + 2),
-                intersectionMat
-            );
-            intersection.rotation.x = -Math.PI / 2;
-            intersection.position.set(stripStartX, 0.018, 0);
-            strip.add(intersection);
+            // No T-intersection needed - Strip continues straight from highway
 
             scene.add(strip);
 
-            // Store Strip boundaries for future use (tourist spawning, traffic)
+            // Store Strip boundaries for new layout (X-axis oriented)
             strip.userData = {
-                centerX: stripStartX,
-                startZ: stripCenterZ - VEGAS_CFG.stripLength / 2,
-                endZ: stripCenterZ + VEGAS_CFG.stripLength / 2,
+                centerZ: stripCenterZ,
+                startX: stripStartX,
+                endX: stripStartX + VEGAS_CFG.stripLength,
                 width: VEGAS_CFG.stripWidth,
-                sidewalkWidth: sidewalkWidth
+                sidewalkWidth: sidewalkWidth,
+                lotWidth: lotWidth
             };
 
             return strip;
@@ -960,11 +950,12 @@
             }
 
             // Position billboard at The Strip entrance
-            const stripX = VEGAS_CFG.zoneStartX + VEGAS_CFG.highwayLength;
+            // Position at Strip entrance (where highway meets Strip), on south side
+            const stripStartX = VEGAS_CFG.zoneStartX + VEGAS_CFG.highwayLength;
             billboard.position.set(
-                stripX + VEGAS_CFG.stripWidth / 2 + 6, // East side of Strip
+                stripStartX + 5, // Near start of Strip
                 0,
-                -VEGAS_CFG.stripLength / 2 + 10 // Near south end
+                VEGAS_CFG.stripWidth / 2 + 6 // South side of road
             );
 
             scene.add(billboard);
@@ -1076,16 +1067,18 @@
             sphinxHead.position.set(0, 1.8, 17);
             pyramid.add(sphinxHead);
 
-            // Position on west side of Strip, near south end
-            const stripCenterX = theStrip.userData.centerX;
-            const stripStartZ = theStrip.userData.startZ;
+            // Position on south side of Strip (positive Z), near west end
+            const stripStartX = theStrip.userData.startX;
+            const stripEndX = theStrip.userData.endX;
+            const stripCenterZ = theStrip.userData.centerZ;
             const sidewalkWidth = theStrip.userData.sidewalkWidth;
             const stripWidth = theStrip.userData.width;
+            const stripLength = stripEndX - stripStartX;
 
             pyramid.position.set(
-                stripCenterX - stripWidth / 2 - sidewalkWidth - 15, // West side parking lot
+                stripStartX + stripLength * 0.15, // Near west end of Strip
                 0,
-                stripStartZ + 15 // Near south end
+                stripCenterZ + stripWidth / 2 + sidewalkWidth + 18 // South side parking lot
             );
 
             // Store userData for Phase 3 lighting
@@ -1209,17 +1202,18 @@
             antenna.position.y = legHeight + 1 + middleHeight + spireHeight + 1.5;
             tower.add(antenna);
 
-            // Position on east side of Strip, middle
-            const stripCenterX = theStrip.userData.centerX;
-            const stripStartZ = theStrip.userData.startZ;
-            const stripEndZ = theStrip.userData.endZ;
+            // Position on north side of Strip (negative Z), middle
+            const stripStartX = theStrip.userData.startX;
+            const stripEndX = theStrip.userData.endX;
+            const stripCenterZ = theStrip.userData.centerZ;
             const sidewalkWidth = theStrip.userData.sidewalkWidth;
             const stripWidth = theStrip.userData.width;
+            const stripLength = stripEndX - stripStartX;
 
             tower.position.set(
-                stripCenterX + stripWidth / 2 + sidewalkWidth + 12, // East side parking lot
+                stripStartX + stripLength * 0.5, // Middle of Strip
                 0,
-                (stripStartZ + stripEndZ) / 2 // Middle of Strip
+                stripCenterZ - stripWidth / 2 - sidewalkWidth - 12 // North side parking lot
             );
 
             // Store userData for Phase 3 lighting
@@ -1378,21 +1372,22 @@
             westBorder.position.set(-lakeWidth / 2 - borderThickness / 2, borderHeight / 2, 18);
             bellagio.add(westBorder);
 
-            // Position on west side of Strip, north of Luxor
-            const stripCenterX = theStrip.userData.centerX;
-            const stripStartZ = theStrip.userData.startZ;
-            const stripLength = theStrip.userData.endZ - stripStartZ;
+            // Position on south side of Strip (positive Z), east of Luxor
+            const stripStartX = theStrip.userData.startX;
+            const stripEndX = theStrip.userData.endX;
+            const stripCenterZ = theStrip.userData.centerZ;
             const sidewalkWidth = theStrip.userData.sidewalkWidth;
             const stripWidth = theStrip.userData.width;
+            const stripLength = stripEndX - stripStartX;
 
             bellagio.position.set(
-                stripCenterX - stripWidth / 2 - sidewalkWidth - 20, // West side parking lot
+                stripStartX + stripLength * 0.65, // Toward east end of Strip
                 0,
-                stripStartZ + stripLength * 0.65 // North-middle area
+                stripCenterZ + stripWidth / 2 + sidewalkWidth + 25 // South side parking lot
             );
 
-            // Rotate to face Strip (building entrance faces east/Strip)
-            bellagio.rotation.y = Math.PI / 2;
+            // Rotate to face Strip (building entrance faces north/Strip)
+            bellagio.rotation.y = 0;
 
             // Store userData for Phase 3 lighting
             bellagio.userData = {
@@ -1555,21 +1550,22 @@
             foundation.receiveShadow = true;
             caesars.add(foundation);
 
-            // Position on east side of Strip, south of Eiffel Tower
-            const stripCenterX = theStrip.userData.centerX;
-            const stripStartZ = theStrip.userData.startZ;
-            const stripLength = theStrip.userData.endZ - stripStartZ;
+            // Position on north side of Strip (negative Z), west of Eiffel Tower
+            const stripStartX = theStrip.userData.startX;
+            const stripEndX = theStrip.userData.endX;
+            const stripCenterZ = theStrip.userData.centerZ;
             const sidewalkWidth = theStrip.userData.sidewalkWidth;
             const stripWidth = theStrip.userData.width;
+            const stripLength = stripEndX - stripStartX;
 
             caesars.position.set(
-                stripCenterX + stripWidth / 2 + sidewalkWidth + 25, // East side parking lot
+                stripStartX + stripLength * 0.3, // Toward west end of Strip
                 0,
-                stripStartZ + stripLength * 0.3 // South-middle area
+                stripCenterZ - stripWidth / 2 - sidewalkWidth - 25 // North side parking lot
             );
 
-            // Rotate to face Strip (entrance faces west/Strip)
-            caesars.rotation.y = -Math.PI / 2;
+            // Rotate to face Strip (entrance faces south/Strip)
+            caesars.rotation.y = Math.PI;
 
             // Store userData for Phase 3 lighting
             caesars.userData = {
@@ -1584,9 +1580,9 @@
             return caesars;
         }
 
-        // Vegas landmarks positioned along Strip:
-        // West side (south to north): Luxor, Excalibur, Bellagio
-        // East side (south to north): Caesars, Paris Eiffel
+        // Vegas landmarks positioned along Strip (runs east-west along X axis):
+        // South side (west to east): Luxor, Excalibur, Bellagio
+        // North side (west to east): Caesars, Paris Eiffel
         function mkExcaliburCastle() {
             const castle = new THREE.Group();
 
@@ -1764,21 +1760,22 @@
             spire.castShadow = true;
             castle.add(spire);
 
-            // Position on west side of Strip, between Luxor and Bellagio
-            const stripCenterX = theStrip.userData.centerX;
-            const stripStartZ = theStrip.userData.startZ;
-            const stripLength = theStrip.userData.endZ - stripStartZ;
+            // Position on south side of Strip (positive Z), between Luxor and Bellagio
+            const stripStartX = theStrip.userData.startX;
+            const stripEndX = theStrip.userData.endX;
+            const stripCenterZ = theStrip.userData.centerZ;
             const sidewalkWidth = theStrip.userData.sidewalkWidth;
             const stripWidth = theStrip.userData.width;
+            const stripLength = stripEndX - stripStartX;
 
             castle.position.set(
-                stripCenterX - stripWidth / 2 - sidewalkWidth - 22, // West side parking lot
+                stripStartX + stripLength * 0.4, // Between Luxor (west) and Bellagio (east)
                 0,
-                stripStartZ + stripLength * 0.35 // Between Luxor (south) and Bellagio (north)
+                stripCenterZ + stripWidth / 2 + sidewalkWidth + 22 // South side parking lot
             );
 
-            // Rotate to face Strip (entrance faces east/Strip)
-            castle.rotation.y = Math.PI / 2;
+            // Rotate to face Strip (entrance faces north/Strip)
+            castle.rotation.y = 0;
 
             // Store userData for Phase 3 lighting
             castle.userData = {
