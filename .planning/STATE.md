@@ -13,13 +13,19 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 - **Phase:** 2 of 6 (Iconic Landmarks - COMPLETE)
 - **Plan:** 5 of 13 completed
 - **Status:** Phase 2 complete, ready for Phase 3
-- **Last activity:** 2026-01-26 - Completed quick task 002: Vegas hotels larger, many windows, welcome sign
+- **Last activity:** 2026-01-26 - Completed quick task 003: Vegas traffic, highway extension, hotel spacing
 
 **Progress:** █████░░░░░░░░░░░ 38% (5/13 plans across all phases)
 
 ## Recent Progress
 
 ### Quick Tasks
+- quick-003: Highway traffic between Metropolis and Vegas, Strip doubled to 140 units, highway extends 80 units past Vegas
+- highwayCars[] array with 6-8 vehicles traveling bidirectionally at 0.3-0.4 speed
+- mkHighwayCars() and updHighwayCars() separate from city car system
+- Highway extension includes road, lane markings, desert strips
+- Hotels automatically spread out with 15-21 unit gaps
+- 2 commits: 335e341, 64babb0
 - quick-002: Vegas hotels scaled 2.5x larger, dense window grids, Welcome to Las Vegas sign
 - All 5 landmarks scaled up: Luxor (75 height), Paris (~95), Bellagio (90 tower), Caesars (50), Excalibur (55 turrets)
 - addHotelWindowsAllSides() adds windows on all 4 faces (spacing 1.5 for dense grid)
@@ -332,6 +338,7 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 003 | Highway traffic, highway extension past Vegas, hotel spacing | 2026-01-26 | 64babb0 | [003-vegas-traffic-highway-extension-hotel-sp](./quick/003-vegas-traffic-highway-extension-hotel-sp/) |
 | 002 | Vegas hotels 2.5x larger, dense windows, Welcome sign | 2026-01-26 | 72194aa | [002-vegas-hotels-larger-many-windows-welcome](./quick/002-vegas-hotels-larger-many-windows-welcome/) |
 | 001 | Fix Vegas zone - Strip layout, hotel windows, HUD flicker | 2026-01-26 | e9b6110 | [001-fix-vegas-zone-strip-layout-hotels-windo](./quick/001-fix-vegas-zone-strip-layout-hotels-windo/) |
 
@@ -347,6 +354,9 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 
 | Date | Decision | Context |
 |------|----------|---------|
+| 2026-01-26 | Strip length doubled 70->140 units | Real Vegas spacing between hotels (15-21 unit gaps) |
+| 2026-01-26 | Highway extension 80 units past Vegas | Road continues into desert horizon |
+| 2026-01-26 | Highway cars separate from city cars | highwayCars[] array, faster speed 0.3-0.4 |
 | 2026-01-26 | 2.5x scale factor for Vegas landmarks | Creates real Vegas hotel scale, dominates skyline |
 | 2026-01-26 | Window spacing 1.5 units (was 2) | Denser grid matches Metropolis buildings |
 | 2026-01-26 | addHotelWindowsAllSides for 4-face windows | Consistent window coverage from all angles |
@@ -451,7 +461,7 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 ## Session Continuity
 
 - **Last session:** 2026-01-26
-- **Stopped at:** Completed quick-002-PLAN.md (Vegas Hotels Larger, Windows, Welcome Sign)
+- **Stopped at:** Completed quick-003-PLAN.md (Vegas Traffic, Highway Extension, Hotel Spacing)
 - **Resume file:** None
 - **Next:** v2-03-PLAN.md (Vegas Night Lighting) - Phase 3
 
