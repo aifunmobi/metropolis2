@@ -1018,8 +1018,9 @@
             const pyramid = new THREE.Group();
 
             // Pyramid structure using ConeGeometry with 4 radial segments = pyramid shape
-            const pyramidHeight = 30;
-            const pyramidBaseWidth = 25;
+            // Scaled up 2.5x for Vegas hotel scale
+            const pyramidHeight = 75;
+            const pyramidBaseWidth = 60;
             // ConeGeometry: radius is from center to corner, so divide by sqrt(2) for edge-to-edge
             const pyramidRadius = pyramidBaseWidth / Math.sqrt(2);
             const pyramidMat = new THREE.MeshStandardMaterial({
@@ -1031,40 +1032,40 @@
                 new THREE.ConeGeometry(pyramidRadius, pyramidHeight, 4),
                 pyramidMat
             );
-            pyramidMesh.position.y = pyramidHeight / 2 + 1; // Sits on base platform
+            pyramidMesh.position.y = pyramidHeight / 2 + 2; // Sits on base platform
             pyramidMesh.rotation.y = Math.PI / 4; // Rotate 45 degrees so faces align with axes
             pyramidMesh.castShadow = true;
             pyramidMesh.receiveShadow = true;
             pyramid.add(pyramidMesh);
 
-            // Base platform - slightly larger, sandstone color
+            // Base platform - slightly larger, sandstone color (scaled up)
             const baseMat = new THREE.MeshStandardMaterial({
                 color: 0xc4a777,
                 roughness: 0.8
             });
             const base = new THREE.Mesh(
-                new THREE.BoxGeometry(27, 1, 27),
+                new THREE.BoxGeometry(65, 2, 65),
                 baseMat
             );
-            base.position.y = 0.5;
+            base.position.y = 1;
             base.receiveShadow = true;
             pyramid.add(base);
 
-            // Sphinx hint - simple box suggesting sphinx shape
+            // Sphinx hint - simple box suggesting sphinx shape (scaled up)
             const sphinxBody = new THREE.Mesh(
-                new THREE.BoxGeometry(3, 1.5, 2),
+                new THREE.BoxGeometry(6, 3, 4),
                 baseMat
             );
-            sphinxBody.position.set(0, 0.75, 16); // In front of pyramid
+            sphinxBody.position.set(0, 1.5, 38); // In front of pyramid
             sphinxBody.receiveShadow = true;
             pyramid.add(sphinxBody);
 
             // Sphinx head (slightly smaller box on top)
             const sphinxHead = new THREE.Mesh(
-                new THREE.BoxGeometry(1, 1.2, 1),
+                new THREE.BoxGeometry(2, 2.4, 2),
                 baseMat
             );
-            sphinxHead.position.set(0, 1.8, 17);
+            sphinxHead.position.set(0, 3.6, 40);
             pyramid.add(sphinxHead);
 
             // Position on south side of Strip (positive Z), near west end
@@ -1078,7 +1079,7 @@
             pyramid.position.set(
                 stripStartX + stripLength * 0.15, // Near west end of Strip
                 0,
-                stripCenterZ + stripWidth / 2 + sidewalkWidth + 18 // South side parking lot
+                stripCenterZ + stripWidth / 2 + sidewalkWidth + 45 // South side parking lot (larger offset)
             );
 
             // Store userData for Phase 3 lighting
@@ -1109,20 +1110,20 @@
                 roughness: 0.5
             });
 
-            // Base/foundation - square platform
+            // Base/foundation - square platform (scaled up 2.5x)
             const foundation = new THREE.Mesh(
-                new THREE.BoxGeometry(15, 1, 15),
+                new THREE.BoxGeometry(35, 2, 35),
                 new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.9 })
             );
-            foundation.position.y = 0.5;
+            foundation.position.y = 1;
             foundation.receiveShadow = true;
             tower.add(foundation);
 
-            // Four angled legs (base section)
-            const legHeight = 12;
-            const legRadius = 0.5;
-            const legSpread = 5; // Distance from center at base
-            const legTopSpread = 2; // Distance from center at top
+            // Four angled legs (base section) - scaled up 2.5x
+            const legHeight = 30;
+            const legRadius = 1.25;
+            const legSpread = 12; // Distance from center at base
+            const legTopSpread = 5; // Distance from center at top
 
             for (let i = 0; i < 4; i++) {
                 const angle = (i * Math.PI / 2) + Math.PI / 4; // 45, 135, 225, 315 degrees
@@ -1140,7 +1141,7 @@
                 // Position at midpoint
                 leg.position.set(
                     (baseX + topX) / 2,
-                    legHeight / 2 + 1,
+                    legHeight / 2 + 2,
                     (baseZ + topZ) / 2
                 );
 
@@ -1156,50 +1157,50 @@
                 tower.add(leg);
             }
 
-            // First observation deck (at top of legs)
+            // First observation deck (at top of legs) - scaled up
             const deck1 = new THREE.Mesh(
-                new THREE.CylinderGeometry(4, 4, 0.4, 8),
+                new THREE.CylinderGeometry(10, 10, 0.8, 8),
                 platformMat
             );
-            deck1.position.y = legHeight + 1;
+            deck1.position.y = legHeight + 2;
             deck1.castShadow = true;
             tower.add(deck1);
 
-            // Middle section - tapered cylinder
-            const middleHeight = 12;
+            // Middle section - tapered cylinder (scaled up 2.5x)
+            const middleHeight = 30;
             const middleSection = new THREE.Mesh(
-                new THREE.CylinderGeometry(1.2, 2.2, middleHeight, 8),
+                new THREE.CylinderGeometry(3, 5.5, middleHeight, 8),
                 ironMat
             );
-            middleSection.position.y = legHeight + 1 + middleHeight / 2;
+            middleSection.position.y = legHeight + 2 + middleHeight / 2;
             middleSection.castShadow = true;
             tower.add(middleSection);
 
-            // Second observation deck (at top of middle section)
+            // Second observation deck (at top of middle section) - scaled up
             const deck2 = new THREE.Mesh(
-                new THREE.CylinderGeometry(3, 3, 0.3, 8),
+                new THREE.CylinderGeometry(7.5, 7.5, 0.6, 8),
                 platformMat
             );
-            deck2.position.y = legHeight + 1 + middleHeight;
+            deck2.position.y = legHeight + 2 + middleHeight;
             deck2.castShadow = true;
             tower.add(deck2);
 
-            // Top spire section
-            const spireHeight = 10;
+            // Top spire section (scaled up 2.5x)
+            const spireHeight = 25;
             const spire = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.2, 0.6, spireHeight, 8),
+                new THREE.CylinderGeometry(0.5, 1.5, spireHeight, 8),
                 ironMat
             );
-            spire.position.y = legHeight + 1 + middleHeight + spireHeight / 2;
+            spire.position.y = legHeight + 2 + middleHeight + spireHeight / 2;
             spire.castShadow = true;
             tower.add(spire);
 
-            // Antenna at very top
+            // Antenna at very top (scaled up 1.5x)
             const antenna = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.05, 0.1, 3, 6),
+                new THREE.CylinderGeometry(0.075, 0.15, 4.5, 6),
                 ironMat
             );
-            antenna.position.y = legHeight + 1 + middleHeight + spireHeight + 1.5;
+            antenna.position.y = legHeight + 2 + middleHeight + spireHeight + 2.25;
             tower.add(antenna);
 
             // Position on north side of Strip (negative Z), middle
@@ -1213,7 +1214,7 @@
             tower.position.set(
                 stripStartX + stripLength * 0.5, // Middle of Strip
                 0,
-                stripCenterZ - stripWidth / 2 - sidewalkWidth - 12 // North side parking lot
+                stripCenterZ - stripWidth / 2 - sidewalkWidth - 30 // North side parking lot (larger offset)
             );
 
             // Store userData for Phase 3 lighting
@@ -1246,73 +1247,79 @@
             });
 
             // Main building - curved facade created with 3 angled sections
-            // Center section
+            // Center section (scaled up 2.5x)
             const centerSection = new THREE.Mesh(
-                new THREE.BoxGeometry(12, 25, 15),
+                new THREE.BoxGeometry(30, 65, 35),
                 buildingMat
             );
-            centerSection.position.set(0, 12.5, 0);
+            centerSection.position.set(0, 32.5, 0);
             centerSection.castShadow = true;
             centerSection.receiveShadow = true;
             bellagio.add(centerSection);
 
-            // Add illuminated windows to center section
-            addHotelWindows(centerSection, 10, 22, 13, 0xffffcc);
+            // Add illuminated windows to center section (all 4 faces)
+            addHotelWindowsAllSides(centerSection, 28, 60, 33, 0xffffcc);
 
-            // Left wing (angled outward slightly)
+            // Left wing (angled outward slightly) - scaled up
             const leftWing = new THREE.Mesh(
-                new THREE.BoxGeometry(10, 25, 15),
+                new THREE.BoxGeometry(25, 65, 35),
                 buildingMat
             );
-            leftWing.position.set(-10, 12.5, 1);
+            leftWing.position.set(-25, 32.5, 2.5);
             leftWing.rotation.y = 0.15; // Angle outward
             leftWing.castShadow = true;
             leftWing.receiveShadow = true;
             bellagio.add(leftWing);
 
-            // Right wing (angled outward slightly)
+            // Add windows to left wing
+            addHotelWindowsAllSides(leftWing, 23, 60, 33, 0xffffcc);
+
+            // Right wing (angled outward slightly) - scaled up
             const rightWing = new THREE.Mesh(
-                new THREE.BoxGeometry(10, 25, 15),
+                new THREE.BoxGeometry(25, 65, 35),
                 buildingMat
             );
-            rightWing.position.set(10, 12.5, 1);
+            rightWing.position.set(25, 32.5, 2.5);
             rightWing.rotation.y = -0.15; // Angle outward
             rightWing.castShadow = true;
             rightWing.receiveShadow = true;
             bellagio.add(rightWing);
 
-            // Accent band at roof level
+            // Add windows to right wing
+            addHotelWindowsAllSides(rightWing, 23, 60, 33, 0xffffcc);
+
+            // Accent band at roof level (scaled up)
             const accentBand = new THREE.Mesh(
-                new THREE.BoxGeometry(32, 1.5, 16),
+                new THREE.BoxGeometry(80, 3, 40),
                 accentMat
             );
-            accentBand.position.set(0, 24.5, 0);
+            accentBand.position.set(0, 64, 0);
             bellagio.add(accentBand);
 
-            // Tower section behind main building
+            // Tower section behind main building (scaled up 2.5x)
             const tower = new THREE.Mesh(
-                new THREE.BoxGeometry(8, 35, 10),
+                new THREE.BoxGeometry(20, 90, 25),
                 buildingMat
             );
-            tower.position.set(0, 17.5, -10);
+            tower.position.set(0, 45, -25);
             tower.castShadow = true;
             tower.receiveShadow = true;
             bellagio.add(tower);
 
-            // Add illuminated windows to tower
-            addHotelWindows(tower, 6, 30, 8, 0xffffcc);
+            // Add illuminated windows to tower (all 4 faces)
+            addHotelWindowsAllSides(tower, 18, 85, 23, 0xffffcc);
 
-            // Tower accent band
+            // Tower accent band (scaled up)
             const towerAccent = new THREE.Mesh(
-                new THREE.BoxGeometry(9, 1, 11),
+                new THREE.BoxGeometry(22, 2, 27),
                 accentMat
             );
-            towerAccent.position.set(0, 34.5, -10);
+            towerAccent.position.set(0, 89, -25);
             bellagio.add(towerAccent);
 
-            // Fountain lake (CRITICAL for Phase 4)
-            const lakeWidth = 35;
-            const lakeDepth = 20;
+            // Fountain lake (CRITICAL for Phase 4) - scaled up 2.5x
+            const lakeWidth = 90;
+            const lakeDepth = 50;
             const lakeMat = new THREE.MeshStandardMaterial({
                 color: 0x4fc3f7,
                 opacity: 0.8,
@@ -1325,27 +1332,27 @@
                 lakeMat
             );
             lake.rotation.x = -Math.PI / 2;
-            lake.position.set(0, 0.1, 18); // In front of building facing Strip
+            lake.position.set(0, 0.1, 45); // In front of building facing Strip
             lake.receiveShadow = true;
             bellagio.add(lake);
 
             // Store global reference for Phase 4 fountain show
             bellagioFountainLake = lake;
 
-            // Lake border - rectangular rim around lake
+            // Lake border - rectangular rim around lake (scaled up)
             const borderMat = new THREE.MeshStandardMaterial({
                 color: 0xeeeeee,
                 roughness: 0.4
             });
-            const borderThickness = 0.5;
-            const borderHeight = 0.3;
+            const borderThickness = 1;
+            const borderHeight = 0.5;
 
             // North border (closest to building)
             const northBorder = new THREE.Mesh(
                 new THREE.BoxGeometry(lakeWidth + borderThickness * 2, borderHeight, borderThickness),
                 borderMat
             );
-            northBorder.position.set(0, borderHeight / 2, 18 - lakeDepth / 2 - borderThickness / 2);
+            northBorder.position.set(0, borderHeight / 2, 45 - lakeDepth / 2 - borderThickness / 2);
             bellagio.add(northBorder);
 
             // South border (facing Strip)
@@ -1353,7 +1360,7 @@
                 new THREE.BoxGeometry(lakeWidth + borderThickness * 2, borderHeight, borderThickness),
                 borderMat
             );
-            southBorder.position.set(0, borderHeight / 2, 18 + lakeDepth / 2 + borderThickness / 2);
+            southBorder.position.set(0, borderHeight / 2, 45 + lakeDepth / 2 + borderThickness / 2);
             bellagio.add(southBorder);
 
             // East border
@@ -1361,7 +1368,7 @@
                 new THREE.BoxGeometry(borderThickness, borderHeight, lakeDepth),
                 borderMat
             );
-            eastBorder.position.set(lakeWidth / 2 + borderThickness / 2, borderHeight / 2, 18);
+            eastBorder.position.set(lakeWidth / 2 + borderThickness / 2, borderHeight / 2, 45);
             bellagio.add(eastBorder);
 
             // West border
@@ -1369,7 +1376,7 @@
                 new THREE.BoxGeometry(borderThickness, borderHeight, lakeDepth),
                 borderMat
             );
-            westBorder.position.set(-lakeWidth / 2 - borderThickness / 2, borderHeight / 2, 18);
+            westBorder.position.set(-lakeWidth / 2 - borderThickness / 2, borderHeight / 2, 45);
             bellagio.add(westBorder);
 
             // Position on south side of Strip (positive Z), east of Luxor
@@ -1383,7 +1390,7 @@
             bellagio.position.set(
                 stripStartX + stripLength * 0.65, // Toward east end of Strip
                 0,
-                stripCenterZ + stripWidth / 2 + sidewalkWidth + 25 // South side parking lot
+                stripCenterZ + stripWidth / 2 + sidewalkWidth + 55 // South side parking lot (larger offset)
             );
 
             // Rotate to face Strip (building entrance faces north/Strip)
@@ -1432,22 +1439,25 @@
                 roughness: 0.3
             });
 
-            // Main building
+            // Main building (scaled up 2.5x)
             const mainBuilding = new THREE.Mesh(
-                new THREE.BoxGeometry(40, 22, 20),
+                new THREE.BoxGeometry(100, 50, 75),
                 marbleMat
             );
-            mainBuilding.position.set(0, 11, 0);
+            mainBuilding.position.set(0, 25, 0);
             mainBuilding.castShadow = true;
             mainBuilding.receiveShadow = true;
             caesars.add(mainBuilding);
 
-            // Roman columns (8 columns across front entrance)
+            // Add illuminated windows to main building (all 4 faces)
+            addHotelWindowsAllSides(mainBuilding, 95, 45, 70, 0xffffcc);
+
+            // Roman columns (8 columns across front entrance) - scaled up
             const numColumns = 8;
-            const columnSpacing = 3;
+            const columnSpacing = 12;
             const columnStartX = -(numColumns - 1) * columnSpacing / 2;
-            const columnHeight = 10;
-            const columnRadius = 0.5;
+            const columnHeight = 25;
+            const columnRadius = 1.25;
 
             for (let i = 0; i < numColumns; i++) {
                 // Column shaft
@@ -1458,95 +1468,95 @@
                 column.position.set(
                     columnStartX + i * columnSpacing,
                     columnHeight / 2,
-                    11 // Front of building
+                    40 // Front of building
                 );
                 column.castShadow = true;
                 caesars.add(column);
 
                 // Column capital (wider top)
                 const capital = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.7, 0.5, 0.5, 12),
+                    new THREE.CylinderGeometry(1.75, 1.25, 1.25, 12),
                     columnMat
                 );
                 capital.position.set(
                     columnStartX + i * columnSpacing,
-                    columnHeight + 0.25,
-                    11
+                    columnHeight + 0.6,
+                    40
                 );
                 caesars.add(capital);
 
                 // Column base (wider bottom)
                 const base = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.7, 0.8, 0.4, 12),
+                    new THREE.CylinderGeometry(1.75, 2, 1, 12),
                     columnMat
                 );
                 base.position.set(
                     columnStartX + i * columnSpacing,
-                    0.2,
-                    11
+                    0.5,
+                    40
                 );
                 caesars.add(base);
             }
 
-            // Entrance portico (roof above columns)
+            // Entrance portico (roof above columns) - scaled up
             const portico = new THREE.Mesh(
-                new THREE.BoxGeometry(25, 2, 8),
+                new THREE.BoxGeometry(95, 4, 20),
                 porticoMat
             );
-            portico.position.set(0, columnHeight + 1.5, 11);
+            portico.position.set(0, columnHeight + 3, 40);
             portico.castShadow = true;
             portico.receiveShadow = true;
             caesars.add(portico);
 
-            // Portico triangular pediment (classical Greek/Roman style)
+            // Portico triangular pediment (classical Greek/Roman style) - scaled up
             const pedimentGeo = new THREE.BufferGeometry();
             const pedimentVertices = new Float32Array([
-                -12.5, 0, 0,    // Left
-                12.5, 0, 0,     // Right
-                0, 4, 0         // Top
+                -45, 0, 0,    // Left
+                45, 0, 0,     // Right
+                0, 12, 0      // Top (taller)
             ]);
             pedimentGeo.setAttribute('position', new THREE.BufferAttribute(pedimentVertices, 3));
             pedimentGeo.computeVertexNormals();
             const pediment = new THREE.Mesh(pedimentGeo, porticoMat);
-            pediment.position.set(0, columnHeight + 2.5, 15);
+            pediment.position.set(0, columnHeight + 5, 50);
             caesars.add(pediment);
 
-            // Central dome on roof
-            const domeGeo = new THREE.SphereGeometry(4, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+            // Central dome on roof (scaled up)
+            const domeGeo = new THREE.SphereGeometry(10, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2);
             const dome = new THREE.Mesh(domeGeo, goldMat);
-            dome.position.set(0, 22, 0);
+            dome.position.set(0, 50, 0);
             dome.castShadow = true;
             caesars.add(dome);
 
-            // Dome base ring
+            // Dome base ring (scaled up)
             const domeBase = new THREE.Mesh(
-                new THREE.CylinderGeometry(4.2, 4.2, 0.5, 24),
+                new THREE.CylinderGeometry(10.5, 10.5, 1.25, 24),
                 marbleMat
             );
-            domeBase.position.set(0, 22, 0);
+            domeBase.position.set(0, 50, 0);
             caesars.add(domeBase);
 
-            // Grand staircase (3 steps)
+            // Grand staircase (5 steps for larger scale)
             const stairMat = new THREE.MeshStandardMaterial({
                 color: columnColor,
                 roughness: 0.5
             });
-            for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < 5; i++) {
                 const step = new THREE.Mesh(
-                    new THREE.BoxGeometry(20 - i * 2, 0.5, 3),
+                    new THREE.BoxGeometry(80 - i * 4, 1, 5),
                     stairMat
                 );
-                step.position.set(0, 0.25 + i * 0.5, 14 + i * 3);
+                step.position.set(0, 0.5 + i * 1, 45 + i * 5);
                 step.receiveShadow = true;
                 caesars.add(step);
             }
 
-            // Foundation platform
+            // Foundation platform (scaled up)
             const foundation = new THREE.Mesh(
-                new THREE.BoxGeometry(42, 0.3, 30),
+                new THREE.BoxGeometry(105, 0.5, 90),
                 marbleMat
             );
-            foundation.position.set(0, 0.15, 5);
+            foundation.position.set(0, 0.25, 15);
             foundation.receiveShadow = true;
             caesars.add(foundation);
 
@@ -1561,7 +1571,7 @@
             caesars.position.set(
                 stripStartX + stripLength * 0.3, // Toward west end of Strip
                 0,
-                stripCenterZ - stripWidth / 2 - sidewalkWidth - 25 // North side parking lot
+                stripCenterZ - stripWidth / 2 - sidewalkWidth - 55 // North side parking lot (larger offset)
             );
 
             // Rotate to face Strip (entrance faces south/Strip)
@@ -1611,95 +1621,95 @@
                 roughness: 0.7
             });
 
-            // 1. Foundation/moat hint
+            // 1. Foundation/moat hint (scaled up 2.5x)
             const foundation = new THREE.Mesh(
-                new THREE.BoxGeometry(40, 2, 22),
+                new THREE.BoxGeometry(100, 4, 55),
                 foundationMat
             );
-            foundation.position.set(0, 1, 0);
+            foundation.position.set(0, 2, 0);
             foundation.receiveShadow = true;
             castle.add(foundation);
 
-            // Thin blue strip around base suggesting moat
+            // Thin blue strip around base suggesting moat (scaled up)
             const moatMat = new THREE.MeshStandardMaterial({ color: moatColor });
-            const moatWidth = 1;
+            const moatWidth = 2.5;
             // Front moat
             const moatFront = new THREE.Mesh(
-                new THREE.BoxGeometry(42, 0.3, moatWidth),
+                new THREE.BoxGeometry(105, 0.5, moatWidth),
                 moatMat
             );
-            moatFront.position.set(0, 0.15, 12);
+            moatFront.position.set(0, 0.25, 30);
             castle.add(moatFront);
             // Back moat
             const moatBack = new THREE.Mesh(
-                new THREE.BoxGeometry(42, 0.3, moatWidth),
+                new THREE.BoxGeometry(105, 0.5, moatWidth),
                 moatMat
             );
-            moatBack.position.set(0, 0.15, -12);
+            moatBack.position.set(0, 0.25, -30);
             castle.add(moatBack);
             // Side moats
             const moatLeft = new THREE.Mesh(
-                new THREE.BoxGeometry(moatWidth, 0.3, 24),
+                new THREE.BoxGeometry(moatWidth, 0.5, 60),
                 moatMat
             );
-            moatLeft.position.set(-21, 0.15, 0);
+            moatLeft.position.set(-52.5, 0.25, 0);
             castle.add(moatLeft);
             const moatRight = new THREE.Mesh(
-                new THREE.BoxGeometry(moatWidth, 0.3, 24),
+                new THREE.BoxGeometry(moatWidth, 0.5, 60),
                 moatMat
             );
-            moatRight.position.set(21, 0.15, 0);
+            moatRight.position.set(52.5, 0.25, 0);
             castle.add(moatRight);
 
-            // 2. Main castle body
+            // 2. Main castle body (scaled up 2.5x)
             const mainBody = new THREE.Mesh(
-                new THREE.BoxGeometry(35, 15, 18),
+                new THREE.BoxGeometry(90, 40, 45),
                 stoneMat
             );
-            mainBody.position.set(0, 2 + 7.5, 0);
+            mainBody.position.set(0, 4 + 20, 0);
             mainBody.castShadow = true;
             mainBody.receiveShadow = true;
             castle.add(mainBody);
 
-            // Add illuminated windows to main castle body (warm yellow color)
-            addHotelWindows(mainBody, 30, 12, 16, 0xffffaa);
+            // Add illuminated windows to main castle body (all 4 faces)
+            addHotelWindowsAllSides(mainBody, 85, 35, 40, 0xffffaa);
 
-            // 3. Battlements (crenellated top)
+            // 3. Battlements (crenellated top) - scaled up
             const battlementMat = stoneMat.clone();
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < 15; i++) {
                 const battlement = new THREE.Mesh(
-                    new THREE.BoxGeometry(1, 2, 1),
+                    new THREE.BoxGeometry(2.5, 5, 2.5),
                     battlementMat
                 );
-                battlement.position.set(-16 + i * 3.5, 2 + 15 + 1, 9.5); // Front edge
+                battlement.position.set(-40 + i * 5.5, 4 + 40 + 2.5, 23); // Front edge
                 battlement.castShadow = true;
                 castle.add(battlement);
             }
             // Back edge battlements
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < 15; i++) {
                 const battlement = new THREE.Mesh(
-                    new THREE.BoxGeometry(1, 2, 1),
+                    new THREE.BoxGeometry(2.5, 5, 2.5),
                     battlementMat
                 );
-                battlement.position.set(-16 + i * 3.5, 2 + 15 + 1, -9.5);
+                battlement.position.set(-40 + i * 5.5, 4 + 40 + 2.5, -23);
                 battlement.castShadow = true;
                 castle.add(battlement);
             }
 
-            // 4. Entry gate
+            // 4. Entry gate (scaled up 2.5x)
             const gate = new THREE.Mesh(
-                new THREE.BoxGeometry(6, 8, 0.5),
+                new THREE.BoxGeometry(15, 20, 1),
                 gateMat
             );
-            gate.position.set(0, 2 + 4, 9.3);
+            gate.position.set(0, 4 + 10, 23);
             castle.add(gate);
 
-            // 5. Corner turrets (4 total) with conical tops
+            // 5. Corner turrets (4 total) with conical tops (scaled up 2.5x)
             const turretPositions = [
-                { x: -17.5, z: 9, color: redTurret },   // Front-left: red
-                { x: 17.5, z: 9, color: blueTurret },   // Front-right: blue
-                { x: -17.5, z: -9, color: blueTurret }, // Back-left: blue
-                { x: 17.5, z: -9, color: redTurret }    // Back-right: red
+                { x: -45, z: 22.5, color: redTurret },   // Front-left: red
+                { x: 45, z: 22.5, color: blueTurret },   // Front-right: blue
+                { x: -45, z: -22.5, color: blueTurret }, // Back-left: blue
+                { x: 45, z: -22.5, color: redTurret }    // Back-right: red
             ];
 
             turretPositions.forEach(tp => {
@@ -1709,54 +1719,54 @@
                     metalness: 0.2
                 });
 
-                // Turret cylinder
+                // Turret cylinder (scaled up)
                 const turret = new THREE.Mesh(
-                    new THREE.CylinderGeometry(2.5, 2.5, 12, 16),
+                    new THREE.CylinderGeometry(6, 6, 30, 16),
                     turretMat
                 );
-                turret.position.set(tp.x, 2 + 6, tp.z);
+                turret.position.set(tp.x, 4 + 15, tp.z);
                 turret.castShadow = true;
                 castle.add(turret);
 
-                // Conical roof
+                // Conical roof (scaled up)
                 const cone = new THREE.Mesh(
-                    new THREE.ConeGeometry(3.5, 5, 16),
+                    new THREE.ConeGeometry(8, 12, 16),
                     turretMat
                 );
-                cone.position.set(tp.x, 2 + 12 + 2.5, tp.z);
+                cone.position.set(tp.x, 4 + 30 + 6, tp.z);
                 cone.castShadow = true;
                 castle.add(cone);
 
-                // Flag hint
+                // Flag hint (scaled up)
                 const flagMat = new THREE.MeshStandardMaterial({ color: tp.color });
                 const flag = new THREE.Mesh(
-                    new THREE.BoxGeometry(0.1, 3, 2),
+                    new THREE.BoxGeometry(0.25, 7.5, 5),
                     flagMat
                 );
-                flag.position.set(tp.x, 2 + 12 + 5 + 1.5, tp.z + 1);
+                flag.position.set(tp.x, 4 + 30 + 12 + 4, tp.z + 2.5);
                 castle.add(flag);
             });
 
-            // 6. Central tower (taller, white with gold spire)
+            // 6. Central tower (taller, white with gold spire) - scaled up 2.5x
             const centralTower = new THREE.Mesh(
-                new THREE.CylinderGeometry(3, 3, 20, 16),
+                new THREE.CylinderGeometry(7.5, 7.5, 50, 16),
                 stoneMat
             );
-            centralTower.position.set(0, 2 + 10, -5);
+            centralTower.position.set(0, 4 + 25, -12.5);
             centralTower.castShadow = true;
             castle.add(centralTower);
 
-            // Gold spire on central tower
+            // Gold spire on central tower (scaled up)
             const goldMat = new THREE.MeshStandardMaterial({
                 color: goldSpire,
                 metalness: 0.8,
                 roughness: 0.3
             });
             const spire = new THREE.Mesh(
-                new THREE.ConeGeometry(4, 6, 16),
+                new THREE.ConeGeometry(10, 15, 16),
                 goldMat
             );
-            spire.position.set(0, 2 + 20 + 3, -5);
+            spire.position.set(0, 4 + 50 + 7.5, -12.5);
             spire.castShadow = true;
             castle.add(spire);
 
@@ -1771,7 +1781,7 @@
             castle.position.set(
                 stripStartX + stripLength * 0.4, // Between Luxor (west) and Bellagio (east)
                 0,
-                stripCenterZ + stripWidth / 2 + sidewalkWidth + 22 // South side parking lot
+                stripCenterZ + stripWidth / 2 + sidewalkWidth + 55 // South side parking lot (larger offset)
             );
 
             // Rotate to face Strip (entrance faces north/Strip)
@@ -1790,7 +1800,7 @@
             return castle;
         }
 
-        // Add illuminated windows to Vegas hotel buildings
+        // Add illuminated windows to Vegas hotel buildings (front and back faces only)
         function addHotelWindows(building, width, height, depth, color = 0xffffcc) {
             const windowMat = new THREE.MeshStandardMaterial({
                 color: color,
@@ -1799,7 +1809,7 @@
             });
 
             const windowSize = 0.8;
-            const windowSpacing = 2;
+            const windowSpacing = 1.5; // Denser grid (was 2)
 
             // Front and back faces
             for (const zSide of [1, -1]) {
@@ -1819,6 +1829,70 @@
                                 zSide * depth/2 + zSide * 0.05
                             );
                             if (zSide < 0) win.rotation.y = Math.PI;
+                            win.userData.isVegasWindow = true;
+                            building.add(win);
+                            vegasWindows.push(win);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Add illuminated windows to all 4 faces of Vegas hotel buildings
+        function addHotelWindowsAllSides(building, width, height, depth, color = 0xffffcc) {
+            const windowMat = new THREE.MeshStandardMaterial({
+                color: color,
+                emissive: color,
+                emissiveIntensity: 0.3
+            });
+
+            const windowSize = 0.8;
+            const windowSpacing = 1.5; // Dense grid like Metropolis buildings
+
+            // Front and back faces (Z axis)
+            for (const zSide of [1, -1]) {
+                const cols = Math.floor(width / windowSpacing) - 1;
+                const rows = Math.floor(height / windowSpacing) - 1;
+
+                for (let c = 0; c < cols; c++) {
+                    for (let r = 0; r < rows; r++) {
+                        if (Math.random() > 0.3) { // 70% windows lit
+                            const win = new THREE.Mesh(
+                                new THREE.PlaneGeometry(windowSize, windowSize),
+                                windowMat.clone()
+                            );
+                            win.position.set(
+                                -width/2 + windowSpacing + c * windowSpacing,
+                                windowSpacing + r * windowSpacing,
+                                zSide * depth/2 + zSide * 0.05
+                            );
+                            if (zSide < 0) win.rotation.y = Math.PI;
+                            win.userData.isVegasWindow = true;
+                            building.add(win);
+                            vegasWindows.push(win);
+                        }
+                    }
+                }
+            }
+
+            // Left and right faces (X axis)
+            for (const xSide of [1, -1]) {
+                const cols = Math.floor(depth / windowSpacing) - 1;
+                const rows = Math.floor(height / windowSpacing) - 1;
+
+                for (let c = 0; c < cols; c++) {
+                    for (let r = 0; r < rows; r++) {
+                        if (Math.random() > 0.3) { // 70% windows lit
+                            const win = new THREE.Mesh(
+                                new THREE.PlaneGeometry(windowSize, windowSize),
+                                windowMat.clone()
+                            );
+                            win.position.set(
+                                xSide * width/2 + xSide * 0.05,
+                                windowSpacing + r * windowSpacing,
+                                -depth/2 + windowSpacing + c * windowSpacing
+                            );
+                            win.rotation.y = xSide > 0 ? Math.PI / 2 : -Math.PI / 2;
                             win.userData.isVegasWindow = true;
                             building.add(win);
                             vegasWindows.push(win);
