@@ -13,13 +13,19 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 - **Phase:** 2 of 6 (Iconic Landmarks - COMPLETE)
 - **Plan:** 5 of 13 completed
 - **Status:** Phase 2 complete, ready for Phase 3
-- **Last activity:** 2026-01-26 - Completed quick task 001: Fix Vegas zone (Strip layout, hotel windows, HUD flicker)
+- **Last activity:** 2026-01-26 - Completed quick task 002: Vegas hotels larger, many windows, welcome sign
 
 **Progress:** █████░░░░░░░░░░░ 38% (5/13 plans across all phases)
 
 ## Recent Progress
 
 ### Quick Tasks
+- quick-002: Vegas hotels scaled 2.5x larger, dense window grids, Welcome to Las Vegas sign
+- All 5 landmarks scaled up: Luxor (75 height), Paris (~95), Bellagio (90 tower), Caesars (50), Excalibur (55 turrets)
+- addHotelWindowsAllSides() adds windows on all 4 faces (spacing 1.5 for dense grid)
+- mkWelcomeSign() creates iconic diamond-shaped sign with 20 chase lights
+- Welcome sign positioned at Vegas entrance (stripStartX - 12)
+- 2 commits: dd64a08, 72194aa
 - quick-001: Fixed Vegas zone issues (Strip layout, hotel windows, HUD temperature)
 - Strip reoriented to continue straight from highway (east-west along X axis)
 - Hotels repositioned: south side (Luxor, Excalibur, Bellagio), north side (Caesars, Paris)
@@ -326,6 +332,7 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 002 | Vegas hotels 2.5x larger, dense windows, Welcome sign | 2026-01-26 | 72194aa | [002-vegas-hotels-larger-many-windows-welcome](./quick/002-vegas-hotels-larger-many-windows-welcome/) |
 | 001 | Fix Vegas zone - Strip layout, hotel windows, HUD flicker | 2026-01-26 | e9b6110 | [001-fix-vegas-zone-strip-layout-hotels-windo](./quick/001-fix-vegas-zone-strip-layout-hotels-windo/) |
 
 ## Open Issues
@@ -340,6 +347,11 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 
 | Date | Decision | Context |
 |------|----------|---------|
+| 2026-01-26 | 2.5x scale factor for Vegas landmarks | Creates real Vegas hotel scale, dominates skyline |
+| 2026-01-26 | Window spacing 1.5 units (was 2) | Denser grid matches Metropolis buildings |
+| 2026-01-26 | addHotelWindowsAllSides for 4-face windows | Consistent window coverage from all angles |
+| 2026-01-26 | Welcome sign at stripStartX - 12 | Visible when approaching from highway |
+| 2026-01-26 | 20 chase lights on welcome sign | Classic Vegas animated signage effect |
 | 2026-01-25 | Excalibur alternating red/blue corner turrets | Signature colorful look, visual balance front-left red, front-right blue |
 | 2026-01-25 | Gold spire on Excalibur central tower | Distinctive silhouette element, Vegas glamour on white tower |
 | 2026-01-25 | Excalibur at 0.35 strip length | Good spacing between Luxor (south) and Bellagio (north) on west side |
@@ -439,7 +451,7 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 ## Session Continuity
 
 - **Last session:** 2026-01-26
-- **Stopped at:** Completed quick-001-PLAN.md (Vegas Zone Fixes)
+- **Stopped at:** Completed quick-002-PLAN.md (Vegas Hotels Larger, Windows, Welcome Sign)
 - **Resume file:** None
 - **Next:** v2-03-PLAN.md (Vegas Night Lighting) - Phase 3
 
