@@ -213,6 +213,8 @@
 
         // Vegas weather - always sunny, independent of Metropolis
         let vegasWeatherState = 'sunny'; // Vegas never changes from sunny
+        let vegasTemperature = 95 + Math.floor(Math.random() * 20); // Cached temp for stable HUD
+        let vegasTemperatureTimer = 0; // Timer for slow temperature updates
 
         // Day/night cycle system
         let timeOfDay = 0.25; // 0-1 where 0=midnight, 0.25=dawn, 0.5=noon, 0.75=dusk
@@ -8247,13 +8249,20 @@
         
         function updWeather(t) {
             weatherTimer += 0.016;
-            
+
             // Random weather changes
             if (weatherTimer > nextWeatherChange) {
                 changeWeather();
                 weatherTimer = 0;
             }
-            
+
+            // Update Vegas temperature slowly (every 30 seconds)
+            vegasTemperatureTimer += 0.016;
+            if (vegasTemperatureTimer > 30) {
+                vegasTemperature = Math.max(90, Math.min(115, vegasTemperature + Math.floor(Math.random() * 5) - 2));
+                vegasTemperatureTimer = 0;
+            }
+
             // Update storm effects
             if (weatherState === 'storm') {
                 // Lightning flashes
@@ -8261,11 +8270,11 @@
                     triggerLightning();
                     lastLightning = t;
                 }
-                
+
                 // Update flying debris
                 updStormDebris(t);
             }
-            
+
             // Update weather indicator
             updateWeatherUI();
         }
@@ -8495,8 +8504,8 @@
             if (weatherEl) {
                 const inVegas = isInVegasZone(cam.position.x, cam.position.z);
                 if (inVegas) {
-                    // Vegas always shows sunny and hot
-                    weatherEl.textContent = '☀️ Sunny ' + Math.floor(95 + Math.random() * 20) + '°F';
+                    // Vegas always shows sunny and hot - use stable cached temperature
+                    weatherEl.textContent = '☀️ Sunny ' + vegasTemperature + '°F';
                 } else {
                     // Metropolis shows current weather
                     const icons = { 'sunny': '☀️ Sunny', 'cloudy': '☁️ Cloudy', 'rain': '🌧️ Rain', 'storm': '⛈️ Storm' };
