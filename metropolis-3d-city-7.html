@@ -2200,10 +2200,10 @@
                 castle.add(flag);
             });
 
-            // 6. Central tower (taller, white with gold spire) - scaled up 2.5x
+            // 6. Central tower (taller, green with gold spire) - scaled up 2.5x
             const centralTower = new THREE.Mesh(
                 new THREE.CylinderGeometry(7.5, 7.5, 50, 16),
-                stoneMat
+                greenMat
             );
             centralTower.position.set(0, 4 + 25, -12.5);
             centralTower.castShadow = true;
