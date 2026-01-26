@@ -19,6 +19,14 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 
 ## Recent Progress
 
+### Quick Tasks
+- quick-001: Fixed Vegas zone issues (Strip layout, hotel windows, HUD temperature)
+- Strip reoriented to continue straight from highway (east-west along X axis)
+- Hotels repositioned: south side (Luxor, Excalibur, Bellagio), north side (Caesars, Paris)
+- Added vegasWindows[] with illuminated windows on Excalibur and Bellagio
+- Fixed HUD temperature flicker with cached vegasTemperature variable
+- 3 commits: 6948093, db20551, e9b6110
+
 ### v2.0 In Progress
 - v2-02-03: Excalibur Castle completing all 5 Vegas landmarks (PHASE COMPLETE)
 - mkExcaliburCastle() with medieval castle, battlements, entry gate
@@ -341,7 +349,10 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 | 2026-01-25 | Pyramid rotated 45 degrees | Faces align with cardinal directions for natural viewing angles |
 | 2026-01-25 | Simplified Eiffel with 4 angled legs | Recognizable silhouette without complex lattice geometry |
 | 2026-01-25 | vegasLandmarks[] array for lighting integration | Phase 3 can iterate landmarks without scene graph search |
-| 2026-01-25 | Strip perpendicular to highway (north-south) | Creates natural T-intersection, maximizes casino frontage on both sides |
+| 2026-01-26 | Strip inline with highway (east-west along X axis) | Road continues straight from highway, no T-intersection |
+| 2026-01-26 | Hotels on north/south sides of Strip | South: Luxor (0.15), Excalibur (0.4), Bellagio (0.65); North: Caesars (0.3), Paris (0.5) |
+| 2026-01-26 | Vegas temperature cached in global variable | Updates every 30 seconds instead of every frame for stable HUD |
+| 2026-01-26 | Windows only on Excalibur and Bellagio | Architectural shapes (pyramid, tower) don't suit window grids |
 | 2026-01-25 | Double yellow center line on Strip | Indicates no-passing zone, matches real Vegas Strip traffic rules |
 | 2026-01-25 | Wide sidewalks (4 units vs city 2 units) | Vegas Strip has very wide sidewalks for tourist crowds |
 | 2026-01-25 | Weather zone isolation via position checks | Cleanest implementation, Vegas stays sunny regardless of Metropolis weather |
@@ -403,12 +414,28 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 | 2025-01-23 | 5 features chosen for visual variety | Day/night, birds, performers, subway, rooftops |
 | 2025-01-23 | Audio out of scope | Focus on visual observation |
 
+## Session Notes
+
+### 2026-01-26 - Quick Task 001 (Vegas Zone Fixes)
+- Fixed HUD temperature flicker: added vegasTemperature/vegasTemperatureTimer global variables
+- Temperature now cached and updates every 30 seconds instead of every frame
+- Added illuminated windows to Excalibur (castle body 30x12) and Bellagio (center 10x22, tower 6x30)
+- vegasWindows[] array tracks window meshes, updVegasWindows() handles subtle flicker animation
+- Reoriented Strip from north-south (Z-axis) to east-west (X-axis) continuing from highway
+- No more T-intersection - seamless road continuation from Metropolis
+- Landmarks repositioned to north/south sides of Strip
+- South side: Luxor (0.15), Excalibur (0.4), Bellagio (0.65)
+- North side: Caesars (0.3), Paris Eiffel (0.5)
+- Temperature billboard moved to Strip entrance on south side
+- 3 tasks completed, 3 commits: 6948093, db20551, e9b6110
+- Execution time: 4 minutes 44 seconds
+
 ## Session Continuity
 
-- **Last session:** 2026-01-25
-- **Stopped at:** Completed v2-02-03-PLAN.md (Excalibur Castle)
+- **Last session:** 2026-01-26
+- **Stopped at:** Completed quick-001-PLAN.md (Vegas Zone Fixes)
 - **Resume file:** None
 - **Next:** v2-03-PLAN.md (Vegas Night Lighting) - Phase 3
 
 ---
-*Last updated: 2026-01-25*
+*Last updated: 2026-01-26*
