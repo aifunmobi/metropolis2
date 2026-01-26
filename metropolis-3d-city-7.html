@@ -194,6 +194,7 @@
         // Vegas infrastructure
         let theStrip = null;
         let temperatureBillboard = null;
+        let welcomeSign = null; // Welcome to Fabulous Las Vegas sign
 
         // Vegas landmarks for lighting system (Phase 3)
         let vegasLandmarks = [];
@@ -322,6 +323,7 @@
             prog(54, 'The Strip...');
             theStrip = mkTheStrip();
             temperatureBillboard = mkTemperatureBillboard();
+            welcomeSign = mkWelcomeSign();
             mkLuxorPyramid();
             mkParisEiffelTower();
             mkBellagio();
@@ -1011,6 +1013,159 @@
                     const intensity = 0.5 + 0.5 * Math.sin(phase);
                     child.material.color.setRGB(intensity, intensity * 0.2, intensity * 0.2);
                 }
+            });
+        }
+
+        // Create the iconic "Welcome to Fabulous Las Vegas" sign
+        function mkWelcomeSign() {
+            const sign = new THREE.Group();
+
+            // Diamond-shaped main sign (rotated square)
+            // Real sign is ~25ft tall, scale to ~15 units for visibility
+            const diamondSize = 12;
+            const diamondMat = new THREE.MeshStandardMaterial({
+                color: 0xcc0000,  // Red
+                roughness: 0.5
+            });
+
+            // Main diamond shape using rotated box
+            const diamond = new THREE.Mesh(
+                new THREE.BoxGeometry(diamondSize, diamondSize, 0.5),
+                diamondMat
+            );
+            diamond.rotation.z = Math.PI / 4; // Rotate 45 degrees
+            diamond.position.y = 14;
+            sign.add(diamond);
+
+            // Inner diamond (slightly smaller, white)
+            const innerDiamond = new THREE.Mesh(
+                new THREE.BoxGeometry(diamondSize * 0.75, diamondSize * 0.75, 0.6),
+                new THREE.MeshStandardMaterial({ color: 0xffffff })
+            );
+            innerDiamond.rotation.z = Math.PI / 4;
+            innerDiamond.position.y = 14;
+            sign.add(innerDiamond);
+
+            // Blue accent at bottom of diamond
+            const blueAccent = new THREE.Mesh(
+                new THREE.BoxGeometry(diamondSize * 0.5, diamondSize * 0.25, 0.7),
+                new THREE.MeshStandardMaterial({ color: 0x0033aa })
+            );
+            blueAccent.position.y = 9;
+            sign.add(blueAccent);
+
+            // Canvas texture for text
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+
+            // Draw sign text
+            ctx.fillStyle = '#cc0000';
+            ctx.fillRect(0, 0, 512, 512);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 44px serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('WELCOME', 256, 130);
+            ctx.font = 'italic 54px serif';
+            ctx.fillText('to Fabulous', 256, 210);
+            ctx.font = 'bold 90px serif';
+            ctx.fillText('LAS VEGAS', 256, 330);
+            ctx.font = 'bold 40px serif';
+            ctx.fillText('NEVADA', 256, 400);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            const textPlane = new THREE.Mesh(
+                new THREE.PlaneGeometry(9, 9),
+                new THREE.MeshBasicMaterial({ map: texture, transparent: true })
+            );
+            textPlane.position.set(0, 14, 0.4);
+            sign.add(textPlane);
+
+            // Back side
+            const textPlaneBack = textPlane.clone();
+            textPlaneBack.rotation.y = Math.PI;
+            textPlaneBack.position.z = -0.4;
+            sign.add(textPlaneBack);
+
+            // Support poles
+            const poleMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
+            for (const xOff of [-2.5, 2.5]) {
+                const pole = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.25, 0.25, 10, 8),
+                    poleMat
+                );
+                pole.position.set(xOff, 5, 0);
+                sign.add(pole);
+            }
+
+            // Circle medallion at top
+            const circleMat = new THREE.MeshStandardMaterial({
+                color: 0xffd700,
+                metalness: 0.7
+            });
+            const circle = new THREE.Mesh(
+                new THREE.CircleGeometry(1.8, 16),
+                circleMat
+            );
+            circle.position.set(0, 22.5, 0.3);
+            sign.add(circle);
+
+            // Back of circle
+            const circleBack = new THREE.Mesh(
+                new THREE.CircleGeometry(1.8, 16),
+                circleMat
+            );
+            circleBack.rotation.y = Math.PI;
+            circleBack.position.set(0, 22.5, -0.3);
+            sign.add(circleBack);
+
+            // Chase lights around perimeter (20 bulbs)
+            const lights = [];
+            const bulbGeo = new THREE.SphereGeometry(0.25, 8, 8);
+
+            // Position bulbs around diamond perimeter
+            const numBulbs = 20;
+            for (let i = 0; i < numBulbs; i++) {
+                const angle = (i / numBulbs) * Math.PI * 2 - Math.PI / 4;
+                const radius = diamondSize * 0.55;
+                const bulb = new THREE.Mesh(bulbGeo, new THREE.MeshBasicMaterial({ color: 0xffff00 }));
+                bulb.position.set(
+                    Math.cos(angle) * radius,
+                    14 + Math.sin(angle) * radius,
+                    0.5
+                );
+                bulb.userData.lightIndex = i;
+                lights.push(bulb);
+                sign.add(bulb);
+            }
+
+            sign.userData.lights = lights;
+            sign.userData.chasePhase = 0;
+
+            // Position at Vegas entrance (where highway meets Strip)
+            const stripStartX = theStrip.userData.startX;
+            sign.position.set(
+                stripStartX - 12, // Just before Strip starts
+                0,
+                14 // South side of road, visible when approaching
+            );
+
+            scene.add(sign);
+            return sign;
+        }
+
+        // Update welcome sign chase lights
+        function updWelcomeSign() {
+            if (!welcomeSign) return;
+            const lights = welcomeSign.userData.lights;
+            welcomeSign.userData.chasePhase += 0.15;
+
+            lights.forEach((bulb, i) => {
+                // Create a classic chase light pattern - groups of 3 lit bulbs rotating around
+                const phase = (welcomeSign.userData.chasePhase + i * 0.5) % (Math.PI * 2);
+                const brightness = Math.sin(phase) > 0.3 ? 1 : 0.15;
+                bulb.material.color.setHex(brightness > 0.5 ? 0xffff00 : 0x444400);
             });
         }
 
@@ -9363,6 +9518,7 @@
             updGridlock(t);
             updWeather(t);
             if (temperatureBillboard) updTemperatureBillboard(temperatureBillboard, t);
+            updWelcomeSign();
             chkDiscoveries();
             if (raining) updRain();
             updMM();
