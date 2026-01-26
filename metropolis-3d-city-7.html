@@ -1454,6 +1454,103 @@
             });
         }
 
+        // Create big neon sign for Vegas hotels
+        function mkHotelNeonSign(name, color = 0xff00ff, width = 40, height = 12) {
+            const sign = new THREE.Group();
+
+            // Create canvas for text
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+
+            // Background (dark/transparent)
+            ctx.fillStyle = 'rgba(20, 20, 30, 0.8)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Glowing text effect
+            const r = (color >> 16) & 0xff;
+            const g = (color >> 8) & 0xff;
+            const b = color & 0xff;
+            const colorStr = `rgb(${r},${g},${b})`;
+
+            // Glow layers
+            ctx.shadowColor = colorStr;
+            ctx.shadowBlur = 30;
+            ctx.fillStyle = colorStr;
+            ctx.font = 'bold 72px Arial Black, Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Draw multiple times for glow effect
+            for (let i = 0; i < 3; i++) {
+                ctx.fillText(name, canvas.width / 2, canvas.height / 2);
+            }
+
+            // Bright center
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(name, canvas.width / 2, canvas.height / 2);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+
+            // Main sign face
+            const signMat = new THREE.MeshBasicMaterial({
+                map: texture,
+                transparent: true,
+                side: THREE.DoubleSide
+            });
+
+            const signMesh = new THREE.Mesh(
+                new THREE.PlaneGeometry(width, height),
+                signMat
+            );
+            sign.add(signMesh);
+
+            // Add frame with neon tubes
+            const frameMat = new THREE.MeshBasicMaterial({ color: color });
+            const tubeRadius = 0.3;
+
+            // Top tube
+            const topTube = new THREE.Mesh(
+                new THREE.CylinderGeometry(tubeRadius, tubeRadius, width + 2, 8),
+                frameMat
+            );
+            topTube.rotation.z = Math.PI / 2;
+            topTube.position.y = height / 2 + tubeRadius;
+            sign.add(topTube);
+
+            // Bottom tube
+            const bottomTube = new THREE.Mesh(
+                new THREE.CylinderGeometry(tubeRadius, tubeRadius, width + 2, 8),
+                frameMat
+            );
+            bottomTube.rotation.z = Math.PI / 2;
+            bottomTube.position.y = -height / 2 - tubeRadius;
+            sign.add(bottomTube);
+
+            // Side tubes
+            for (const side of [-1, 1]) {
+                const sideTube = new THREE.Mesh(
+                    new THREE.CylinderGeometry(tubeRadius, tubeRadius, height + 2, 8),
+                    frameMat
+                );
+                sideTube.position.x = side * (width / 2 + tubeRadius);
+                sign.add(sideTube);
+            }
+
+            // Add point light for glow effect
+            const glowLight = new THREE.PointLight(color, 2, 50);
+            glowLight.position.z = 2;
+            sign.add(glowLight);
+
+            sign.userData.isNeonSign = true;
+            sign.userData.color = color;
+
+            return sign;
+        }
+
         function mkLuxorPyramid() {
             const pyramid = new THREE.Group();
 
@@ -1507,6 +1604,12 @@
             );
             sphinxHead.position.set(0, 3.6, 40);
             pyramid.add(sphinxHead);
+
+            // Big neon sign on top
+            const luxorSign = mkHotelNeonSign('LUXOR', 0xffdd00, 35, 10);
+            luxorSign.position.set(0, 80, 0); // Above pyramid peak
+            luxorSign.rotation.y = Math.PI; // Face the road
+            pyramid.add(luxorSign);
 
             // Position on south side of Strip (positive Z), near west end
             const stripStartX = theStrip.userData.startX;
@@ -1643,6 +1746,11 @@
             );
             antenna.position.y = legHeight + 2 + middleHeight + spireHeight + 2.25;
             tower.add(antenna);
+
+            // Big neon sign near top
+            const parisSign = mkHotelNeonSign('PARIS', 0xff66cc, 30, 8);
+            parisSign.position.set(0, legHeight + middleHeight + 5, 0);
+            tower.add(parisSign);
 
             // Position on north side of Strip (negative Z), middle
             const stripStartX = theStrip.userData.startX;
@@ -1819,6 +1927,12 @@
             );
             westBorder.position.set(-lakeWidth / 2 - borderThickness / 2, borderHeight / 2, 45);
             bellagio.add(westBorder);
+
+            // Big neon sign on top of tower
+            const bellagioSign = mkHotelNeonSign('BELLAGIO', 0x00ffff, 45, 10);
+            bellagioSign.position.set(0, 75, -20); // Top of main tower
+            bellagioSign.rotation.y = Math.PI; // Face the road
+            bellagio.add(bellagioSign);
 
             // Position on south side of Strip (positive Z), east of Luxor
             const stripStartX = theStrip.userData.startX;
@@ -2001,6 +2115,11 @@
             foundation.position.set(0, 0.25, 15);
             foundation.receiveShadow = true;
             caesars.add(foundation);
+
+            // Big neon sign on top
+            const caesarsSign = mkHotelNeonSign('CAESARS PALACE', 0xffd700, 55, 10);
+            caesarsSign.position.set(0, 55, 0); // Top of main building
+            caesars.add(caesarsSign);
 
             // Position on north side of Strip (negative Z), west of Eiffel Tower
             const stripStartX = theStrip.userData.startX;
@@ -2222,6 +2341,12 @@
             spire.position.set(0, 4 + 50 + 7.5, -12.5);
             spire.castShadow = true;
             castle.add(spire);
+
+            // Big neon sign on front of castle
+            const excaliburSign = mkHotelNeonSign('EXCALIBUR', 0xff00ff, 40, 10);
+            excaliburSign.position.set(0, 50, 25); // Above main entrance
+            excaliburSign.rotation.y = Math.PI; // Face the road
+            castle.add(excaliburSign);
 
             // Position on south side of Strip (positive Z), between Luxor and Bellagio
             const stripStartX = theStrip.userData.startX;
@@ -5062,7 +5187,9 @@
 
                             // Dispatch wreckers for each stuck car (max 4)
                             const toTow = gridlockCars.slice(0, 4);
-                            notify(`🚨 Intersection gridlock! Dispatching police + ${toTow.length} wreckers!`, 4000);
+                            if (!isInVegasZone(cam.position.x, cam.position.z)) {
+                                notify(`🚨 Intersection gridlock! Dispatching police + ${toTow.length} wreckers!`, 4000);
+                            }
 
                             toTow.forEach((stuckCar, i) => {
                                 stuckCar.userData.wreckerAssigned = true;
@@ -5108,7 +5235,9 @@
                         newWrecker.position.set(edge, 0, longStuck.position.z);
                         scene.add(newWrecker);
                         wreckers.push(newWrecker);
-                        notify('🚛 Wrecker dispatched for stuck vehicle!', 3000);
+                        if (!isInVegasZone(cam.position.x, cam.position.z)) {
+                            notify('🚛 Wrecker dispatched for stuck vehicle!', 3000);
+                        }
                     }
                 }
 
@@ -5123,7 +5252,9 @@
                     newWrecker.position.set(edge, 0, omnibus.position.z);
                     scene.add(newWrecker);
                     wreckers.push(newWrecker);
-                    notify('🚛 Wrecker dispatched for stuck omnibus!', 3000);
+                    if (!isInVegasZone(cam.position.x, cam.position.z)) {
+                        notify('🚛 Wrecker dispatched for stuck omnibus!', 3000);
+                    }
                 }
             }
 
@@ -5211,7 +5342,9 @@
                                 policeCar.userData.respondingToGridlock = false;
                                 policeCar.userData.gridlockCenter = null;
                                 policeCar.userData.returningToRoad = true;
-                                notify('✅ Intersection cleared!', 2500);
+                                if (!isInVegasZone(cam.position.x, cam.position.z)) {
+                                    notify('✅ Intersection cleared!', 2500);
+                                }
                             }
                         }
                     }
@@ -7590,8 +7723,11 @@
             scene.add(garbageTruck);
             garbageTruckActive = true;
             suctionActive = true;
-            
-            notify('🚛💨 GARBAGE TRUCK! Watch out for the suction!', 4000);
+
+            // Only notify if player is not in Vegas
+            if (!isInVegasZone(cam.position.x, cam.position.z)) {
+                notify('🚛💨 GARBAGE TRUCK! Watch out for the suction!', 4000);
+            }
         }
         
         function updGarbageTruck(t) {
@@ -7830,7 +7966,7 @@
                 garbageTruck = null;
                 garbageTruckActive = false;
                 suctionActive = false;
-                if (truck.userData.suckedPeds > 0) {
+                if (truck.userData.suckedPeds > 0 && !isInVegasZone(cam.position.x, cam.position.z)) {
                     notify(`🚛 Garbage truck left. Collected ${truck.userData.suckedPeds} pedestrians!`, 3000);
                 }
             }
@@ -7858,37 +7994,40 @@
         function triggerRandomEvent(t) {
             const events = ['parade', 'semiTruck', 'iceCreamTruck', 'dogWalker', 'streaker', 'weddingCortege', 'brokenDown'];
             const eventType = events[Math.floor(Math.random() * events.length)];
-            
+
             specialEvent = { type: eventType, startTime: t, entities: [] };
-            
+
+            // Don't show Metropolis event notifications when player is in Vegas
+            const inVegas = isInVegasZone(cam.position.x, cam.position.z);
+
             switch(eventType) {
                 case 'parade':
                     createParade();
-                    notify('🎉 PARADE! A parade is passing through!', 4000);
+                    if (!inVegas) notify('🎉 PARADE! A parade is passing through!', 4000);
                     break;
                 case 'semiTruck':
                     createSemiTruck();
-                    notify('🚛 Wide Load! Semi truck coming through!', 3000);
+                    if (!inVegas) notify('🚛 Wide Load! Semi truck coming through!', 3000);
                     break;
                 case 'iceCreamTruck':
                     createIceCreamTruck();
-                    notify('🍦 Ice Cream Truck! Playing music...', 3000);
+                    if (!inVegas) notify('🍦 Ice Cream Truck! Playing music...', 3000);
                     break;
                 case 'dogWalker':
                     createDogWalker();
-                    notify('🐕 Dog Walker! Someone is walking lots of dogs!', 3000);
+                    if (!inVegas) notify('🐕 Dog Walker! Someone is walking lots of dogs!', 3000);
                     break;
                 case 'streaker':
                     createStreaker();
-                    notify('😱 STREAKER! Someone is running through the city!', 3000);
+                    if (!inVegas) notify('😱 STREAKER! Someone is running through the city!', 3000);
                     break;
                 case 'weddingCortege':
                     createWeddingCortege();
-                    notify('💒 Wedding! Newlyweds passing through!', 3000);
+                    if (!inVegas) notify('💒 Wedding! Newlyweds passing through!', 3000);
                     break;
                 case 'brokenDown':
                     createBrokenDownCar();
-                    notify('🔧 Breakdown! A car broke down in the road!', 3000);
+                    if (!inVegas) notify('🔧 Breakdown! A car broke down in the road!', 3000);
                     break;
             }
         }
@@ -10570,11 +10709,15 @@
                         policeCar.userData.respondingToGridlock = true;
                         policeCar.userData.gridlockTarget = stuckEntity;
                         trafficCop = policeCar; // Reuse trafficCop variable to track response
-                        notify('🚔 Police car dispatched to assist!', 2500);
+                        if (!isInVegasZone(cam.position.x, cam.position.z)) {
+                            notify('🚔 Police car dispatched to assist!', 2500);
+                        }
                     } else {
                         // Fallback to traffic cop pedestrian if police is busy
                         spawnTrafficCop(stuckEntity);
-                        notify('🚔 Traffic cop dispatched to clear gridlock!', 2500);
+                        if (!isInVegasZone(cam.position.x, cam.position.z)) {
+                            notify('🚔 Traffic cop dispatched to clear gridlock!', 2500);
+                        }
                     }
                 }
             }
