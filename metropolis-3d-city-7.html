@@ -105,9 +105,22 @@
     </script>
     <script type="module">
         import * as THREE from 'three';
-        
+
+        // ============================================================================
+        // METROPOLIS 3D CITY EXPLORER
+        // ============================================================================
+        // A single-file Three.js city simulation featuring:
+        // - Metropolis: Main city with buildings, traffic, pedestrians, weather
+        // - Vegas Zone: Desert expansion with hotels, Strip, tourists
+        // ============================================================================
+
+        // ============================================================================
+        // SECTION 1: UTILITIES & CONFIGURATION
+        // ============================================================================
+
         const $ = id => document.getElementById(id);
-        
+
+        // --- City Grid Configuration ---
         const GRID = {
             cellSize: 24,
             roadWidth: 8,
@@ -175,6 +188,11 @@
             figuresPerParty: [4, 8]    // Min/max figures at parties
         };
 
+        // ============================================================================
+        // SECTION 2: GLOBAL STATE VARIABLES
+        // ============================================================================
+
+        // --- Three.js Core ---
         let scene, cam, renderer, clock;
         let sunLight = null;      // Directional light reference
         let ambientLight = null;  // Ambient light reference
@@ -291,6 +309,10 @@
             highwayExtension: 80              // Highway continues past Vegas into distance
         };
 
+        // ============================================================================
+        // SECTION 3: INITIALIZATION
+        // ============================================================================
+
         function prog(p, t) {
             $('prog').style.width = p + '%';
             $('ltxt').textContent = t.toUpperCase();
@@ -378,6 +400,10 @@
             animate();
         }
 
+        // ============================================================================
+        // SECTION 4: LIGHTING & CELESTIAL BODIES
+        // ============================================================================
+
         function mkLighting() {
             ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
             scene.add(ambientLight);
@@ -450,6 +476,10 @@
                 moonMesh.add(crater);
             });
         }
+
+        // ============================================================================
+        // SECTION 5: CITY INFRASTRUCTURE (Metropolis)
+        // ============================================================================
 
         function mkCityLayout() {
             const ground = new THREE.Mesh(
@@ -574,6 +604,10 @@
                 }
             }
         }
+
+        // ============================================================================
+        // SECTION 6: VEGAS ZONE (Highway, Strip, Hotels, Stores, Tourists)
+        // ============================================================================
 
         function mkVegasZoneGround() {
             // Create desert ground extending from Metropolis edge past Vegas (includes highway extension)
@@ -2819,6 +2853,10 @@
             });
         }
 
+        // ============================================================================
+        // SECTION 7: BUILDINGS & STREETLIGHTS
+        // ============================================================================
+
         function mkStreetlights() {
             const poleHeight = 6;
             const armLength = 2;
@@ -4734,6 +4772,10 @@
             });
         }
 
+        // ============================================================================
+        // SECTION 8: TRAFFIC SYSTEM (Lights, Cars, Emergency Vehicles, Taxis)
+        // ============================================================================
+
         function mkTrafficLights() {
             // Only create traffic lights at intersections with crosswalks
             for (const intersection of signalizedIntersections) {
@@ -4897,6 +4939,10 @@
             // Create subway line
             createSubwayLine();
         }
+
+        // ============================================================================
+        // SECTION 9: PUBLIC TRANSIT (Omnibus, Subway)
+        // ============================================================================
 
         let omnibus = null;
         let omnibusStops = [];
@@ -6828,6 +6874,10 @@
             }
         }
 
+        // ============================================================================
+        // SECTION 10: PEDESTRIANS & BICYCLES
+        // ============================================================================
+
         function mkPeds() {
             const cols = [0xff6b6b, 0x4ecdc4, 0xffe66d, 0x95e1d3, 0xf38181, 0xaa96da, 0x6c5ce7, 0xfdcb6e];
             const innerSize = GRID.cellSize - GRID.roadWidth;
@@ -7663,7 +7713,9 @@
             });
         }
 
-        // ============ GARBAGE TRUCK SYSTEM ============
+        // ============================================================================
+        // SECTION 11: SPECIAL VEHICLES & EVENTS (Garbage Truck, Parades, etc.)
+        // ============================================================================
 
         function mkGarbageTruck() {
             const g = new THREE.Group();
@@ -9302,6 +9354,10 @@
             }
         }
 
+        // ============================================================================
+        // SECTION 12: WEATHER SYSTEM (Rain, Storm, Lightning)
+        // ============================================================================
+
         function isInVegasZone(x, z) {
             // Vegas zone starts at VEGAS_CFG.zoneStartX and extends east
             return x > VEGAS_CFG.zoneStartX - 10; // 10 unit buffer for smooth transition
@@ -9809,6 +9865,10 @@
             });
         }
 
+        // ============================================================================
+        // SECTION 13: DAY/NIGHT CYCLE & LIGHTING UPDATES
+        // ============================================================================
+
         function updDayNight(dt) {
             // Advance time (wraps at 1.0)
             timeOfDay = (timeOfDay + dayNightSpeed * dt) % 1.0;
@@ -10263,6 +10323,10 @@
                 });
             });
         }
+
+        // ============================================================================
+        // SECTION 14: MAIN ANIMATION LOOP & UPDATE FUNCTIONS
+        // ============================================================================
 
         function animate() {
             requestAnimationFrame(animate);
