@@ -8899,7 +8899,7 @@
             scene.add(ufo);
             
             const balloon = mkBalloon();
-            balloon.position.set(5, 50, -30);
+            balloon.position.set(5, 85, -30);  // High enough to clear buildings
             balloon.userData.secret = '🎈 Hot Air Balloon';
             balloon.userData.type = 'balloon';
             secrets.push(balloon);
@@ -11562,8 +11562,8 @@
                     s.traverse(c => { if (c.userData.ufoL) c.material.color.setHex(Math.sin(t * 5 + c.userData.ph) > 0 ? 0x00ff00 : 0x004400); }); 
                 }
                 if (s.userData.type === 'balloon') {
-                    s.position.y = 50 + Math.sin(t * 0.2) * 6;
-                    s.position.x = 5 + Math.sin(t * 0.1) * 10;
+                    s.position.y = 85 + Math.sin(t * 0.2) * 6;  // Higher to clear buildings
+                    s.position.x = 5 + Math.sin(t * 0.1) * 15;  // Wider drift
                     s.rotation.y += 0.003;
                     // Cycle ads every 5 seconds
                     const newAdIndex = Math.floor(t / 5) % BALLOON_ADS.length;
