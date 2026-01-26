@@ -283,7 +283,7 @@
             zoneWidth: 120,                   // Vegas zone width (expanded for landmarks)
             zoneDepth: 100,                   // Vegas zone depth (Z axis)
             stripWidth: 12,                   // The Strip is wider than regular roads
-            stripLength: 140,                 // Length of The Strip (doubled for real Vegas spacing)
+            stripLength: 350,                 // Length of The Strip (long enough for spaced hotels)
             highwayWidth: 10,                 // Highway wider than city roads
             highwayLength: 100,               // Length of connecting highway (longer journey)
             highwayExtension: 80              // Highway continues past Vegas into distance
@@ -1517,7 +1517,7 @@
             const stripLength = stripEndX - stripStartX;
 
             pyramid.position.set(
-                stripStartX + stripLength * 0.12, // Near entrance of Strip
+                stripStartX + stripLength * 0.10, // Near entrance of Strip
                 0,
                 stripCenterZ + stripWidth / 2 + sidewalkWidth + 80 // South side - well back from road
             );
@@ -1653,7 +1653,7 @@
             const stripLength = stripEndX - stripStartX;
 
             tower.position.set(
-                stripStartX + stripLength * 0.35, // Toward entrance
+                stripStartX + stripLength * 0.25, // Early on Strip (north side)
                 0,
                 stripCenterZ - stripWidth / 2 - sidewalkWidth - 70 // North side - well back from road
             );
@@ -1829,7 +1829,7 @@
             const stripLength = stripEndX - stripStartX;
 
             bellagio.position.set(
-                stripStartX + stripLength * 0.55, // Middle-east of Strip
+                stripStartX + stripLength * 0.50, // Middle of Strip (south side)
                 0,
                 stripCenterZ + stripWidth / 2 + sidewalkWidth + 90 // South side - well back from road
             );
@@ -2011,7 +2011,7 @@
             const stripLength = stripEndX - stripStartX;
 
             caesars.position.set(
-                stripStartX + stripLength * 0.65, // Past middle of Strip
+                stripStartX + stripLength * 0.75, // Far end of Strip (north side)
                 0,
                 stripCenterZ - stripWidth / 2 - sidewalkWidth - 100 // North side - well back from road
             );
@@ -2221,7 +2221,7 @@
             const stripLength = stripEndX - stripStartX;
 
             castle.position.set(
-                stripStartX + stripLength * 0.30, // Between Luxor and Bellagio
+                stripStartX + stripLength * 0.30, // Between Luxor and Bellagio (south side)
                 0,
                 stripCenterZ + stripWidth / 2 + sidewalkWidth + 90 // South side - well back from road
             );
@@ -2585,13 +2585,18 @@
             }
         }
 
-        // Update Vegas hotel windows with occasional flickering
+        // Update Vegas hotel windows - 20% randomly turn on/off
         function updVegasWindows() {
             vegasWindows.forEach(win => {
-                if (Math.random() < 0.001) { // Occasional flicker
-                    const mat = win.material;
-                    const lit = Math.random() > 0.3;
-                    mat.emissiveIntensity = lit ? 0.3 + Math.random() * 0.2 : 0;
+                // 0.3% chance per frame to toggle (noticeable but not too fast)
+                if (Math.random() < 0.003) {
+                    const wasLit = win.userData.isLit;
+                    // 20% chance to change state
+                    if (Math.random() < 0.2) {
+                        const nowLit = !wasLit;
+                        win.userData.isLit = nowLit;
+                        win.material.color.setHex(nowLit ? 0xffeeaa : 0x334455);
+                    }
                 }
             });
         }
