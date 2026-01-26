@@ -1068,10 +1068,13 @@
             // Position at Strip entrance (where highway meets Strip), on south side
             const stripStartX = VEGAS_CFG.zoneStartX + VEGAS_CFG.highwayLength;
             billboard.position.set(
-                stripStartX + 5, // Near start of Strip
+                stripStartX + 25, // Near start of Strip
                 0,
-                VEGAS_CFG.stripWidth / 2 + 6 // South side of road
+                VEGAS_CFG.stripWidth / 2 + 8 // South side of road
             );
+
+            // Rotate 90 degrees to face incoming traffic from Metropolis (west)
+            billboard.rotation.y = -Math.PI / 2;
 
             scene.add(billboard);
 
@@ -1259,10 +1262,13 @@
             // Position at Vegas entrance (where highway meets Strip)
             const stripStartX = theStrip.userData.startX;
             sign.position.set(
-                stripStartX - 12, // Just before Strip starts
+                stripStartX - 15, // Just before Strip starts
                 0,
-                14 // South side of road, visible when approaching
+                18 // South side of road, visible when approaching
             );
+
+            // Rotate 90 degrees to face incoming traffic from Metropolis (west)
+            sign.rotation.y = -Math.PI / 2;
 
             scene.add(sign);
             return sign;
@@ -1345,10 +1351,11 @@
             const stripLength = stripEndX - stripStartX;
 
             pyramid.position.set(
-                stripStartX + stripLength * 0.15, // Near west end of Strip
+                stripStartX + stripLength * 0.12, // Near entrance of Strip
                 0,
-                stripCenterZ + stripWidth / 2 + sidewalkWidth + 45 // South side parking lot (larger offset)
+                stripCenterZ + stripWidth / 2 + sidewalkWidth + 80 // South side - well back from road
             );
+            pyramid.rotation.y = Math.PI; // Face the road
 
             // Store userData for Phase 3 lighting
             pyramid.userData = {
@@ -1480,9 +1487,9 @@
             const stripLength = stripEndX - stripStartX;
 
             tower.position.set(
-                stripStartX + stripLength * 0.5, // Middle of Strip
+                stripStartX + stripLength * 0.35, // Toward entrance
                 0,
-                stripCenterZ - stripWidth / 2 - sidewalkWidth - 30 // North side parking lot (larger offset)
+                stripCenterZ - stripWidth / 2 - sidewalkWidth - 70 // North side - well back from road
             );
 
             // Store userData for Phase 3 lighting
@@ -1656,13 +1663,13 @@
             const stripLength = stripEndX - stripStartX;
 
             bellagio.position.set(
-                stripStartX + stripLength * 0.65, // Toward east end of Strip
+                stripStartX + stripLength * 0.55, // Middle-east of Strip
                 0,
-                stripCenterZ + stripWidth / 2 + sidewalkWidth + 55 // South side parking lot (larger offset)
+                stripCenterZ + stripWidth / 2 + sidewalkWidth + 90 // South side - well back from road
             );
 
-            // Rotate to face Strip (building entrance faces north/Strip)
-            bellagio.rotation.y = 0;
+            // Rotate to face Strip (entrance toward road)
+            bellagio.rotation.y = Math.PI;
 
             // Store userData for Phase 3 lighting
             bellagio.userData = {
@@ -1837,13 +1844,13 @@
             const stripLength = stripEndX - stripStartX;
 
             caesars.position.set(
-                stripStartX + stripLength * 0.3, // Toward west end of Strip
+                stripStartX + stripLength * 0.65, // Past middle of Strip
                 0,
-                stripCenterZ - stripWidth / 2 - sidewalkWidth - 55 // North side parking lot (larger offset)
+                stripCenterZ - stripWidth / 2 - sidewalkWidth - 100 // North side - well back from road
             );
 
-            // Rotate to face Strip (entrance faces south/Strip)
-            caesars.rotation.y = Math.PI;
+            // Rotate to face Strip (entrance faces south toward road)
+            caesars.rotation.y = 0;
 
             // Store userData for Phase 3 lighting
             caesars.userData = {
@@ -2047,13 +2054,13 @@
             const stripLength = stripEndX - stripStartX;
 
             castle.position.set(
-                stripStartX + stripLength * 0.4, // Between Luxor (west) and Bellagio (east)
+                stripStartX + stripLength * 0.30, // Between Luxor and Bellagio
                 0,
-                stripCenterZ + stripWidth / 2 + sidewalkWidth + 55 // South side parking lot (larger offset)
+                stripCenterZ + stripWidth / 2 + sidewalkWidth + 90 // South side - well back from road
             );
 
-            // Rotate to face Strip (entrance faces north/Strip)
-            castle.rotation.y = 0;
+            // Rotate to face Strip (entrance faces north toward road)
+            castle.rotation.y = Math.PI;
 
             // Store userData for Phase 3 lighting
             castle.userData = {
@@ -2114,25 +2121,28 @@
                 emissiveIntensity: 0.3
             });
 
-            const windowSize = 0.8;
-            const windowSpacing = 1.5; // Dense grid like Metropolis buildings
+            const windowSize = 1.2;
+            const windowSpacing = 2.5; // Reasonable spacing for large buildings
+
+            // BoxGeometry is centered, so offset y by -height/2 to start from bottom
+            const yOffset = -height / 2;
 
             // Front and back faces (Z axis)
             for (const zSide of [1, -1]) {
-                const cols = Math.floor(width / windowSpacing) - 1;
-                const rows = Math.floor(height / windowSpacing) - 1;
+                const cols = Math.floor(width / windowSpacing) - 2;
+                const rows = Math.floor(height / windowSpacing) - 2;
 
                 for (let c = 0; c < cols; c++) {
                     for (let r = 0; r < rows; r++) {
-                        if (Math.random() > 0.3) { // 70% windows lit
+                        if (Math.random() > 0.25) { // 75% windows lit
                             const win = new THREE.Mesh(
                                 new THREE.PlaneGeometry(windowSize, windowSize),
                                 windowMat.clone()
                             );
                             win.position.set(
-                                -width/2 + windowSpacing + c * windowSpacing,
-                                windowSpacing + r * windowSpacing,
-                                zSide * depth/2 + zSide * 0.05
+                                -width/2 + windowSpacing * 1.5 + c * windowSpacing,
+                                yOffset + windowSpacing * 1.5 + r * windowSpacing,
+                                zSide * depth/2 + zSide * 0.1
                             );
                             if (zSide < 0) win.rotation.y = Math.PI;
                             win.userData.isVegasWindow = true;
@@ -2145,20 +2155,20 @@
 
             // Left and right faces (X axis)
             for (const xSide of [1, -1]) {
-                const cols = Math.floor(depth / windowSpacing) - 1;
-                const rows = Math.floor(height / windowSpacing) - 1;
+                const cols = Math.floor(depth / windowSpacing) - 2;
+                const rows = Math.floor(height / windowSpacing) - 2;
 
                 for (let c = 0; c < cols; c++) {
                     for (let r = 0; r < rows; r++) {
-                        if (Math.random() > 0.3) { // 70% windows lit
+                        if (Math.random() > 0.25) { // 75% windows lit
                             const win = new THREE.Mesh(
                                 new THREE.PlaneGeometry(windowSize, windowSize),
                                 windowMat.clone()
                             );
                             win.position.set(
-                                xSide * width/2 + xSide * 0.05,
-                                windowSpacing + r * windowSpacing,
-                                -depth/2 + windowSpacing + c * windowSpacing
+                                xSide * width/2 + xSide * 0.1,
+                                yOffset + windowSpacing * 1.5 + r * windowSpacing,
+                                -depth/2 + windowSpacing * 1.5 + c * windowSpacing
                             );
                             win.rotation.y = xSide > 0 ? Math.PI / 2 : -Math.PI / 2;
                             win.userData.isVegasWindow = true;
