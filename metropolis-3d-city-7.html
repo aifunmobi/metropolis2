@@ -1515,7 +1515,9 @@
             ctx.shadowColor = colorStr;
             ctx.shadowBlur = 30;
             ctx.fillStyle = colorStr;
-            ctx.font = 'bold 72px Arial Black, Arial, sans-serif';
+            // Auto-scale font size based on text length
+            const fontSize = name.length > 12 ? 48 : name.length > 8 ? 60 : 72;
+            ctx.font = `bold ${fontSize}px Arial Black, Arial, sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
@@ -1966,9 +1968,9 @@
             westBorder.position.set(-lakeWidth / 2 - borderThickness / 2, borderHeight / 2, 45);
             bellagio.add(westBorder);
 
-            // Big neon sign on top of tower - facing north toward road (hotel is rotated Math.PI)
+            // Big neon sign on top of center section roof - facing north toward road
             const bellagioSign = mkHotelNeonSign('BELLAGIO', 0x00ffff, 45, 10);
-            bellagioSign.position.set(0, 75, 50); // In front toward road
+            bellagioSign.position.set(0, 70, 17.5); // On top of center section (height 65 + half sign), front edge
             bellagio.add(bellagioSign);
 
             // Position on south side of Strip (positive Z), east of Luxor
@@ -8951,7 +8953,7 @@
             scene.add(ufo);
             
             const balloon = mkBalloon();
-            balloon.position.set(0, 90, -15);  // Start at first waypoint (Metropolis center)
+            balloon.position.set(0, 55, -15);  // Start at first waypoint (Metropolis center, lower altitude)
             balloon.userData.secret = '🎈 Hot Air Balloon';
             balloon.userData.type = 'balloon';
             secrets.push(balloon);
@@ -9067,21 +9069,21 @@
                 g.add(cable);
             });
 
-            // Waypoints for Metropolis-Vegas journey
+            // Waypoints for Metropolis-Vegas journey - lower altitude, only rise to clear obstacles
             g.userData.waypoints = [
-                new THREE.Vector3(0, 90, -15),         // Metropolis center
-                new THREE.Vector3(20, 95, 10),         // Metropolis east side
-                new THREE.Vector3(80, 100, 0),         // Desert approach
-                new THREE.Vector3(180, 105, -5),       // Vegas highway
-                new THREE.Vector3(320, 100, 0),        // Vegas Strip center
-                new THREE.Vector3(400, 105, 10),       // Far Vegas
-                new THREE.Vector3(320, 100, -5),       // Vegas return
-                new THREE.Vector3(180, 100, 5),        // Highway return
-                new THREE.Vector3(80, 95, 0),          // Desert return
-                new THREE.Vector3(20, 90, -10)         // Back to Metropolis
+                new THREE.Vector3(0, 55, -15),         // Metropolis center - above buildings
+                new THREE.Vector3(20, 50, 10),         // Metropolis east side
+                new THREE.Vector3(80, 40, 0),          // Desert approach - lower over open desert
+                new THREE.Vector3(180, 45, -5),        // Vegas highway - low cruise
+                new THREE.Vector3(320, 50, 0),         // Vegas Strip center - slight rise for hotels
+                new THREE.Vector3(400, 45, 10),        // Far Vegas
+                new THREE.Vector3(320, 50, -5),        // Vegas return
+                new THREE.Vector3(180, 45, 5),         // Highway return
+                new THREE.Vector3(80, 40, 0),          // Desert return - low
+                new THREE.Vector3(20, 50, -10)         // Back to Metropolis - rise for buildings
             ];
             g.userData.waypointIndex = 0;
-            g.userData.balloonSpeed = 0.25;            // Slower than helicopter
+            g.userData.balloonSpeed = 0.12;            // Half speed for leisurely float
 
             return g;
         }
