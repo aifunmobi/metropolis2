@@ -8951,7 +8951,7 @@
             scene.add(ufo);
             
             const balloon = mkBalloon();
-            balloon.position.set(5, 85, -30);  // High enough to clear buildings
+            balloon.position.set(0, 90, -15);  // Start at first waypoint (Metropolis center)
             balloon.userData.secret = '🎈 Hot Air Balloon';
             balloon.userData.type = 'balloon';
             secrets.push(balloon);
@@ -8999,8 +8999,10 @@
             return g;
         }
 
-        const BALLOON_ADS = ['SEE VEGAS', 'RECYCLE', 'OBEY', 'WORK'];
+        const BALLOON_ADS_METRO = ['SEE VEGAS', 'RECYCLE', 'OBEY', 'WORK'];
+        const BALLOON_ADS_VEGAS = ['$9.99 Buffet', 'Luxor Slots', 'Free T-Shirt', 'Show Tonight'];
         let balloonAdIndex = 0;
+        let balloonInVegas = false;
         let balloonAdCanvas, balloonAdCtx, balloonAdTexture;
 
         function createBalloonAdTexture(text) {
@@ -9014,18 +9016,21 @@
             // Black background with glowing effect
             balloonAdCtx.fillStyle = '#000000';
             balloonAdCtx.fillRect(0, 0, 512, 256);
-            // Neon border
-            balloonAdCtx.strokeStyle = '#ff0000';
+            // Neon border - gold for Vegas, red for Metropolis
+            const borderColor = balloonInVegas ? '#ffcc00' : '#ff0000';
+            const glowColor = balloonInVegas ? '#ffaa00' : '#ff0000';
+            balloonAdCtx.strokeStyle = borderColor;
             balloonAdCtx.lineWidth = 8;
             balloonAdCtx.strokeRect(10, 10, 492, 236);
-            // Glowing text
-            balloonAdCtx.font = 'bold 64px Arial';
+            // Adjust font size based on text length
+            const fontSize = text.length > 10 ? 52 : 64;
+            balloonAdCtx.font = `bold ${fontSize}px Arial`;
             balloonAdCtx.textAlign = 'center';
             balloonAdCtx.textBaseline = 'middle';
             // Glow effect
-            balloonAdCtx.shadowColor = '#ff0000';
+            balloonAdCtx.shadowColor = glowColor;
             balloonAdCtx.shadowBlur = 20;
-            balloonAdCtx.fillStyle = '#ff3333';
+            balloonAdCtx.fillStyle = balloonInVegas ? '#ffcc33' : '#ff3333';
             balloonAdCtx.fillText(text, 256, 128);
             // Brighter center text
             balloonAdCtx.shadowBlur = 0;
@@ -9044,23 +9049,39 @@
             balloon.scale.y = 1.3;
             g.add(balloon);
 
-            // Illuminated ad panel attached directly below balloon
-            const adTexture = createBalloonAdTexture(BALLOON_ADS[0]);
+            // Illuminated ad panel attached directly below balloon - wider for longer Vegas ads
+            const adTexture = createBalloonAdTexture(BALLOON_ADS_METRO[0]);
             const adPanel = new THREE.Mesh(
-                new THREE.PlaneGeometry(12, 4),
+                new THREE.PlaneGeometry(14, 5),
                 new THREE.MeshBasicMaterial({ map: adTexture, side: THREE.DoubleSide })
             );
             adPanel.position.y = -8;
             g.add(adPanel);
             g.userData.adPanel = adPanel;
 
-            // Short cables from balloon to sign
+            // Short cables from balloon to sign - wider spacing for bigger sign
             const cableMat = new THREE.MeshBasicMaterial({ color: 0x333333 });
-            [[-4, 0], [4, 0]].forEach(([x, z]) => {
+            [[-5, 0], [5, 0]].forEach(([x, z]) => {
                 const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3), cableMat);
                 cable.position.set(x, -6.5, z);
                 g.add(cable);
             });
+
+            // Waypoints for Metropolis-Vegas journey
+            g.userData.waypoints = [
+                new THREE.Vector3(0, 90, -15),         // Metropolis center
+                new THREE.Vector3(20, 95, 10),         // Metropolis east side
+                new THREE.Vector3(80, 100, 0),         // Desert approach
+                new THREE.Vector3(180, 105, -5),       // Vegas highway
+                new THREE.Vector3(320, 100, 0),        // Vegas Strip center
+                new THREE.Vector3(400, 105, 10),       // Far Vegas
+                new THREE.Vector3(320, 100, -5),       // Vegas return
+                new THREE.Vector3(180, 100, 5),        // Highway return
+                new THREE.Vector3(80, 95, 0),          // Desert return
+                new THREE.Vector3(20, 90, -10)         // Back to Metropolis
+            ];
+            g.userData.waypointIndex = 0;
+            g.userData.balloonSpeed = 0.25;            // Slower than helicopter
 
             return g;
         }
@@ -11626,14 +11647,34 @@
                     s.traverse(c => { if (c.userData.ufoL) c.material.color.setHex(Math.sin(t * 5 + c.userData.ph) > 0 ? 0x00ff00 : 0x004400); }); 
                 }
                 if (s.userData.type === 'balloon') {
-                    s.position.y = 85 + Math.sin(t * 0.2) * 6;  // Higher to clear buildings
-                    s.position.x = 5 + Math.sin(t * 0.1) * 15;  // Wider drift
+                    // Waypoint-based movement between Metropolis and Vegas
+                    if (s.userData.waypoints) {
+                        const target = s.userData.waypoints[s.userData.waypointIndex];
+                        const dir = new THREE.Vector3().subVectors(target, s.position);
+                        const dist = dir.length();
+
+                        if (dist < 8) {
+                            // Reached waypoint, go to next
+                            s.userData.waypointIndex = (s.userData.waypointIndex + 1) % s.userData.waypoints.length;
+                        } else {
+                            // Move toward waypoint with gentle bobbing
+                            dir.normalize().multiplyScalar(s.userData.balloonSpeed);
+                            s.position.add(dir);
+                            s.position.y += Math.sin(t * 0.3) * 0.1;  // Gentle vertical bob
+                        }
+                    }
                     s.rotation.y += 0.003;
+
+                    // Switch ad set based on location (desert starts around x=60)
+                    const nowInVegas = s.position.x > 60;
+                    const currentAds = nowInVegas ? BALLOON_ADS_VEGAS : BALLOON_ADS_METRO;
+
                     // Cycle ads every 5 seconds
-                    const newAdIndex = Math.floor(t / 5) % BALLOON_ADS.length;
-                    if (newAdIndex !== balloonAdIndex) {
+                    const newAdIndex = Math.floor(t / 5) % currentAds.length;
+                    if (newAdIndex !== balloonAdIndex || nowInVegas !== balloonInVegas) {
                         balloonAdIndex = newAdIndex;
-                        createBalloonAdTexture(BALLOON_ADS[balloonAdIndex]);
+                        balloonInVegas = nowInVegas;
+                        createBalloonAdTexture(currentAds[balloonAdIndex]);
                     }
                 }
                 if (s.userData.type === 'heli') {
