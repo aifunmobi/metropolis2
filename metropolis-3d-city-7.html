@@ -9671,13 +9671,18 @@
             const weatherEl = $('weather');
             if (weatherEl) {
                 const inVegas = isInVegasZone(cam.position.x, cam.position.z);
+                // Check if it's nighttime (before 6am or after 6pm)
+                const isNight = timeOfDay < 0.25 || timeOfDay > 0.75;
                 if (inVegas) {
-                    // Vegas always shows sunny and hot - use stable cached temperature
-                    weatherEl.textContent = '☀️ Sunny ' + vegasTemperature + '°F';
+                    // Vegas - use "Clear" at night, "Sunny" during day
+                    const vegasWeather = isNight ? '🌙 Clear' : '☀️ Sunny';
+                    weatherEl.textContent = vegasWeather + ' ' + vegasTemperature + '°F';
                 } else {
-                    // Metropolis shows current weather
-                    const icons = { 'sunny': '☀️ Sunny', 'cloudy': '☁️ Cloudy', 'rain': '🌧️ Rain', 'storm': '⛈️ Storm' };
-                    weatherEl.textContent = (icons[weatherState] || '☀️') + ' 24°C';
+                    // Metropolis shows current weather - adjust sunny to clear at night
+                    const icons = isNight
+                        ? { 'sunny': '🌙 Clear', 'cloudy': '☁️ Cloudy', 'rain': '🌧️ Rain', 'storm': '⛈️ Storm' }
+                        : { 'sunny': '☀️ Sunny', 'cloudy': '☁️ Cloudy', 'rain': '🌧️ Rain', 'storm': '⛈️ Storm' };
+                    weatherEl.textContent = (icons[weatherState] || (isNight ? '🌙' : '☀️')) + ' 24°C';
                 }
             }
         }
