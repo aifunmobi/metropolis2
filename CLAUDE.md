@@ -8,8 +8,8 @@ Metropolis is an interactive 3D city simulation built as a **single HTML file** 
 
 ```
 metropolis/
-├── metropolis-3d-city.html  # The entire application (single file ~4700 lines)
-└── README.md                # Project documentation
+├── metropolis-3d-city-7.html  # The entire application (single file, ~9000 lines)
+└── README.md                  # Project documentation
 ```
 
 ## Architecture
@@ -39,6 +39,44 @@ All systems follow a **make/update pattern**: `mk*()` functions create objects, 
 | Special Events | Various `create*()` | `updSpecialEvents()`, `updateEvent()` | Random city events |
 | Secrets | `mkSecrets()`, `mkUFO()`, `mkBalloon()`, `mkHelicopter()` | `updSecrets()` | Hidden discoverable objects |
 | Billboards | `mkBillboards()` | `updBillboards()` | Animated rooftop signs |
+| Shops | `mkStorefronts()`, `addShopUnit()`, `SHOP_CATALOG` | `updShops()`, `updShopTooltip()` | ~110 unique ground-floor stores, product windows, hover tooltips |
+| Ped population | - | `updPedPopulation()` | Street crowd size follows time of day |
+| Airport | `mkAirport()`, `mkJet()`, `mkJetBridge()` | `updAirport()` | RDU-style airport east of town (x≈100-215): Terminals 1/2, garage, jets, animated jet bridges, taxi/bus fleet |
+| Street life | `mkStreetLife()`, `mkCinema()`, `mkFoodCart()`, `mkNewsstand()`, `mkStreetArtist()`, `mkDogWalkerUnit()` | `updStreetLife()`, `updCinemaCrowd()`, `updIdlers()` | Cinema with chasing marquee + box-office queue, food carts, newsstands, pavement artists, dog walkers |
+| Outskirts | `mkOutskirts()` | - | Low-rise sprawl beyond the grid so downtown has a horizon; windows painted into the facade texture |
+| Wall ads | `mkWallAds()` | - | Painted billboards with gooseneck floodlights on blank upper storeys |
+| Airport fleet | `mkCourtesyBus()`, `mkAirportCar()`, `mkApronTug()`, `mkFuelTruck()`, `mkCateringTruck()`, `mkBeltLoader()`, `mkFollowMeCar()` | `updAirport()` | Ground fleet drives along its own +Z, so wheels use `vWheel(..., {zFwd:true})`; `apBeacon()` adds the rotating amber |
+| Obstacles | `addObstacle()` | `resolveObstacles()`, `resolveWalkers()` | Bucketed static-collision field; keeps walkers out of furniture, carts and parked cars |
+| Vehicle kit | `vWheel()`, `vLamp()`, `vLightbar()`, `vStripe()`, `vehSize()` | `spinWheels()` | Shared parts bin + per-vehicle footprints (`userData.len`/`wid`) that drive every traffic clearance |
+
+### Visual conventions
+
+- **Facade texturing** — `facadeBox()` tiles each wall by real metres (`FACADE_TILE`); a
+  single stretched material makes brick come out the size of a car. `tiledTex()` caches
+  the repeat variants.
+- **Building form** — plinth (`PLINTH_H`) + shaft + belt course + `mkRoofKit()` (cornice,
+  parapet, HVAC, water tower). Windows start above the plinth and stop below the cornice.
+- **Ground layers** — everything flat declares its own depth layer via `polygonOffset`
+  (yards < roads < repairs < markings). Sharing a `y` causes z-fighting while moving.
+- **Vehicle clearances** — never hardcode a gap. Use `vGap()` / `vSide()` so a 14m artic
+  and a 2.3m hatchback both stop at the right distance.
+- **People vs traffic** — brake against `people` (rebuilt each frame by `refreshPeople()`),
+  never `peds[]` alone: the cinema queue, dog walkers and performers are people too.
+  Braking only covers what is ahead, so `pushPeopleOutOfVehicles()` is the backstop for
+  someone walking into a flank and for vehicles running their own controllers, which
+  skip the braking checks entirely.
+- **Airport ground** — every flat airport surface takes a layer from the `Y` table plus a
+  `polygonOffset`; they used to share a 16mm band across a 300m site, and the airport
+  grass sat *below* the world ground plane, so the whole place shimmered.
+- **Airport layout** — gate spacing must be `half-span(left) + half-span(right) + clearance`
+  or parked wings intersect. Service routes stay aft of `AP.noseX + longest fuselage` and
+  inboard of `AP.taxiX`. Never replace a vehicle's `userData` — `Object.assign` into it,
+  or the route wipes its wheels, beacons and footprint.
+- **Sky** — clouds are painted into the sky-dome shader, not hung on their own geometry:
+  a separate cloud mesh shows its rim as a silhouette and fights the star layer for depth.
+  The dome and starfield ride with the camera every frame — anchored at the origin, the
+  far side of the 440-unit dome falls outside the 500-unit far plane as soon as you leave
+  the middle of the map, and the clipped cap renders as a black dome over the city.
 
 ### Global Configuration
 
